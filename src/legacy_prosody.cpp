@@ -880,21 +880,6 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
                 const double class_scale = lv ? (rv ? policy.vv_duration_scale : policy.vc_duration_scale)
                                               : (rv ? policy.cv_duration_scale : policy.cc_duration_scale);
                 u.base_scale=std::clamp(u.base_scale*class_scale,0.35,2.5);
-                if(physical_length_strength>0.0 && !u.raw.samples.empty()){
-                    const auto split=std::min(u.layout.split_sample_estimate,u.raw.samples.size());
-                    const double L=static_cast<double>(split);
-                    const double R=static_cast<double>(u.raw.samples.size()-split);
-                    const double den=L+R;
-                    if(den>0.0){
-                        const double lp0=(i<physical_le_lattice.length_percent.size())
-                            ? physical_le_lattice.length_percent[i] : 0.0;
-                        const double lp1=(i+1<physical_le_lattice.length_percent.size())
-                            ? physical_le_lattice.length_percent[i+1] : 0.0;
-                        const double pct=(L*lp0+R*lp1)/den;
-                        const double m=std::clamp(1.0+physical_length_strength*pct*0.01,0.70,1.35);
-                        u.base_scale=std::clamp(u.base_scale*m,0.35,2.5);
-                    }
-                }
                 u.target_ms=u.source_ms*u.base_scale;
             }
         } else {
@@ -979,6 +964,39 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
             }
         }
 
+        // M32: consume [l%d] where the PC runtime does: on the phone feature
+        // record represented by each side of this diphone. Unlike M31's
+        // weighted whole-unit projection, this deliberately changes the two
+        // half durations independently and is not renormalized away.
+        if(physical_length_strength>0.0){
+            const double lp0=(i<physical_le_lattice.length_percent.size())
+                ? physical_le_lattice.length_percent[i] : 0.0;
+            const double lp1=(i+1<physical_le_lattice.length_percent.size())
+                ? physical_le_lattice.length_percent[i+1] : 0.0;
+            const double lm=std::clamp(1.0+physical_length_strength*lp0*0.01,0.70,1.35);
+            const double rm=std::clamp(1.0+physical_length_strength*lp1*0.01,0.70,1.35);
+            left_scale=std::clamp(left_scale*lm,0.20,3.00);
+            right_scale=std::clamp(right_scale*rm,0.20,3.00);
+        }
+        // Preserve M31 bit-for-bit when the physical [l] layer is disabled.
+        // Re-averaging two nominally equal side scales can change the last
+        // floating-point bit and push llround across a sample boundary.
+        const double effective_scale=(physical_length_strength>0.0 && (L+R)>0.0)
+            ? (L*left_scale+R*right_scale)/(L+R) : u.base_scale;
+        u.target_ms=u.source_ms*effective_scale;
+
+        double left_energy_gain=1.0, right_energy_gain=1.0;
+        if(physical_energy_strength>0.0){
+            const double ep0=(i<physical_le_lattice.energy_percent.size())
+                ? physical_le_lattice.energy_percent[i] : 100.0;
+            const double ep1=(i+1<physical_le_lattice.energy_percent.size())
+                ? physical_le_lattice.energy_percent[i+1] : 100.0;
+            left_energy_gain=std::clamp(
+                1.0+physical_energy_strength*(ep0*0.01-1.0),0.40,1.25);
+            right_energy_gain=std::clamp(
+                1.0+physical_energy_strength*(ep1*0.01-1.0),0.40,1.25);
+        }
+
         M15UnitDiagnostics ud; ud.label=u.label; ud.schedule=u.sched; ud.layout=u.layout;
         if(!u.layout.runs.empty()){
             ud.left_period_hint=first_period(u.layout.runs.front());
@@ -1055,41 +1073,26 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         const double psm=blended_scale(pctm,phym,phy_strengthm)*m24_declination_multiplier(policy,xm)*std::sqrt(left_stress*right_stress);
 
         Pcm16Mono pcm;
-        if(side_strength<=0.0 || std::abs(left_scale-right_scale)<1e-10){
-            TdPsolaConfig cfg; cfg.pitch_scale=psm; cfg.duration_scale=u.base_scale;
-            cfg.use_three_point_pitch=anchor_strength>0.0 || physical_strength>0.0 || physical_terminal_strength>0.0 || empty_strength>0.0 || single_strength>0.0 || policy.pitch_declination_strength>0.0 || std::abs(stress_boost-1.0)>1e-12;
-            cfg.pitch_scale_start=ps0; cfg.pitch_scale_mid=psm; cfg.pitch_scale_end=ps1;
+        TdPsolaConfig cfg; cfg.pitch_scale=psm; cfg.duration_scale=effective_scale;
+        cfg.use_three_point_pitch=anchor_strength>0.0 || physical_strength>0.0 || physical_terminal_strength>0.0 || empty_strength>0.0 || single_strength>0.0 || policy.pitch_declination_strength>0.0 || std::abs(stress_boost-1.0)>1e-12;
+        cfg.pitch_scale_start=ps0; cfg.pitch_scale_mid=psm; cfg.pitch_scale_end=ps1;
+        const bool side_duration=std::abs(left_scale-right_scale)>=1e-10;
+        const bool side_energy=std::abs(left_energy_gain-1.0)>=1e-12 ||
+                               std::abs(right_energy_gain-1.0)>=1e-12;
+        if(!side_duration && !side_energy){
             pcm=resynthesize_seg_m15(u.raw,u.sched,u.layout,cfg,&ud);
         } else {
-            // The phone-side experimental renderer still accepts one F0 ratio.
-            // Production M23/M24 keeps phone_side_strength=0; use midpoint if
-            // an experiment explicitly enables it.
-            pcm=resynthesize_seg_m23_phone_sides(u.raw,u.sched,u.layout,psm,left_scale,right_scale,&ud);
+            pcm=resynthesize_seg_m32_phone_sides(
+                u.raw,u.sched,u.layout,cfg,left_scale,right_scale,
+                left_energy_gain,right_energy_gain,&ud);
         }
         if(pcm.samples.empty()){out.error="render_failed";return out;}
-        if(physical_energy_strength>0.0 && !u.raw.samples.empty()){
-            const auto split=std::min(u.layout.split_sample_estimate,u.raw.samples.size());
-            const double L=static_cast<double>(split);
-            const double R=static_cast<double>(u.raw.samples.size()-split);
-            const double den=L+R;
-            if(den>0.0){
-                const double ep0=(i<physical_le_lattice.energy_percent.size())
-                    ? physical_le_lattice.energy_percent[i] : 100.0;
-                const double ep1=(i+1<physical_le_lattice.energy_percent.size())
-                    ? physical_le_lattice.energy_percent[i+1] : 100.0;
-                const double target=(L*ep0+R*ep1)/den;
-                const double gain=std::clamp(1.0+physical_energy_strength*(target*0.01-1.0),0.40,1.25);
-                for(auto& sample:pcm.samples){
-                    const long v=std::lround(static_cast<double>(sample)*gain);
-                    sample=static_cast<std::int16_t>(std::clamp<long>(v,-32768,32767));
-                }
-            }
-        }
         rendered.push_back(std::move(pcm));
         lh.push_back(ud.left_period_hint); rh.push_back(ud.right_period_hint);
         unit_pitch_left.push_back(ps0);
         unit_pitch_right.push_back(ps1);
-        out.timings.push_back({ud.label,u.source_ms,u.target_ms,u.base_scale,left_scale,right_scale});
+        out.timings.push_back({ud.label,u.source_ms,u.target_ms,effective_scale,
+                               left_scale,right_scale,left_energy_gain,right_energy_gain});
     }
 
     out.pcm=rendered.front();

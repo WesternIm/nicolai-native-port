@@ -3,6 +3,9 @@ project(nicolai_native_port LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+if(MSVC)
+  add_compile_options(/utf-8)
+endif()
 add_library(nicolai_port STATIC
     src/voice_db.cpp src/edat.cpp src/address_space.cpp src/assets.cpp
     src/huffman.cpp src/ana_index.cpp src/cmp16.cpp src/cmp16_decode.cpp src/cmp16_codebook.cpp src/static_files.cpp

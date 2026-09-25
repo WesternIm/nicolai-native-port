@@ -78,6 +78,23 @@ Pcm16Mono resynthesize_seg_m23_phone_sides(
     double right_duration_scale,
     M15UnitDiagnostics* diagnostics = nullptr);
 
+// M32: phone-local execution path. Duration is mapped independently on the
+// two sides of layout.split_sample_estimate while the full M24+ three-point F0
+// contour remains live inside voiced TD-PSOLA runs. Energy targets are also
+// consumed per side, with a short transition around the phone boundary to
+// avoid a sample discontinuity. Equal duration scales and unity gains dispatch
+// to M15 exactly, preserving the production baseline byte-for-byte.
+Pcm16Mono resynthesize_seg_m32_phone_sides(
+    const Pcm16Mono& source,
+    const SegScheduleM15& schedule,
+    const SegSpanLayout& layout,
+    const TdPsolaConfig& pitch_config,
+    double left_duration_scale,
+    double right_duration_scale,
+    double left_energy_gain = 1.0,
+    double right_energy_gain = 1.0,
+    M15UnitDiagnostics* diagnostics = nullptr);
+
 DiphoneChainM15Result synthesize_diphone_chain_m15(
     const std::vector<std::uint8_t>& database_bytes,
     const DiphoneCatalog& catalog,

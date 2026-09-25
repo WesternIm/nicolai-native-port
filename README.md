@@ -1,3 +1,31 @@
+# Nicolai Native Port — M32
+
+M32 fixes the execution-side granularity that kept M31's recovered
+`physical.int` duration (`[l%d]`) and energy (`[e%d]`) values disabled. The
+portable renderer now consumes those values on the left/right phone support of
+each diphone instead of averaging them over the complete unit, and the
+piecewise-duration path retains M24+'s start/middle/end F0 contour.
+
+The zero-effect path dispatches to the established renderer exactly; 20/20 host
+tests pass, including byte-identical fallback, live three-point F0 under
+asymmetric duration, and side-local energy checks. The original local voice
+inputs were restored for evaluation and 39 unique coarse, micro, and fine-grid
+settings were measured against all 22 PC golden WAVs. No non-zero duration or
+energy setting produced a robust multi-metric win, so production deliberately
+keeps both strengths at **0.0** and remains byte-identical to M31.
+
+Reproducibility is now first-class: `tools/measure_parity.py` computes waveform,
+active/total duration, F0 contour, MFCC-DTW, and RMS/energy parity in one report;
+`tools/run_m32_parity.ps1` and `tools/sweep_m32_physical.ps1` reproduce the
+candidate runs without committing golden WAVs or proprietary voice data.
+`tools/compare_parity.py` audits candidate changes phrase by phrase. Committed
+JSON/CSV summaries live in `docs/metrics/`.
+
+See `docs/M32_FINDINGS.md`, `docs/M32_PC_PARITY_REPORT.md`, and
+`docs/M32_CONTINUATION.md`.
+
+---
+
 # Nicolai Native Port — M31
 
 M31 moves one layer beyond M30 pitch authoring and reconstructs the Windows engine's sibling **`[l%d]` duration** and **`[e%d]` energy** writers from the same `physical.int` authoring pass. Static tracing of the supplied `mtsyc32.dll` shows that source feature byte `+0x1d` is sign-extended into runtime duration state and consumed as an exact signed-percent correction (`base * (1 + l/100)`), while `+0x1c` carries the companion energy target.

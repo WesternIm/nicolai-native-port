@@ -249,10 +249,10 @@ struct LegacyTimingPolicy {
     // enabled without regressing the PC oracle.
     double physical_single_marker_pitch_strength = 0.002;
 
-    // M31 experimental projection of the exact physical.int [l%d] and [e%d]
-    // authoring profiles onto the portable diphone renderer. [l] is a signed
-    // percent duration correction in the PC runtime (base*(1+l/100)); [e] is
-    // an absolute 0..100 energy target. Zero preserves M30 exactly.
+    // M32 consumes the exact M31 physical.int [l%d]/[e%d] authoring values on
+    // the corresponding left/right phone side of each diphone. [l] is a signed
+    // duration correction (base*(1+l/100)); [e] is an absolute 0..100 energy
+    // target. Zero preserves the M31 production path exactly.
     double physical_length_strength = 0.0;
     double physical_energy_strength = 0.0;
     // Keep the M27 last-phone terminal approximation available while M28
@@ -332,6 +332,8 @@ struct LegacyTimedDiphone {
     double duration_scale = 1.0;
     double left_duration_scale = 1.0;
     double right_duration_scale = 1.0;
+    double left_energy_gain = 1.0;
+    double right_energy_gain = 1.0;
 };
 
 struct DiphoneChainLegacyResult {
