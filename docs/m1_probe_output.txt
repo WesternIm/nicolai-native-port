@@ -1,0 +1,53 @@
+Nicolai native-port M1 EDAT probe
+size_bytes: 10961460 (0xa74234)
+tagged_magic: 0xa4f22a56
+edat_valid: yes
+segment0: [0x18, 0xa43eb4) size=0xa43e9c
+segment1: [0xa43eb4, 0xa74034) size=0x30180
+footer:   [0xa74034, 0xa74234) size=0x200
+tagged_refs: 3192
+invalid_tagged_targets: 0
+  header -> segment0: 1
+  header -> segment1: 1
+  segment0 -> header: 1
+  segment0 -> segment0: 2475
+  segment1 -> header: 7
+  segment1 -> segment0: 707
+mode_records: 3
+  [0] offset=0xa71e44
+      engine: ELAN Telecom V5.0
+      description: Speech Cube Russian (Nicolai 16Khz)
+      voice: Nicolai
+      style: Standard / Normal
+      database: nicolai16
+      sample_rate: 16000
+  [1] offset=0xa72994
+      engine: ELAN Multimedia V5.0
+      description: ELAN TTS Russian (Nicolai 16Khz)
+      voice: Nicolai
+      style: Standard / Normal
+      database: nicolai16
+      sample_rate: 16000
+  [2] offset=0xa734e4
+      engine: ELAN Multimedia (P) V5.0
+      description: ELAN Tempo Russian (Nicolai 16Khz)
+      voice: Nicolai
+      style: Standard / Normal
+      database: nicolai16
+      sample_rate: 16000
+resource_paths: 13
+  0x429284: C:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\nbr16aci.dsc
+  0x4293e4: c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\nbr.rgl
+  0x4294e8: c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\16aci\nbr16aci.axm
+  0x4298fc: c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\16aci\nbr16aci.seg
+  0x42ad4c: c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\16aci\nbr16aci.ana
+  0x42b984: C:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\nbr16aci.dsc.pho
+  0x42baa4: c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\16aci\nbr16aci.axm
+  0x42bbc4: c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\nbr.rgl
+  0x453e7c: c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\16aci\nbr16aci.seg
+  0x453f9c: c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\16aci\nbr16aci.ana
+  0xa62508: C:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\nbr16aci.dsc
+  0xa6260c: c:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\modeinfo.dsc
+  0xa71d18: c:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\modeinfo.dsc
+synthesis_status: native_core_not_implemented
+synthesis_message: voice DB loaded; portable synthesis core is the remaining work

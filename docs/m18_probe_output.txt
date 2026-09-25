@@ -1,0 +1,21 @@
+Nicolai native-port M18 PC-compat probe
+
+stress entries: 94596
+exception entries: 95073 (multiword 324)
+abbreviation entries: 212
+duration table: yes entries=64
+  a0=100 ms
+  a1=65 ms
+  a3=50 ms
+  a4=55 ms
+  m=70 ms
+  p=80 ms
+  sh=110 ms
+  sc=150 ms
+wordstr: yes floats=35
+  tail: 120 240 400 20 150
+text: молоко -> ok samples=9721 wav=/mnt/data/nicolai_m18_wavs/moloko.wav
+text: привет -> ok samples=9024 wav=/mnt/data/nicolai_m18_wavs/privet.wav
+text: все будет хорошо -> ok samples=29931 wav=/mnt/data/nicolai_m18_wavs/vse_budet_horosho.wav
+text: USB 123 -> ok samples=47564 wav=/mnt/data/nicolai_m18_wavs/usb_123.wav
+text: мама папа -> ok samples=16024 wav=/mnt/data/nicolai_m18_wavs/mama_papa.wav

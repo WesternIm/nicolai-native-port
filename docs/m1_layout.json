@@ -1,0 +1,134 @@
+{
+  "file": "/mnt/data/nicolai_main/nicolai16.dat",
+  "size": 10961460,
+  "size_hex": "0xa74234",
+  "layout": {
+    "segment0_size": "0xa43e9c",
+    "segment1_size": "0x30180",
+    "tag0": "0xa4f22a56",
+    "segment0_offset": "0x18",
+    "tag1": "0xa4f22a56",
+    "segment1_offset": "0xa43eb4",
+    "segment0_end": "0xa43eb4",
+    "segment1_end": "0xa74034",
+    "footer_offset": "0xa74034",
+    "footer_size": "0x200",
+    "valid": true
+  },
+  "tagged_ref_count": 3192,
+  "invalid_tagged_targets": 0,
+  "edge_counts": {
+    "header->segment0": 1,
+    "header->segment1": 1,
+    "segment0->header": 1,
+    "segment0->segment0": 2475,
+    "segment1->header": 7,
+    "segment1->segment0": 707
+  },
+  "mode_records": [
+    {
+      "offset": 10952260,
+      "offset_hex": "0xa71e44",
+      "vendor": "ELAN Speech",
+      "engine_name": "ELAN Telecom V5.0",
+      "description": "Speech Cube Russian (Nicolai 16Khz)",
+      "style": "Standard",
+      "voice_name": "Nicolai",
+      "pitch_name": "Normal",
+      "sample_rate": 16000,
+      "database_name": "nicolai16"
+    },
+    {
+      "offset": 10955156,
+      "offset_hex": "0xa72994",
+      "vendor": "ELAN Speech",
+      "engine_name": "ELAN Multimedia V5.0",
+      "description": "ELAN TTS Russian (Nicolai 16Khz)",
+      "style": "Standard",
+      "voice_name": "Nicolai",
+      "pitch_name": "Normal",
+      "sample_rate": 16000,
+      "database_name": "nicolai16"
+    },
+    {
+      "offset": 10958052,
+      "offset_hex": "0xa734e4",
+      "vendor": "ELAN Speech",
+      "engine_name": "ELAN Multimedia (P) V5.0",
+      "description": "ELAN Tempo Russian (Nicolai 16Khz)",
+      "style": "Standard",
+      "voice_name": "Nicolai",
+      "pitch_name": "Normal",
+      "sample_rate": 16000,
+      "database_name": "nicolai16"
+    }
+  ],
+  "resource_paths": [
+    {
+      "offset": 4362884,
+      "offset_hex": "0x429284",
+      "value": "C:\\cvswf\\ref\\data\\tempo-psola\\russian\\nicolai\\16aci\\nbr16aci.dsc"
+    },
+    {
+      "offset": 4363236,
+      "offset_hex": "0x4293e4",
+      "value": "c:\\cvswf\\bddson\\diphones\\russian\\nicolai\\dico-psola\\nbr.rgl"
+    },
+    {
+      "offset": 4363496,
+      "offset_hex": "0x4294e8",
+      "value": "c:\\cvswf\\bddson\\diphones\\russian\\nicolai\\dico-psola\\16aci\\nbr16aci.axm"
+    },
+    {
+      "offset": 4364540,
+      "offset_hex": "0x4298fc",
+      "value": "c:\\cvswf\\bddson\\diphones\\russian\\nicolai\\dico-psola\\16aci\\nbr16aci.seg"
+    },
+    {
+      "offset": 4369740,
+      "offset_hex": "0x42ad4c",
+      "value": "c:\\cvswf\\bddson\\diphones\\russian\\nicolai\\dico-psola\\16aci\\nbr16aci.ana"
+    },
+    {
+      "offset": 4372868,
+      "offset_hex": "0x42b984",
+      "value": "C:\\cvswf\\ref\\data\\tempo-psola\\russian\\nicolai\\16aci\\nbr16aci.dsc.pho"
+    },
+    {
+      "offset": 4373156,
+      "offset_hex": "0x42baa4",
+      "value": "c:\\cvswf\\bddson\\diphones\\russian\\nicolai\\dico-psola\\16aci\\nbr16aci.axm"
+    },
+    {
+      "offset": 4373444,
+      "offset_hex": "0x42bbc4",
+      "value": "c:\\cvswf\\bddson\\diphones\\russian\\nicolai\\dico-psola\\nbr.rgl"
+    },
+    {
+      "offset": 4537980,
+      "offset_hex": "0x453e7c",
+      "value": "c:\\cvswf\\bddson\\diphones\\russian\\nicolai\\dico-psola\\16aci\\nbr16aci.seg"
+    },
+    {
+      "offset": 4538268,
+      "offset_hex": "0x453f9c",
+      "value": "c:\\cvswf\\bddson\\diphones\\russian\\nicolai\\dico-psola\\16aci\\nbr16aci.ana"
+    },
+    {
+      "offset": 10888456,
+      "offset_hex": "0xa62508",
+      "value": "C:\\cvswf\\ref\\data\\tempo-psola\\russian\\nicolai\\16aci\\nbr16aci.dsc"
+    },
+    {
+      "offset": 10888716,
+      "offset_hex": "0xa6260c",
+      "value": "c:\\cvswf\\ref\\data\\tempo-psola\\russian\\nicolai\\16aci\\modeinfo.dsc"
+    },
+    {
+      "offset": 10951960,
+      "offset_hex": "0xa71d18",
+      "value": "c:\\cvswf\\ref\\data\\tempo-psola\\russian\\nicolai\\16aci\\modeinfo.dsc"
+    }
+  ],
+  "footer_ascii_preview": "Copyright ELAN Speech @2003 ///1.0/intel/WINDOWS/-/-/MSVC6/2.0/edat//"
+}

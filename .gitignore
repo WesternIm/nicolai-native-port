@@ -1,0 +1,22 @@
+# Local build trees
+/build*/
+/out/
+
+# Proprietary/local reference inputs and rendered corpora
+/voice-data/
+/reference_pack*/
+/portable_corpus*/
+*.wav
+*.dat
+*.dll
+*.msi
+*.rar
+
+# Local metric scratch files
+/metrics-work/
+
+# Editor/OS noise
+.vs/
+.vscode/
+Thumbs.db
+.DS_Store

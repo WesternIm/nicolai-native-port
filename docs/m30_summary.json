@@ -1,0 +1,10 @@
+{
+  "rendered": 22,
+  "corr": 0.1965157232028779,
+  "active_duration_mae_pct": 5.679022643845702,
+  "active_duration_ratio": 0.992549896959575,
+  "total_duration_mae_pct": 3.598674499004331,
+  "f0_mae_pct": 13.479913521658911,
+  "mfcc_dtw_mean": 128.58993265978654,
+  "candidate_byte_diffs": []
+}

@@ -1,0 +1,28 @@
+Nicolai native-port M14 TD-PSOLA probe
+
+legacy Hanning primitive: P=160 first/mid/last=32767/16384/0
+
+neutral mama chain: samples=12810 duration_ms=800.625
+  #->m: raw/mixed SEG (mixed_or_unvoiced_seg)
+  m->a0: TD-PSOLA periods=14 split=5 margins=81/81 src_marks=15 synth_marks=15 grains=15 meanP=153.714->153.214
+  a0->m: TD-PSOLA periods=9 split=5 margins=115/115 src_marks=10 synth_marks=10 grains=10 meanP=193.444->190.778
+  m->a0: TD-PSOLA periods=14 split=5 margins=81/81 src_marks=15 synth_marks=15 grains=15 meanP=153.714->153.214
+  a0->#: raw/mixed SEG (period_count_header_mismatch)
+joins=4
+
+pitch 1.20x: samples=12938 duration_ms=808.625
+  #->m: raw/mixed SEG (mixed_or_unvoiced_seg)
+  m->a0: TD-PSOLA periods=14 split=5 margins=81/81 src_marks=15 synth_marks=17 grains=17 meanP=153.714->127.552
+  a0->m: TD-PSOLA periods=9 split=5 margins=115/115 src_marks=10 synth_marks=11 grains=11 meanP=193.444->157.583
+  m->a0: TD-PSOLA periods=14 split=5 margins=81/81 src_marks=15 synth_marks=17 grains=17 meanP=153.714->127.552
+  a0->#: raw/mixed SEG (period_count_header_mismatch)
+
+duration 1.25x: samples=14303 duration_ms=893.938
+  #->m: raw/mixed SEG (mixed_or_unvoiced_seg)
+  m->a0: TD-PSOLA periods=14 split=5 margins=81/81 src_marks=15 synth_marks=18 grains=18 meanP=153.714->153.118
+  a0->m: TD-PSOLA periods=9 split=5 margins=115/115 src_marks=10 synth_marks=12 grains=12 meanP=193.444->190.545
+  m->a0: TD-PSOLA periods=14 split=5 margins=81/81 src_marks=15 synth_marks=18 grains=18 meanP=153.714->153.118
+  a0->#: raw/mixed SEG (period_count_header_mismatch)
+
+NOTE: clean voiced SEG records are now grain-resynthesized pitch-synchronously.
+Mixed/unvoiced signed SEG records still use decoded source PCM until their control grammar is recovered.

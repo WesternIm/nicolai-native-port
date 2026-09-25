@@ -1,0 +1,49 @@
+Nicolai native-port M8 legacy static-address probe
+
+segment0(init): file=0x18 size=0xa43e9c
+segment1(exec): file=0xa43eb4 size=0x30180
+resolver formula: runtime/file base[duration] + logical_offset
+
+segment0 root: initialization logical=0xa4245c -> file=0xa42474  [Fenetres_de_Hanning]
+segment1 root: execution logical=0x2de64 -> file=0xa71d18  [c:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\modeinfo.dsc]
+
+serialized tagged refs (header excluded): 3190
+  fit init duration: 3190
+  fit exec duration: 706
+  fit both:          706
+  fit neither:       0
+
+path-bearing metadata records: 24
+
+rsrc.dsc:
+  record file offset: 0xa43eb4
+  path: c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\rsrc.dsc
+  primary/init: initialization logical=0x2de64 -> file=0x2de7c
+  primary/exec: execution logical=0x2de64 -> file=0xa71d18  [c:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\modeinfo.dsc]
+  secondary/exec: execution logical=0x128 -> file=0xa43fdc  [V*..j.]
+
+modeinfo.dsc:
+  record file offset: 0xa71d10
+  path: c:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\modeinfo.dsc
+  primary/init: initialization logical=0x2dc24 -> file=0x2dc3c  [7]
+  primary/exec: execution logical=0x2dc24 -> file=0xa71ad8  [c:\cvswf\ref\cvox\rusvox\data\s.dat]
+  secondary/exec: execution logical=0x2df84 -> file=0xa71e38  [.]
+
+resource registry:
+  valid: yes
+  terminated: yes
+  base_dir: c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\
+  entries: 201
+    [0] Syc.VoxDsc -> c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\voix.dsc
+    [1] Syc.CanauxDsc -> c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\canaux.dsc
+    [2] Syc.VoxDsc -> voix.dsc
+    [3] Syc.CanauxDsc -> canaux.dsc
+    [4] Syc.Brasivoz.Abrev.Abreviations -> c:\cvswf\ref\cvox\front\abrev\data\abb_bra.txt
+  Syc.VoxDsc -> c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\voix.dsc
+  Syc.CanauxDsc -> c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\canaux.dsc
+  Syc.Russkij.DataDir -> c:\cvswf\ref\cvox\rusvox\data
+  Syc.Russkij.Abrev.Abreviations -> c:\cvswf\ref\cvox\front\abrev\data\abb_rus.txt
+  last: Syc.Hispavoc.Abrev.Abreviations -> c:\cvswf\ref\cvox\front\abrev\data\abb_spa.txt
+
+M8 model: {tag, logical_offset} + explicit static duration -> range base + logical offset.
+Header tag/file-offset pairs are descriptors, not serialized runtime references.

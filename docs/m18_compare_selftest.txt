@@ -1,0 +1,16 @@
+sample_rate_hz=16000
+reference_samples=9024
+portable_samples=9024
+reference_duration_ms=564.000
+portable_duration_ms=564.000
+duration_delta_ms=0.000
+reference_rms=1369.540
+portable_rms=1369.540
+reference_peak=9137
+portable_peak=9137
+best_lag_samples=0
+best_lag_ms=0.000
+search_corr=1.000000
+aligned_corr=1.000000
+compared_samples=9024
+exact_samples=yes

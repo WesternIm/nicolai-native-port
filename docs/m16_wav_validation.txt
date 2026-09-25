@@ -1,0 +1,6 @@
+nicolai_m16_mama_from_text.wav: sr=16000 samples=12546 ms=784.125 peak=14080 rms=2154.4 clips=0
+nicolai_m16_mama_papa_from_text.wav: sr=16000 samples=24943 ms=1558.938 peak=16333 rms=2090.8 clips=0
+nicolai_m16_mir_from_text.wav: sr=16000 samples=11644 ms=727.750 peak=8448 rms=1912.5 clips=0
+nicolai_m16_papa_from_text.wav: sr=16000 samples=12552 ms=784.500 peak=16333 rms=2011.8 clips=0
+nicolai_m16_privet_from_text.wav: sr=16000 samples=15426 ms=964.125 peak=12219 rms=1547.8 clips=0
+nicolai_m16_yama_from_text.wav: sr=16000 samples=12331 ms=770.688 peak=14080 rms=2028.6 clips=0

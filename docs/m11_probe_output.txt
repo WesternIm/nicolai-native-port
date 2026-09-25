@@ -1,0 +1,66 @@
+Nicolai native-port M11 cmp16 entropy-front-end probe
+
+unit: # -> p
+compressed bytes: 1759
+legacy block size: 32 bytes -> 256 uint16 bit-words
+geometry if viewed as legacy 32-byte blocks: full=54 trailing=31
+
+first 32 compressed bytes:
+  55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 d5 d5 d5 d5 d5 d5 d5 d5 d5 d5 d5
+
+expanded MSB-first bits (8 bits per source byte):
+  byte[ 0]  01010101
+  byte[ 1]  01010101
+  byte[ 2]  01010101
+  byte[ 3]  01010101
+  byte[ 4]  01010101
+  byte[ 5]  01010101
+  byte[ 6]  01010101
+  byte[ 7]  01010101
+  byte[ 8]  01010101
+  byte[ 9]  01010101
+  byte[10]  01010101
+  byte[11]  01010101
+  byte[12]  01010101
+  byte[13]  01010101
+  byte[14]  01010101
+  byte[15]  01010101
+  byte[16]  01010101
+  byte[17]  01010101
+  byte[18]  01010101
+  byte[19]  01010101
+  byte[20]  01010101
+  byte[21]  11010101
+  byte[22]  11010101
+  byte[23]  11010101
+  byte[24]  11010101
+  byte[25]  11010101
+  byte[26]  11010101
+  byte[27]  11010101
+  byte[28]  11010101
+  byte[29]  11010101
+  byte[30]  11010101
+  byte[31]  11010101
+
+resource map recovered from legacy constructor:
+  QMLT        manifest+0x0000 runtime_file_obj+0x6c parser=0x1010ad90
+  QNF         manifest+0x0200 runtime_file_obj+0x88 parser=0x1010c220
+  QRms        manifest+0x0400 runtime_file_obj+0x70 parser=0x1010b4e0
+  HuffmanMLT  manifest+0x0600 runtime_file_obj+0x78 parser=0x1010b6b0
+  HuffmanRMS  manifest+0x0800 runtime_file_obj+0x74 parser=0x1010b9d0
+  QVecA       manifest+0x0a00 runtime_file_obj+0x80 parser=0x1010afe0
+  QVecB       manifest+0x0c00 runtime_file_obj+0x84 parser=0x1010b140
+  sequence    manifest+0x0e00 runtime_file_obj+0x68 parser=0x1010c020
+  noise       manifest+0x1000 runtime_file_obj+0x7c parser=0x1010beb0
+
+verified legacy decoder contracts:
+  raw byte expansion table VA: 0x106139F0
+  source bytes per decoder block: 0x20 (32)
+  expanded logical bits per block: 0x100 (256) WORDs
+  huffman tree-walk VA: 0x1010C930
+  first entropy-stage VA: 0x102287A0
+  second entropy-stage VA: 0x10228910
+  frame driver VA: 0x1021B050
+
+M11 boundary: packed ANA bytes -> exact legacy WORD-bit stream is now portable.
+Remaining before real symbols: bind the serialized HuffmanRMS/HuffmanMLT codebooks.

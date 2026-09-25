@@ -1,0 +1,23 @@
+Legacy cmp16sbi decoder resource map (mtsyc32.dll)
+
+Descriptor reader: 0x1010B2C0
+Path slots: 9 * 0x200 bytes
+Descriptor allocation: 0x1220 bytes
+
+slot 0x000  QMLT        parser 0x1010AD90
+slot 0x200  QNF         parser 0x1010C220
+slot 0x400  QRms        parser 0x1010B4E0
+slot 0x600  HuffmanMLT  parser 0x1010B6B0
+slot 0x800  HuffmanRMS  parser 0x1010B9D0
+slot 0xA00  QVecA       parser 0x1010AFE0
+slot 0xC00  QVecB       parser 0x1010B140
+slot 0xE00  sequence    parser 0x1010C020
+slot 0x1000 noise       parser 0x1010BEB0
+
+QMLT numeric conversion:
+    fixed = trunc(source * 8192.0)
+
+QRms numeric conversion:
+    fixed = trunc(4.0 * pow(10.0, source * 0.05))
+
+Portable Huffman walker (already M2/M3) corresponds to legacy 0x1010C930.

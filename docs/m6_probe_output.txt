@@ -1,0 +1,37 @@
+Nicolai native-port M6 EDAT materializer probe
+
+exact path patches: 24
+serialized size: 0x120 runtime size: 0x114
+
+cmp16 rsrc patch:
+  serialized:  0xa43eb4
+  destination: 0x2de64
+  object_ref:  0x128
+  field_104:   2
+  field_108:   2
+  state:       1
+  path:        c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\rsrc.dsc
+  before[0:16]: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 AD
+  after [0:16]: 63 3A 5C 63 76 73 77 66 5C 65 6C 61 6E 34 34 30
+
+Nicolai modeinfo patch:
+  serialized:  0xa71d10
+  destination: 0x2dc24
+  object_ref:  0x2df84
+  field_104:   2
+  field_108:   2
+  state:       1
+  path:        c:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\modeinfo.dsc
+  before[0:16]: 3C 00 00 00 55 34 00 00 41 00 00 00 79 31 00 00
+  after [0:16]: 63 3A 5C 63 76 73 77 66 5C 72 65 66 5C 64 61 74
+
+pre-materialization 21-byte pattern:
+  hits in modeinfo..rsrc+0x1000: 135
+  first: 0x2dce4 last: 0x2e7e2
+  adjacent stride-21 pairs: 134
+  crosses rsrc destination: yes
+
+offset-view materialization: ok
+  materialized rsrc path at Segment0 destination: c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\rsrc.dsc
+
+status: exact 0x120 -> 0x114 path-node patch materializer implemented

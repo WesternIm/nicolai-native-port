@@ -1,0 +1,19 @@
+Nicolai native-port M13 pitch-guided Hann OLA probe
+
+voiced chain: m -> a0 -> m
+  diphones: 2
+  samples: 3949
+  duration_ms: 246.812
+  join[0]: overlap=168 pitch=157/180 trim=78/90 corr=0.891159
+
+prototype phone chain: # -> m -> a0 -> m -> a0 -> #
+  diphones: 5
+  joins: 4
+  samples: 12502
+  duration_ms: 781.375
+  join[0]: overlap=176 pitch=200/152 trim=100/76 corr=0.787325
+  join[1]: overlap=168 pitch=157/180 trim=78/90 corr=0.891159
+  join[2]: overlap=180 pitch=208/152 trim=52/0 corr=0.755227
+  join[3]: overlap=189 pitch=157/222 trim=78/111 corr=0.580849
+
+NOTE: M13 is pitch-guided Hann OLA, not yet bit-exact legacy Tempo-PSOLA.

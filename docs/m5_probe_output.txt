@@ -1,0 +1,24 @@
+Nicolai native-port M5 static file probe
+
+static_file_records: 24
+cmp16 rsrc:
+  path: c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\rsrc.dsc
+  record_ref: 0xa43eb4
+  payload:    0x2de64
+  field104:   2
+  field108:   2
+  field10c tagged target: 0x128
+Nicolai modeinfo:
+  path: c:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\modeinfo.dsc
+  record_ref: 0xa71d10
+  payload:    0x2dc24
+  field104:   2
+  field108:   2
+  field10c tagged target: 0x2df84
+
+rsrc payload structural probe:
+  best 5-byte/21-byte run count: 116
+  first: 0x2de73
+  marker: ad ae 3c ab ec
+
+status: EDAT static-file records recovered; rsrc payload located without hardcoded address

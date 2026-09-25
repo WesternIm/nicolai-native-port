@@ -1,0 +1,26 @@
+Nicolai native-port M4 codec reconstruction probe
+
+acoustic_assets: yes
+ana_units: 2665
+compressed_bytes: 6132372
+indexed_bytes: 6132370
+
+cmp16sbi resource manifest (recovered loader map):
+  slot 0x0000  QMLT         parser=0x1010ad90
+  slot 0x0200  QNF          parser=0x1010c220
+  slot 0x0400  QRms         parser=0x1010b4e0
+  slot 0x0600  HuffmanMLT   parser=0x1010b6b0
+  slot 0x0800  HuffmanRMS   parser=0x1010b9d0
+  slot 0x0a00  QVecA        parser=0x1010afe0
+  slot 0x0c00  QVecB        parser=0x1010b140
+  slot 0x0e00  sequence     parser=0x1010c020
+  slot 0x1000  noise        parser=0x1010beb0
+
+recovered numeric transforms:
+  QMLT: fixed Q13 = trunc(x * 8192)
+  QRms: trunc(4 * pow(10, x * 0.05))
+
+first indexed compressed range:
+  [0, 1759)  1759 bytes
+
+status: manifest/quantizer readers recovered; static-resource materialization still pending

@@ -1,0 +1,24 @@
+Nicolai native-port M3 acoustic unit directory
+index_valid: yes
+units: 2665
+payload_bytes: 6132372
+covered_bytes: 6132370
+trailing_payload_bytes: 2
+trailing_analysis_bytes: 0
+signed_end_negative: 978
+signed_end_positive: 1687
+compressed_unit_len_min: 1076
+compressed_unit_len_max: 6382
+compressed_unit_len_mean: 2301.08
+first_units:
+  #0 ana=0x0 voice=[0,1759) bytes=1759 signed_end=-1759 rec_size=16 metadata_words=4
+  #1 ana=0x10 voice=[1759,3678) bytes=1919 signed_end=-3678 rec_size=16 metadata_words=4
+  #2 ana=0x20 voice=[3678,6697) bytes=3019 signed_end=6697 rec_size=30 metadata_words=11
+  #3 ana=0x3e voice=[6697,9825) bytes=3128 signed_end=9825 rec_size=34 metadata_words=13
+  #4 ana=0x60 voice=[9825,12819) bytes=2994 signed_end=12819 rec_size=34 metadata_words=13
+  #5 ana=0x82 voice=[12819,16596) bytes=3777 signed_end=16596 rec_size=40 metadata_words=16
+  #6 ana=0xaa voice=[16596,19795) bytes=3199 signed_end=-19795 rec_size=16 metadata_words=4
+  #7 ana=0xba voice=[19795,22994) bytes=3199 signed_end=-22994 rec_size=16 metadata_words=4
+terminal_unit: #2664 ana=0x15102 voice=[6130629,6132370) record_size=10
+unit0_extracted_bytes: 1759
+portable_huffman_builder: ok symbol=22

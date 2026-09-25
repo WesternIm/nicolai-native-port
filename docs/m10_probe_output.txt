@@ -1,0 +1,34 @@
+Nicolai native-port M10 deterministic diphone graph
+
+phones: 66
+AXM: matrix=66x66 entries=4356 occupied=2665 unique_records=2665 size=81384
+SEG: offset=0x4540bc size=86308 fully_partitioned=yes
+ANA: offset=0x4691e0 end=0xa42474 size=6132372 indexed=6132370 trailing=2
+
+phone inventory:
+ 0:#   1:p   2:p'   3:b   4:b'   5:m   6:m'   7:f
+ 8:f'   9:v  10:v'  11:t  12:t'  13:d  14:d'  15:n
+16:n'  17:s  18:s'  19:z  20:z'  21:sh  22:zh  23:c
+24:sc  25:ch  26:l  27:l'  28:r  29:r'  30:j  31:k
+32:k'  33:g  34:g'  35:x  36:x'  37:C  38:CH  39:SC
+40:X  41:a0  42:a1  43:a3  44:a4  45:a5  46:A0  47:A1
+48:u0  49:u1  50:u4  51:U0  52:U4  53:i0  54:i1  55:i4
+56:y0  57:y1  58:y4  59:o0  60:o1  61:O0  62:e0  63:e4
+64:E0  65:E4  
+first diphone units:
+   0  # -> p  axm_rel=0x4410  seg=[0,16)  ana=[0,1759) bytes=1759 signed_end=-1759 meta=4
+   1  # -> p'  axm_rel=0x4428  seg=[16,32)  ana=[1759,3678) bytes=1919 signed_end=-3678 meta=4
+   2  # -> b  axm_rel=0x4440  seg=[32,62)  ana=[3678,6697) bytes=3019 signed_end=6697 meta=11
+   3  # -> b'  axm_rel=0x4458  seg=[62,96)  ana=[6697,9825) bytes=3128 signed_end=9825 meta=13
+   4  # -> m  axm_rel=0x4470  seg=[96,130)  ana=[9825,12819) bytes=2994 signed_end=12819 meta=13
+   5  # -> m'  axm_rel=0x4488  seg=[130,170)  ana=[12819,16596) bytes=3777 signed_end=16596 meta=16
+   6  # -> f  axm_rel=0x44a0  seg=[170,186)  ana=[16596,19795) bytes=3199 signed_end=-19795 meta=4
+   7  # -> f'  axm_rel=0x44b8  seg=[186,202)  ana=[19795,22994) bytes=3199 signed_end=-22994 meta=4
+   8  # -> v  axm_rel=0x44d0  seg=[202,218)  ana=[22994,26353) bytes=3359 signed_end=-26353 meta=4
+   9  # -> v'  axm_rel=0x44e8  seg=[218,248)  ana=[26353,28844) bytes=2491 signed_end=28844 meta=11
+  10  # -> t  axm_rel=0x4500  seg=[248,264)  ana=[28844,30603) bytes=1759 signed_end=-30603 meta=4
+  11  # -> t'  axm_rel=0x4518  seg=[264,280)  ana=[30603,32682) bytes=2079 signed_end=-32682 meta=4
+
+# -> p compressed unit: 1759 bytes; first 24: 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 d5 d5 d5
+
+M10 invariant: AXM matrix cell -> exact SEG record -> exact ANA compressed slice.

@@ -1,0 +1,45 @@
+Nicolai native-port M0 probe
+size_bytes: 10961460
+header_word0: 0xa43e9c
+header_word1: 0x30180
+tagged_magic: 0xa4f22a56
+has_nicolai_name: yes
+nicolai_name_offset: 0x300
+sample_rate_hint: 16000
+tempo_psola_marker: yes
+russian_frontend_marker: yes
+evidence_strings:
+  - C:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\nbr16aci.dsc
+  - c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\nbr.rgl
+  - c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\16aci\nbr16aci.axm
+  - c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\16aci\nbr16aci.seg
+  - c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\16aci\nbr16aci.ana
+  - C:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\nbr16aci.dsc.pho
+  - c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\rsrc.dsc
+  - c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\voix.dsc
+  - c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\canaux.dsc
+  - voix.dsc
+  - canaux.dsc
+  - c:\cvswf\ref\cvox\brasivoz\data\txt\fonemas.dsc
+  - Syc.Russkij.Abrev.Abreviations
+  - Syc.Russkij.DataDir
+  - c:\cvswf\ref\data\sayso\brazilian\tania\16hnip\medium\multimedia\tania16hnipm.dsc
+  - c:\cvswf\ref\data\sayso\brazilian\tania\16hnip\modeinfo.dsc
+  - c:\cvswf\ref\data\sayso\spanish\maria\cost.dsc
+  - c:\cvswf\ref\data\sayso\english\aaron\16hnip\medium\multimedia\aarone16hnipm.dsc
+  - c:\cvswf\ref\data\sayso\english\aaron\16hnip\modeinfo.dsc
+  - c:\cvswf\ref\data\sayso\english\aaron\cost.dsc
+  - c:\cvswf\ref\data\sayso\english\graham\16hnip\medium\multimedia\grahame16hnipm.dsc
+  - c:\cvswf\ref\data\sayso\english\graham\16hnip\modeinfo.dsc
+  - c:\cvswf\ref\data\sayso\english\graham\cost.dsc
+  - c:\cvswf\ref\data\sayso\english\laura\16hnip\medium\multimedia\laurae16hnipm.dsc
+  - c:\cvswf\ref\data\sayso\english\laura\16hnip\modeinfo.dsc
+  - c:\cvswf\ref\data\sayso\english\laura\cost.dsc
+  - c:\cvswf\ref\data\sayso\english\lucy\16hnip\medium\multimedia\lucye16hnipm.dsc
+  - c:\cvswf\ref\data\sayso\english\lucy\16hnip\modeinfo.dsc
+  - c:\cvswf\ref\data\sayso\english\lucy\cost.dsc
+  - c:\cvswf\ref\data\sayso\french\claire\16hnip\medium\multimedia\clairef16hnipm.dsc
+  - c:\cvswf\ref\data\sayso\french\claire\16hnip\modeinfo.dsc
+  - c:\cvswf\ref\data\sayso\french\claire\cost.dsc
+synthesis_status: native_core_not_implemented
+synthesis_message: voice DB loaded; portable synthesis core is the remaining work

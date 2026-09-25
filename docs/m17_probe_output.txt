@@ -1,0 +1,30 @@
+stress dictionary: valid=yes entries=94596 lines=95112 error=''
+text: молоко
+  phones: # m a3 l a1 k o0 #
+  word='молоко' stress_vowel=2 source=dictionary
+text: мо́локо
+  phones: # m o0 l a5 k a4 #
+  word='молоко' stress_vowel=0 source=explicit
+text: привет
+  phones: # p r' i1 v' E0 t #
+  word='привет' stress_vowel=1 source=dictionary
+text: сказка
+  phones: # s k a0 s k a4 #
+  word='сказка' stress_vowel=0 source=dictionary
+text: вокзал
+  phones: # v a1 g z a0 l #
+  word='вокзал' stress_vowel=1 source=dictionary
+text: подписка
+  phones: # p a1 t p' i0 s k a4 #
+  word='подписка' stress_vowel=1 source=dictionary
+text: мама папа
+  phones: # m a0 m a4 # p a0 p a4 #
+  word='мама' stress_vowel=0 source=builtin
+  word='папа' stress_vowel=0 source=builtin
+synth 'молоко': ok samples=12884 message='M17 stress-aware Russian frontend + M15 acoustic renderer; sentence prosody still approximate'
+synth 'мо́локо': ok samples=14459 message='M17 stress-aware Russian frontend + M15 acoustic renderer; sentence prosody still approximate'
+synth 'привет': ok samples=14258 message='M17 stress-aware Russian frontend + M15 acoustic renderer; sentence prosody still approximate'
+synth 'сказка': ok samples=18437 message='M17 stress-aware Russian frontend + M15 acoustic renderer; sentence prosody still approximate'
+synth 'вокзал': ok samples=14915 message='M17 stress-aware Russian frontend + M15 acoustic renderer; sentence prosody still approximate'
+synth 'подписка': ok samples=20530 message='M17 stress-aware Russian frontend + M15 acoustic renderer; sentence prosody still approximate'
+synth 'мама папа': ok samples=22599 message='M17 stress-aware Russian frontend + M15 acoustic renderer; sentence prosody still approximate'

@@ -1,0 +1,17 @@
+Nicolai native-port M12 direct A-law waveform probe
+
+sample_rate: 16000 Hz
+legacy signal coding field (+0x30): 2
+decoded meaning: g711_a_law
+x86 mapping recovered: 1=mu-law, 2=A-law, 3=linear, 0x50=cmp16-special
+
+# -> p: bytes=1759 samples=1759 duration_ms=109.938 min=-8 max=24 mean=0.241 rms=8.036 zero_crossings=175
+# -> m: bytes=2994 samples=2994 duration_ms=187.125 min=-3392 max=7040 mean=-32.307 rms=1499.844 zero_crossings=193
+m -> a0: bytes=2314 samples=2314 duration_ms=144.625 min=-7808 max=12544 mean=-0.640 rms=3078.087 zero_crossings=178
+a0 -> a0: bytes=1900 samples=1900 duration_ms=118.750 min=-8448 max=17920 mean=3.722 rms=3783.378 zero_crossings=148
+p -> a0: bytes=2865 samples=2865 duration_ms=179.062 min=-10496 max=16896 mean=2.781 rms=3056.226 zero_crossings=251
+o0 -> a0: bytes=2566 samples=2566 duration_ms=160.375 min=-8064 max=15104 mean=1.425 rms=4123.901 zero_crossings=198
+
+wrote raw voiced diphone WAV: /mnt/data/nicolai_m12_a0_a0.wav
+
+M12 invariant: Nicolai type 2 maps to legacy 'loi A'; ANA bytes decode 1:1 to PCM16 samples.

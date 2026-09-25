@@ -1,0 +1,11 @@
+M21 golden-reference summary
+phrases: 22
+mean_active_duration_ratio: 0.9965997265417615
+active_duration_mae_pct: 5.372961034654882
+active_duration_rmse_pct: 7.406155217156801
+mean_active_corr: 0.1924741456215895
+mean_total_duration_ratio: 0.9977690739117001
+total_duration_mae_pct: 3.058366975465795
+total_duration_rmse_pct: 3.94127842352649
+mean_abs_trailing_error_ms: 16.37215909090909
+mean_trailing_delta_ms: -6.40625

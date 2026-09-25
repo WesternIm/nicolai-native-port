@@ -1,0 +1,173 @@
+
+/mnt/data/nicolai_work/msi_extract/cab01/mtsyc32.dll:     file format pei-i386
+
+
+Disassembly of section .text:
+
+102382d0 <.text+0x2372d0>:
+102382d0:	53                   	push   ebx
+102382d1:	8b 5c 24 14          	mov    ebx,DWORD PTR [esp+0x14]
+102382d5:	8b cb                	mov    ecx,ebx
+102382d7:	8b 54 24 08          	mov    edx,DWORD PTR [esp+0x8]
+102382db:	33 c0                	xor    eax,eax
+102382dd:	55                   	push   ebp
+102382de:	89 01                	mov    DWORD PTR [ecx],eax
+102382e0:	56                   	push   esi
+102382e1:	8b 74 24 14          	mov    esi,DWORD PTR [esp+0x14]
+102382e5:	57                   	push   edi
+102382e6:	89 41 04             	mov    DWORD PTR [ecx+0x4],eax
+102382e9:	89 41 08             	mov    DWORD PTR [ecx+0x8],eax
+102382ec:	c6 03 20             	mov    BYTE PTR [ebx],0x20
+102382ef:	8b 06                	mov    eax,DWORD PTR [esi]
+102382f1:	8b 8a 74 33 00 00    	mov    ecx,DWORD PTR [edx+0x3374]
+102382f7:	3b c1                	cmp    eax,ecx
+102382f9:	0f 8d d3 00 00 00    	jge    0x102383d2
+102382ff:	c1 e0 07             	shl    eax,0x7
+10238302:	83 c9 ff             	or     ecx,0xffffffff
+10238305:	8d bc 10 74 01 00 00 	lea    edi,[eax+edx*1+0x174]
+1023830c:	33 c0                	xor    eax,eax
+1023830e:	f2 ae                	repnz scas al,BYTE PTR es:[edi]
+10238310:	f7 d1                	not    ecx
+10238312:	49                   	dec    ecx
+10238313:	0f 84 b9 00 00 00    	je     0x102383d2
+10238319:	8b 6c 24 1c          	mov    ebp,DWORD PTR [esp+0x1c]
+1023831d:	8b 45 00             	mov    eax,DWORD PTR [ebp+0x0]
+10238320:	40                   	inc    eax
+10238321:	3b c1                	cmp    eax,ecx
+10238323:	89 45 00             	mov    DWORD PTR [ebp+0x0],eax
+10238326:	7c 70                	jl     0x10238398
+10238328:	8b 3e                	mov    edi,DWORD PTR [esi]
+1023832a:	47                   	inc    edi
+1023832b:	89 3e                	mov    DWORD PTR [esi],edi
+1023832d:	8b 8a 74 33 00 00    	mov    ecx,DWORD PTR [edx+0x3374]
+10238333:	8b c7                	mov    eax,edi
+10238335:	3b c1                	cmp    eax,ecx
+10238337:	0f 8d 95 00 00 00    	jge    0x102383d2
+1023833d:	c1 e0 07             	shl    eax,0x7
+10238340:	83 c9 ff             	or     ecx,0xffffffff
+10238343:	8d bc 10 74 01 00 00 	lea    edi,[eax+edx*1+0x174]
+1023834a:	33 c0                	xor    eax,eax
+1023834c:	f2 ae                	repnz scas al,BYTE PTR es:[edi]
+1023834e:	f7 d1                	not    ecx
+10238350:	49                   	dec    ecx
+10238351:	74 7f                	je     0x102383d2
+10238353:	89 45 00             	mov    DWORD PTR [ebp+0x0],eax
+10238356:	8b 06                	mov    eax,DWORD PTR [esi]
+10238358:	c1 e0 07             	shl    eax,0x7
+1023835b:	8a 8c 10 74 01 00 00 	mov    cl,BYTE PTR [eax+edx*1+0x174]
+10238362:	88 0b                	mov    BYTE PTR [ebx],cl
+10238364:	8b 06                	mov    eax,DWORD PTR [esi]
+10238366:	8b 7d 00             	mov    edi,DWORD PTR [ebp+0x0]
+10238369:	c1 e0 05             	shl    eax,0x5
+1023836c:	03 c7                	add    eax,edi
+1023836e:	5f                   	pop    edi
+1023836f:	8b 8c 82 7c 01 00 00 	mov    ecx,DWORD PTR [edx+eax*4+0x17c]
+10238376:	89 4b 04             	mov    DWORD PTR [ebx+0x4],ecx
+10238379:	8b 06                	mov    eax,DWORD PTR [esi]
+1023837b:	8b 4d 00             	mov    ecx,DWORD PTR [ebp+0x0]
+1023837e:	5e                   	pop    esi
+1023837f:	c1 e0 06             	shl    eax,0x6
+10238382:	03 c1                	add    eax,ecx
+10238384:	5d                   	pop    ebp
+10238385:	66 8b 8c 42 e8 01 00 	mov    cx,WORD PTR [edx+eax*2+0x1e8]
+1023838c:	00 
+1023838d:	b8 01 00 00 00       	mov    eax,0x1
+10238392:	66 89 4b 08          	mov    WORD PTR [ebx+0x8],cx
+10238396:	5b                   	pop    ebx
+10238397:	c3                   	ret
+10238398:	8b 0e                	mov    ecx,DWORD PTR [esi]
+1023839a:	c1 e1 07             	shl    ecx,0x7
+1023839d:	03 c8                	add    ecx,eax
+1023839f:	8a 84 11 74 01 00 00 	mov    al,BYTE PTR [ecx+edx*1+0x174]
+102383a6:	88 03                	mov    BYTE PTR [ebx],al
+102383a8:	8b 0e                	mov    ecx,DWORD PTR [esi]
+102383aa:	8b 7d 00             	mov    edi,DWORD PTR [ebp+0x0]
+102383ad:	c1 e1 05             	shl    ecx,0x5
+102383b0:	03 cf                	add    ecx,edi
+102383b2:	8b 84 8a 7c 01 00 00 	mov    eax,DWORD PTR [edx+ecx*4+0x17c]
+102383b9:	89 43 04             	mov    DWORD PTR [ebx+0x4],eax
+102383bc:	8b 0e                	mov    ecx,DWORD PTR [esi]
+102383be:	8b 45 00             	mov    eax,DWORD PTR [ebp+0x0]
+102383c1:	c1 e1 06             	shl    ecx,0x6
+102383c4:	03 c8                	add    ecx,eax
+102383c6:	66 8b 94 4a e8 01 00 	mov    dx,WORD PTR [edx+ecx*2+0x1e8]
+102383cd:	00 
+102383ce:	66 89 53 08          	mov    WORD PTR [ebx+0x8],dx
+102383d2:	5f                   	pop    edi
+102383d3:	5e                   	pop    esi
+102383d4:	5d                   	pop    ebp
+102383d5:	33 c0                	xor    eax,eax
+102383d7:	5b                   	pop    ebx
+102383d8:	c3                   	ret
+102383d9:	90                   	nop
+102383da:	90                   	nop
+102383db:	90                   	nop
+102383dc:	90                   	nop
+102383dd:	90                   	nop
+102383de:	90                   	nop
+102383df:	90                   	nop
+102383e0:	8b 44 24 08          	mov    eax,DWORD PTR [esp+0x8]
+102383e4:	8b 4c 24 04          	mov    ecx,DWORD PTR [esp+0x4]
+102383e8:	8b d0                	mov    edx,eax
+102383ea:	56                   	push   esi
+102383eb:	8b 74 24 10          	mov    esi,DWORD PTR [esp+0x10]
+102383ef:	57                   	push   edi
+102383f0:	8b 7c 24 18          	mov    edi,DWORD PTR [esp+0x18]
+102383f4:	c1 e2 07             	shl    edx,0x7
+102383f7:	03 d1                	add    edx,ecx
+102383f9:	8a 94 32 74 01 00 00 	mov    dl,BYTE PTR [edx+esi*1+0x174]
+10238400:	88 17                	mov    BYTE PTR [edi],dl
+10238402:	8b d0                	mov    edx,eax
+10238404:	c1 e2 05             	shl    edx,0x5
+10238407:	03 d6                	add    edx,esi
+10238409:	c1 e0 06             	shl    eax,0x6
+1023840c:	8b 94 91 7c 01 00 00 	mov    edx,DWORD PTR [ecx+edx*4+0x17c]
+10238413:	03 c6                	add    eax,esi
+10238415:	89 57 04             	mov    DWORD PTR [edi+0x4],edx
+10238418:	66 8b 84 41 e8 01 00 	mov    ax,WORD PTR [ecx+eax*2+0x1e8]
+1023841f:	00 
+10238420:	66 89 47 08          	mov    WORD PTR [edi+0x8],ax
+10238424:	5f                   	pop    edi
+10238425:	33 c0                	xor    eax,eax
+10238427:	5e                   	pop    esi
+10238428:	c3                   	ret
+10238429:	90                   	nop
+1023842a:	90                   	nop
+1023842b:	90                   	nop
+1023842c:	90                   	nop
+1023842d:	90                   	nop
+1023842e:	90                   	nop
+1023842f:	90                   	nop
+10238430:	83 ec 34             	sub    esp,0x34
+10238433:	53                   	push   ebx
+10238434:	55                   	push   ebp
+10238435:	8b 6c 24 50          	mov    ebp,DWORD PTR [esp+0x50]
+10238439:	33 c9                	xor    ecx,ecx
+1023843b:	8b c5                	mov    eax,ebp
+1023843d:	56                   	push   esi
+1023843e:	99                   	cdq
+1023843f:	8b 74 24 44          	mov    esi,DWORD PTR [esp+0x44]
+10238443:	2b c2                	sub    eax,edx
+10238445:	8b d0                	mov    edx,eax
+10238447:	57                   	push   edi
+10238448:	d1 fa                	sar    edx,1
+1023844a:	83 fd 01             	cmp    ebp,0x1
+1023844d:	89 54 24 1c          	mov    DWORD PTR [esp+0x1c],edx
+10238451:	c7 44 24 10 01 00 00 	mov    DWORD PTR [esp+0x10],0x1
+10238458:	00 
+10238459:	7e 70                	jle    0x102384cb
+1023845b:	8b 44 24 4c          	mov    eax,DWORD PTR [esp+0x4c]
+1023845f:	8b de                	mov    ebx,esi
+10238461:	2b d8                	sub    ebx,eax
+10238463:	8d 78 02             	lea    edi,[eax+0x2]
+10238466:	89 5c 24 14          	mov    DWORD PTR [esp+0x14],ebx
+1023846a:	eb 04                	jmp    0x10238470
+1023846c:	8b 54 24 1c          	mov    edx,DWORD PTR [esp+0x1c]
+10238470:	8b c2                	mov    eax,edx
+10238472:	8b d1                	mov    edx,ecx
+10238474:	2b 54 24 1c          	sub    edx,DWORD PTR [esp+0x1c]
+10238478:	78 0d                	js     0x10238487
+1023847a:	8b ca                	mov    ecx,edx
+1023847c:	99                   	cdq
+1023847d:	2b c2                	sub    eax,edx
+1023847f:	8b                   	.byte 0x8b

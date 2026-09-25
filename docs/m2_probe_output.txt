@@ -1,0 +1,10 @@
+Nicolai native-port M2 acoustic payload probe
+assets_valid: yes
+ana_path_offset: 0x453f9c
+ana_descriptor_offset: 0x453f84
+analysis_object_offset: 0x4540a4
+seg_object_offset: 0x453e64
+analysis_data: [0x4540bc, 0x4691c8) size=86284
+compressed_voice: [0x4691c8, 0xa4245c) size=6132372
+next_object: 0xa4245c ascii="Fenetres_de_Hanning"
+huffman_selftest: ok symbol=22 bits=2

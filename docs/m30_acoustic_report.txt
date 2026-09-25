@@ -1,0 +1,22 @@
+Nicolai Native Port M30 — PC golden-reference summary
+Golden: reference_pack_20260924_222948 (22 WAV)
+
+Rendered: 22/22
+Host tests: 20/20
+Mean active waveform correlation: 0.1965157232
+Mean active-duration ratio: 0.9925498970
+Active-duration MAE: 5.679022644%
+Total-duration MAE: 3.598674499%
+Normalized 12-bin F0 trajectory MAE: 13.479913522%
+Mean 12-coefficient MFCC-DTW distance: 128.589932660
+
+M29 baseline:
+Correlation: 0.1953980115
+Active-duration MAE: 5.683013970%
+F0 trajectory MAE: 13.467980929%
+Total-duration MAE: 3.596859400%
+MFCC-DTW mean: 128.803627469
+
+M30 enables the corrected authoring-span ordinary-< physical pitch layer at
+strength 0.002. The final clean-build corpus is byte-identical to the selected
+0.002 candidate (22/22).

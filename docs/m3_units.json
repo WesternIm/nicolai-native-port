@@ -1,0 +1,442 @@
+{
+  "database": "nicolai16.dat",
+  "analysis": {
+    "offset": 4538556,
+    "size": 86284,
+    "sha256": "5160cafd5bbe03eba59d127b20ccc46c17735a74031ad15a7d9a4ccc1cd97998"
+  },
+  "compressed_voice": {
+    "offset": 4624840,
+    "size": 6132372,
+    "sha256": "4fc9b7815fc0cf8986d2e533743fce7db1807109893eddac91babb6b0e527ab6"
+  },
+  "unit_index": {
+    "count": 2665,
+    "covered_bytes": 6132370,
+    "trailing_payload_bytes": 2,
+    "negative_signed_ends": 978,
+    "positive_signed_ends": 1687,
+    "min_compressed_size": 1076,
+    "max_compressed_size": 6382,
+    "mean_compressed_size": 2301.076923076923,
+    "record_size_histogram": {
+      "10": 1,
+      "16": 238,
+      "20": 9,
+      "22": 70,
+      "24": 121,
+      "26": 171,
+      "28": 297,
+      "30": 281,
+      "32": 238,
+      "34": 233,
+      "36": 194,
+      "38": 197,
+      "40": 201,
+      "42": 157,
+      "44": 109,
+      "46": 62,
+      "48": 36,
+      "50": 28,
+      "52": 9,
+      "54": 5,
+      "56": 2,
+      "60": 2,
+      "62": 1,
+      "64": 2,
+      "72": 1
+    }
+  },
+  "first_records": [
+    {
+      "index": 0,
+      "ana_offset": 0,
+      "compressed_start": 0,
+      "signed_end": -1759,
+      "compressed_end": 1759,
+      "compressed_size": 1759,
+      "record_size": 16,
+      "metadata": [
+        -2,
+        10,
+        6,
+        -10
+      ],
+      "terminal": false
+    },
+    {
+      "index": 1,
+      "ana_offset": 16,
+      "compressed_start": 1759,
+      "signed_end": -3678,
+      "compressed_end": 3678,
+      "compressed_size": 1919,
+      "record_size": 16,
+      "metadata": [
+        -2,
+        11,
+        6,
+        -11
+      ],
+      "terminal": false
+    },
+    {
+      "index": 2,
+      "ana_offset": 32,
+      "compressed_start": 3678,
+      "signed_end": 6697,
+      "compressed_end": 6697,
+      "compressed_size": 3019,
+      "record_size": 30,
+      "metadata": [
+        -2,
+        17,
+        9,
+        -11,
+        6,
+        -82,
+        83,
+        197,
+        217,
+        224,
+        225
+      ],
+      "terminal": false
+    },
+    {
+      "index": 3,
+      "ana_offset": 62,
+      "compressed_start": 6697,
+      "signed_end": 9825,
+      "compressed_end": 9825,
+      "compressed_size": 3128,
+      "record_size": 34,
+      "metadata": [
+        -2,
+        17,
+        10,
+        -9,
+        8,
+        -90,
+        91,
+        175,
+        228,
+        206,
+        216,
+        219,
+        227
+      ],
+      "terminal": false
+    },
+    {
+      "index": 4,
+      "ana_offset": 96,
+      "compressed_start": 9825,
+      "signed_end": 12819,
+      "compressed_end": 12819,
+      "compressed_size": 2994,
+      "record_size": 34,
+      "metadata": [
+        -2,
+        17,
+        10,
+        -9,
+        8,
+        -104,
+        105,
+        149,
+        171,
+        172,
+        198,
+        200,
+        220
+      ],
+      "terminal": false
+    },
+    {
+      "index": 5,
+      "ana_offset": 130,
+      "compressed_start": 12819,
+      "signed_end": 16596,
+      "compressed_end": 16596,
+      "compressed_size": 3777,
+      "record_size": 40,
+      "metadata": [
+        -2,
+        21,
+        11,
+        -10,
+        11,
+        -130,
+        130,
+        200,
+        187,
+        200,
+        193,
+        192,
+        191,
+        189,
+        190,
+        188
+      ],
+      "terminal": false
+    },
+    {
+      "index": 6,
+      "ana_offset": 170,
+      "compressed_start": 16596,
+      "signed_end": -19795,
+      "compressed_end": 19795,
+      "compressed_size": 3199,
+      "record_size": 16,
+      "metadata": [
+        -2,
+        19,
+        9,
+        -19
+      ],
+      "terminal": false
+    },
+    {
+      "index": 7,
+      "ana_offset": 186,
+      "compressed_start": 19795,
+      "signed_end": -22994,
+      "compressed_end": 22994,
+      "compressed_size": 3199,
+      "record_size": 16,
+      "metadata": [
+        -2,
+        19,
+        8,
+        -19
+      ],
+      "terminal": false
+    },
+    {
+      "index": 8,
+      "ana_offset": 202,
+      "compressed_start": 22994,
+      "signed_end": -26353,
+      "compressed_end": 26353,
+      "compressed_size": 3359,
+      "record_size": 16,
+      "metadata": [
+        -2,
+        20,
+        11,
+        -20
+      ],
+      "terminal": false
+    },
+    {
+      "index": 9,
+      "ana_offset": 218,
+      "compressed_start": 26353,
+      "signed_end": 28844,
+      "compressed_end": 28844,
+      "compressed_size": 2491,
+      "record_size": 30,
+      "metadata": [
+        -2,
+        14,
+        8,
+        -8,
+        6,
+        -120,
+        121,
+        194,
+        170,
+        187,
+        213
+      ],
+      "terminal": false
+    },
+    {
+      "index": 10,
+      "ana_offset": 248,
+      "compressed_start": 28844,
+      "signed_end": -30603,
+      "compressed_end": 30603,
+      "compressed_size": 1759,
+      "record_size": 16,
+      "metadata": [
+        -2,
+        10,
+        5,
+        -10
+      ],
+      "terminal": false
+    },
+    {
+      "index": 11,
+      "ana_offset": 264,
+      "compressed_start": 30603,
+      "signed_end": -32682,
+      "compressed_end": 32682,
+      "compressed_size": 2079,
+      "record_size": 16,
+      "metadata": [
+        -2,
+        12,
+        7,
+        -12
+      ],
+      "terminal": false
+    }
+  ],
+  "last_records": [
+    {
+      "index": 2659,
+      "ana_offset": 86084,
+      "compressed_start": 6120283,
+      "signed_end": 6121902,
+      "compressed_end": 6121902,
+      "compressed_size": 1619,
+      "record_size": 32,
+      "metadata": [
+        2,
+        8,
+        5,
+        8,
+        183,
+        182,
+        181,
+        180,
+        179,
+        180,
+        179,
+        179
+      ],
+      "terminal": false
+    },
+    {
+      "index": 2660,
+      "ana_offset": 86116,
+      "compressed_start": 6121902,
+      "signed_end": 6123683,
+      "compressed_end": 6123683,
+      "compressed_size": 1781,
+      "record_size": 32,
+      "metadata": [
+        2,
+        8,
+        3,
+        8,
+        223,
+        269,
+        242,
+        247,
+        241,
+        263,
+        222,
+        38
+      ],
+      "terminal": false
+    },
+    {
+      "index": 2661,
+      "ana_offset": 86148,
+      "compressed_start": 6123683,
+      "signed_end": 6126477,
+      "compressed_end": 6126477,
+      "compressed_size": 2794,
+      "record_size": 48,
+      "metadata": [
+        2,
+        16,
+        5,
+        16,
+        170,
+        173,
+        174,
+        174,
+        172,
+        172,
+        169,
+        166,
+        165,
+        160,
+        160,
+        156,
+        156,
+        156,
+        155,
+        157
+      ],
+      "terminal": false
+    },
+    {
+      "index": 2662,
+      "ana_offset": 86196,
+      "compressed_start": 6126477,
+      "signed_end": 6128238,
+      "compressed_end": 6128238,
+      "compressed_size": 1761,
+      "record_size": 34,
+      "metadata": [
+        2,
+        9,
+        4,
+        9,
+        176,
+        178,
+        178,
+        178,
+        178,
+        177,
+        176,
+        174,
+        174
+      ],
+      "terminal": false
+    },
+    {
+      "index": 2663,
+      "ana_offset": 86230,
+      "compressed_start": 6128238,
+      "signed_end": 6130629,
+      "compressed_end": 6130629,
+      "compressed_size": 2391,
+      "record_size": 44,
+      "metadata": [
+        2,
+        14,
+        6,
+        14,
+        166,
+        166,
+        166,
+        163,
+        161,
+        159,
+        158,
+        157,
+        155,
+        155,
+        155,
+        156,
+        156,
+        159
+      ],
+      "terminal": false
+    },
+    {
+      "index": 2664,
+      "ana_offset": 86274,
+      "compressed_start": 6130629,
+      "signed_end": 6132370,
+      "compressed_end": 6132370,
+      "compressed_size": 1741,
+      "record_size": 10,
+      "metadata": [
+        2
+      ],
+      "terminal": true
+    }
+  ],
+  "unit0": {
+    "sha256": "682f97b82a961e9d75b1a7717e51ca04a9491079a30b86987406e470144158f6",
+    "entropy_bits_per_byte": 1.1323342722467407
+  }
+}

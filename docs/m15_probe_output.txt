@@ -1,0 +1,66 @@
+Nicolai native-port M15 full SEG grammar + hybrid renderer
+
+catalog units: 2665
+SEG parsed:    2665
+SEG laid out:  2665
+all voiced:    1307
+all unvoiced:  238
+mixed:         1120
+signed pitch resets: 426
+run-count histogram: 1=>1545 2=>1101 3=>17 4=>2
+
+neutral mama: samples=12546 duration_ms=784.125 joins=4
+  #->m mode=-2 slots=17 split=10 runs=[-9,+8] split_sample~1779
+    run0 unvoiced slots=9 src=[0,1675) out=1675 duration-stretch=yes
+    run1 voiced slots=8 src=[1675,2994) out=1319 periods=8 reset=yes TDPSOLA=yes marks=8->8 meanP=164.875->150
+  m->a0 mode=2 slots=14 split=5 runs=[+14] split_sample~840
+    run0 voiced slots=14 src=[0,2314) out=2314 periods=14 reset=no TDPSOLA=yes marks=14->14 meanP=153.714->152.846
+  a0->m mode=2 slots=9 split=5 runs=[+9] split_sample~1036
+    run0 voiced slots=9 src=[0,1971) out=1971 periods=9 reset=no TDPSOLA=yes marks=9->9 meanP=193.444->188.125
+  m->a0 mode=2 slots=14 split=5 runs=[+14] split_sample~840
+    run0 voiced slots=14 src=[0,2314) out=2314 periods=14 reset=no TDPSOLA=yes marks=14->14 meanP=153.714->152.846
+  a0-># mode=2 slots=23 split=9 runs=[+6,-17] split_sample~1836
+    run0 voiced slots=6 src=[0,1328) out=1328 periods=6 reset=no TDPSOLA=yes marks=6->6 meanP=221.333->218.4
+    run1 unvoiced slots=17 src=[1328,4207) out=2879 duration-stretch=yes
+
+pitch 1.20x mama: samples=12604 duration_ms=787.75 joins=4
+  #->m mode=-2 slots=17 split=10 runs=[-9,+8] split_sample~1779
+    run0 unvoiced slots=9 src=[0,1675) out=1675 duration-stretch=yes
+    run1 voiced slots=8 src=[1675,2994) out=1319 periods=8 reset=yes TDPSOLA=yes marks=8->9 meanP=164.875->122.604
+  m->a0 mode=2 slots=14 split=5 runs=[+14] split_sample~840
+    run0 voiced slots=14 src=[0,2314) out=2314 periods=14 reset=no TDPSOLA=yes marks=14->16 meanP=153.714->127.389
+  a0->m mode=2 slots=9 split=5 runs=[+9] split_sample~1036
+    run0 voiced slots=9 src=[0,1971) out=1971 periods=9 reset=no TDPSOLA=yes marks=9->10 meanP=193.444->156.204
+  m->a0 mode=2 slots=14 split=5 runs=[+14] split_sample~840
+    run0 voiced slots=14 src=[0,2314) out=2314 periods=14 reset=no TDPSOLA=yes marks=14->16 meanP=153.714->127.389
+  a0-># mode=2 slots=23 split=9 runs=[+6,-17] split_sample~1836
+    run0 voiced slots=6 src=[0,1328) out=1328 periods=6 reset=no TDPSOLA=yes marks=6->7 meanP=221.333->182.5
+    run1 unvoiced slots=17 src=[1328,4207) out=2879 duration-stretch=yes
+
+duration 1.25x mama: samples=15862 duration_ms=991.375 joins=4
+  #->m mode=-2 slots=17 split=10 runs=[-9,+8] split_sample~1779
+    run0 unvoiced slots=9 src=[0,1675) out=2094 duration-stretch=yes
+    run1 voiced slots=8 src=[1675,2994) out=1649 periods=8 reset=yes TDPSOLA=yes marks=8->10 meanP=164.875->151.333
+  m->a0 mode=2 slots=14 split=5 runs=[+14] split_sample~840
+    run0 voiced slots=14 src=[0,2314) out=2893 periods=14 reset=no TDPSOLA=yes marks=14->17 meanP=153.714->152.812
+  a0->m mode=2 slots=9 split=5 runs=[+9] split_sample~1036
+    run0 voiced slots=9 src=[0,1971) out=2464 periods=9 reset=no TDPSOLA=yes marks=9->11 meanP=193.444->188.4
+  m->a0 mode=2 slots=14 split=5 runs=[+14] split_sample~840
+    run0 voiced slots=14 src=[0,2314) out=2893 periods=14 reset=no TDPSOLA=yes marks=14->17 meanP=153.714->152.812
+  a0-># mode=2 slots=23 split=9 runs=[+6,-17] split_sample~1836
+    run0 voiced slots=6 src=[0,1328) out=1660 periods=6 reset=no TDPSOLA=yes marks=6->7 meanP=221.333->219
+    run1 unvoiced slots=17 src=[1328,4207) out=3599 duration-stretch=yes
+
+neutral pa transition: samples=8073 duration_ms=504.562 joins=2
+  #->p mode=-2 slots=10 split=6 runs=[-10] split_sample~1055
+    run0 unvoiced slots=10 src=[0,1759) out=1759 duration-stretch=yes
+  p->a0 mode=-2 slots=18 split=10 runs=[-8,+10] split_sample~1601
+    run0 unvoiced slots=8 src=[0,1440) out=1440 duration-stretch=yes
+    run1 voiced slots=10 src=[1440,2865) out=1425 periods=10 reset=yes TDPSOLA=yes marks=10->10 meanP=142.5->135.889
+  a0-># mode=2 slots=23 split=9 runs=[+6,-17] split_sample~1836
+    run0 voiced slots=6 src=[0,1328) out=1328 periods=6 reset=no TDPSOLA=yes marks=6->6 meanP=221.333->218.4
+    run1 unvoiced slots=17 src=[1328,4207) out=2879 duration-stretch=yes
+
+M15: no whole-unit raw fallback remains for signed/mixed SEG records.
+Voiced runs use TD-PSOLA; unvoiced runs use duration-only processing;
+run boundaries and diphone boundaries use raised-cosine OLA.

@@ -1,0 +1,8 @@
+PHYSICAL	valid=1	records=14
+T_LAYOUT_CLASS1	startA=10	startB=20	end=-20	terminal=-30,-30,-30
+INTERP_EXAMPLE	25	-5
+TEXT	что ты делаешь?	CLASS	0	0	3
+TEXT	привет, Николай!	CLASS	12	4
+TEXT	я пришёл домой.	CLASS	0	0	1
+TEXT	когда домой?	CLASS	0	3
+TEXT	ты дома?	CLASS	0	8

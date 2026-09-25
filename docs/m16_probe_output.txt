@@ -1,0 +1,24 @@
+text: мама
+  normalized: мама
+  phones: # m a0 m a0 #
+text: папа
+  normalized: папа
+  phones: # p a0 p a0 #
+text: яма
+  normalized: яма
+  phones: # j a0 m a0 #
+text: мир
+  normalized: мир
+  phones: # m' i0 r #
+text: привет
+  normalized: привет
+  phones: # p r' i0 v' e0 t #
+text: мама папа
+  normalized: мама папа
+  phones: # m a0 m a0 # p a0 p a0 #
+synth 'мама': ok samples=12546 message='M16 independent Russian frontend + M15 acoustic renderer; stress/prosody not restored yet'
+synth 'папа': ok samples=12552 message='M16 independent Russian frontend + M15 acoustic renderer; stress/prosody not restored yet'
+synth 'яма': ok samples=12331 message='M16 independent Russian frontend + M15 acoustic renderer; stress/prosody not restored yet'
+synth 'мир': ok samples=11644 message='M16 independent Russian frontend + M15 acoustic renderer; stress/prosody not restored yet'
+synth 'привет': ok samples=15426 message='M16 independent Russian frontend + M15 acoustic renderer; stress/prosody not restored yet'
+synth 'мама папа': ok samples=24943 message='M16 independent Russian frontend + M15 acoustic renderer; stress/prosody not restored yet'

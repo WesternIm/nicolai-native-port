@@ -1,0 +1,7 @@
+nicolai_m17_mama_papa.wav: 16000 Hz, 22599 samples, 1412.44 ms, peak=16333, clipped=0, rms=1711.7
+nicolai_m17_moloko.wav: 16000 Hz, 12884 samples, 805.25 ms, peak=15040, clipped=0, rms=1979.0
+nicolai_m17_moloko_stress_first.wav: 16000 Hz, 14459 samples, 903.69 ms, peak=12544, clipped=0, rms=1629.6
+nicolai_m17_podpiska.wav: 16000 Hz, 20530 samples, 1283.12 ms, peak=16128, clipped=0, rms=1295.5
+nicolai_m17_privet.wav: 16000 Hz, 14258 samples, 891.12 ms, peak=12219, clipped=0, rms=1591.8
+nicolai_m17_skazka.wav: 16000 Hz, 18437 samples, 1152.31 ms, peak=17918, clipped=0, rms=1183.2
+nicolai_m17_vokzal.wav: 16000 Hz, 14915 samples, 932.19 ms, peak=16886, clipped=0, rms=1527.8

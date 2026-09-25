@@ -1,0 +1,15 @@
+nicolai_m15_mama_hybrid.wav
+  samples=12546 sr=16000 duration_ms=784.125
+  rms=2154.393 peak=14080 clips=0 max_adjacent_jump=7592
+
+nicolai_m15_mama_pitch120.wav
+  samples=12604 sr=16000 duration_ms=787.750
+  rms=1634.814 peak=12565 clips=0 max_adjacent_jump=6176
+
+nicolai_m15_mama_slow125.wav
+  samples=15862 sr=16000 duration_ms=991.375
+  rms=2126.138 peak=14080 clips=0 max_adjacent_jump=7592
+
+nicolai_m15_pa_transition.wav
+  samples=8073 sr=16000 duration_ms=504.562
+  rms=1753.596 peak=16333 clips=0 max_adjacent_jump=5692

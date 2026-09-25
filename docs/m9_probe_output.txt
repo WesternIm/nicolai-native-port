@@ -1,0 +1,65 @@
+Nicolai native-port M9 voice/channel descriptor probe
+
+legacy file objects: init=6 exec=18
+
+voix.dsc:
+  path: c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\voix.dsc
+  duration: execution
+  file: 0xa498f0 logical: 0x5a3c
+  data logical: 0x5b5c
+  fields: 2 / 2 state=1
+canaux.dsc:
+  path: c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\canaux.dsc
+  duration: execution
+  file: 0xa6bc14 logical: 0x27d60
+  data logical: 0x27e80
+  fields: 2 / 2 state=1
+
+voice catalog:
+  valid: yes
+  records file: 0xa49a10
+  capacity: 64
+  occupied: 50
+
+Nicolai voice record:
+  index: 46
+  file: 0xa621c8
+  init-name logical: 0x2e8
+  name: Nicolai
+  raw[08,0c,10]: 353, 643, 127
+  exception: c:\cvswf\ref\cvox\front\except\data\exc_rus.txt
+  acoustic dsc: C:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\nbr16aci.dsc
+  modeinfo: c:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\modeinfo.dsc
+  0..254 symbol map: identity
+
+channel catalog summary:
+  valid: yes
+  data file: 0xa6bd34
+  serialized size: 0x45f0
+  slot capacity: 64
+  nonzero slot modes: 49
+
+Nicolai acoustic DSC object:
+  path: C:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\nbr16aci.dsc
+  duration: initialization
+  file: 0x429284 logical: 0x42926c
+  data logical: 0x42938c
+  fields: 2 / 2 state=3
+
+Nicolai acoustic descriptor:
+  valid: yes
+  data file: 0x4293a4
+  sample rate: 16000 Hz
+  header raw: 121, 1, 80, 100, 300, 100, 100
+  rgl: c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\nbr.rgl
+  axm: c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\16aci\nbr16aci.axm
+  seg: c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\16aci\nbr16aci.seg
+  ana: c:\cvswf\bddson\diphones\russian\nicolai\dico-psola\16aci\nbr16aci.ana
+
+M9 corrected acoustic byte ranges:
+  ANA data: [0x4540bc, 0x4691e0) bytes=86308
+  cmp16:    [0x4691e0, 0xa42474) bytes=6132372
+  cmp16 prefix: 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55
+  ANA units: 2665 valid=yes covered=6132370 trailing cmp16=2
+
+M9 chain recovered: voix.dsc -> Nicolai[46] -> nbr16aci.dsc -> RGL/AXM/SEG/ANA -> corrected cmp16 stream.

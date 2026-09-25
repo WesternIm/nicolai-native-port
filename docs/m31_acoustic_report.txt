@@ -1,0 +1,16 @@
+Nicolai Native Port M31 — PC golden-reference summary
+Golden: reference_pack_20260924_222948 (22 WAV)
+
+Rendered: 22/22
+Host tests: 20/20
+Mean active waveform correlation: 0.1965157232
+Mean active-duration ratio: 0.9925498970
+Active-duration MAE: 5.679022644%
+Total-duration MAE: 3.598674499%
+Normalized 12-bin F0 trajectory MAE: 13.479913522%
+Mean 12-coefficient MFCC-DTW distance: 128.589932660
+
+M31 production keeps physical [l] length and [e] energy strengths at zero after
+controlled sweeps failed to produce a robust multi-metric improvement. The final
+M31 production corpus is byte-identical to M30 (22/22 WAVs), so the previously
+measured M30 MFCC-DTW value applies exactly.

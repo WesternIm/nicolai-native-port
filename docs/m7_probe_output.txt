@@ -1,0 +1,42 @@
+Nicolai native-port M7 EDAT address-space probe
+
+segment0: [0x18,0xa43eb4)
+segment1: [0xa43eb4,0xa74034)
+footer:   [0xa74034,0xa74234)
+tagged refs: 3192 unresolved: 0
+  source header: 2  target header: 8
+  source segment0: 2476  target segment0: 3183
+  source segment1: 714  target segment1: 1
+  source footer: 0  target footer: 0
+
+source -> target:
+  header -> segment0: 1
+  header -> segment1: 1
+  segment0 -> header: 1
+  segment0 -> segment0: 2475
+  segment1 -> header: 7
+  segment1 -> segment0: 707
+segment0 root: source=0x18 -> target=0xa4245c [segment0+0xa42444]
+segment1 root: source=0xa43eb4 -> target=0x2de64 [segment0+0x2de4c]
+
+path-bearing metadata records: 24
+longest 0x120 lockstep allocation pattern: 22 records
+  serialized: 0xa70570 .. 0xa71d10
+  primary:    0x2c484 .. 0x2dc24
+  first path: c:\cvswf\ref\cvox\rusvox\data\non_verb1.flx
+  last path:  c:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\modeinfo.dsc
+
+rsrc allocation metadata:
+  primary ref: source=0xa43eb4 -> target=0x2de64 [segment0+0x2de4c]
+  secondary ref: source=0xa43fc8 -> target=0x128 [segment0+0x110]
+  fields: 2/2
+  path: c:\cvswf\elan4406\dsc\gendesc\desc\16stbi\rsrc.dsc
+
+modeinfo allocation metadata:
+  primary ref: source=0xa71d10 -> target=0x2dc24 [segment0+0x2dc0c]
+  secondary ref: source=0xa71e24 -> target=0x2df84 [segment0+0x2df6c]
+  fields: 2/2
+  path: c:\cvswf\ref\data\tempo-psola\russian\nicolai\16aci\modeinfo.dsc
+
+model: tagged refs are absolute EDAT offsets resolved through loaded segment ranges.
+M6 write-patch materialization is deprecated; M7 performs no synthetic Segment0 overwrite.

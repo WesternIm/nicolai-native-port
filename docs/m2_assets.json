@@ -1,0 +1,48 @@
+{
+  "ana_path_offset": 4538268,
+  "ana_path_offset_hex": "0x453f9c",
+  "ana_descriptor_offset": 4538244,
+  "ana_descriptor_offset_hex": "0x453f84",
+  "analysis_object_offset": 4538532,
+  "analysis_object_offset_hex": "0x4540a4",
+  "seg_object_offset": 4537956,
+  "seg_object_offset_hex": "0x453e64",
+  "analysis": {
+    "start": 4538556,
+    "start_hex": "0x4540bc",
+    "end": 4624840,
+    "end_hex": "0x4691c8",
+    "size": 86284,
+    "entropy_bits_per_byte": 5.391184169832554,
+    "sha256": "5160cafd5bbe03eba59d127b20ccc46c17735a74031ad15a7d9a4ccc1cd97998",
+    "head_hex": "0000000021f9fffffeff0a000600f6ffdf060000a2f1fffffeff0b000600f5ff"
+  },
+  "compressed_voice": {
+    "start": 4624840,
+    "start_hex": "0x4691c8",
+    "end": 10757212,
+    "end_hex": "0xa4245c",
+    "size": 6132372,
+    "entropy_bits_per_byte": 7.241719810739018,
+    "sha256": "4fc9b7815fc0cf8986d2e533743fce7db1807109893eddac91babb6b0e527ab6",
+    "head_hex": "090004000900ae00b000b000b000af00af00ad00ad00ad005555555555555555"
+  },
+  "next_object": {
+    "offset": 10757212,
+    "offset_hex": "0xa4245c",
+    "ascii_runs": [
+      "Fenetres_de_Hanning"
+    ],
+    "head_hex": "1611161611161614151517131f1f1d1c190407060103000046656e6574726573"
+  },
+  "layout": {
+    "segment0_offset": 24,
+    "segment0_offset_hex": "0x18",
+    "segment0_end": 10763956,
+    "segment0_end_hex": "0xa43eb4",
+    "segment1_offset": 10763956,
+    "segment1_offset_hex": "0xa43eb4",
+    "segment1_end": 10960948,
+    "segment1_end_hex": "0xa74034"
+  }
+}
