@@ -8,14 +8,18 @@ piecewise-duration path retains M24+'s start/middle/end F0 contour.
 
 The zero-effect path dispatches to the established renderer exactly; 20/20 host
 tests pass, including byte-identical fallback, live three-point F0 under
-asymmetric duration, and side-local energy checks. Production physical
-length/energy strengths remain zero until the original local voice inputs are
-restored and the committed 22-WAV sweep proves a multi-metric improvement.
+asymmetric duration, and side-local energy checks. The original local voice
+inputs were restored for evaluation and 39 unique coarse, micro, and fine-grid
+settings were measured against all 22 PC golden WAVs. No non-zero duration or
+energy setting produced a robust multi-metric win, so production deliberately
+keeps both strengths at **0.0** and remains byte-identical to M31.
 
 Reproducibility is now first-class: `tools/measure_parity.py` computes waveform,
 active/total duration, F0 contour, MFCC-DTW, and RMS/energy parity in one report;
 `tools/run_m32_parity.ps1` and `tools/sweep_m32_physical.ps1` reproduce the
 candidate runs without committing golden WAVs or proprietary voice data.
+`tools/compare_parity.py` audits candidate changes phrase by phrase. Committed
+JSON/CSV summaries live in `docs/metrics/`.
 
 See `docs/M32_FINDINGS.md`, `docs/M32_PC_PARITY_REPORT.md`, and
 `docs/M32_CONTINUATION.md`.

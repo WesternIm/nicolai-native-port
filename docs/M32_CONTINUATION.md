@@ -1,9 +1,11 @@
 # M32 continuation point
 
-The implementation and tests are complete; the remaining work is the local
-golden-corpus selection pass.
+M32 is complete as an execution-architecture milestone. Phone-local duration
+and energy are implemented and tested, the full PC corpus selection pass is
+committed, and production correctly retains zero strengths because no non-zero
+candidate passed the multi-metric gate.
 
-## Required local inputs (never commit)
+## Local inputs for reproduction (never commit)
 
 Place these files in one directory, for example `voice-data/`:
 
@@ -20,9 +22,6 @@ without executing installer custom actions:
 python tools/extract_msi.py path\to\nicolai.msi work\msi-extracted
 ```
 
-The convenience copies are written beneath `work\msi-extracted\flat`; use the
-directory containing the three required files as `VoiceDataDir`.
-
 ## Build and test on Windows
 
 Run from a Visual Studio Developer PowerShell or Developer Command Prompt:
@@ -35,32 +34,39 @@ ctest --test-dir build --output-on-failure
 
 Expected result: 20/20 tests.
 
-## Run the M32 grid
+## Reproduce the M32 sweeps
 
-Install the parity-only Python dependencies from
-`tools/requirements-parity.txt`, then run:
+Install the parity-only dependencies from `tools/requirements-parity.txt`, then
+run a grid. The selected Python must contain NumPy and librosa.
 
 ```powershell
 .\tools\sweep_m32_physical.ps1 `
   -BuildDir .\build `
   -VoiceDataDir .\voice-data `
   -ReferencePack C:\path\to\reference_pack_20260924_222948 `
-  -OutputRoot .\metrics-work\m32-sweep `
-  -Python C:\path\to\python.exe
+  -OutputRoot .\metrics-work\m32-micro-sweep `
+  -Python .\.venv\Scripts\python.exe `
+  -Strengths @(0.0005,0.001,0.002,0.005,0.01)
 ```
 
-The final comparison is written to `sweep-summary.csv` and
-`sweep-summary.json`; every candidate directory also contains its 22 rendered
-WAVs plus per-phrase CSV/JSON. These output directories are ignored by Git.
+Use `-Modes length` for a length-only grid. Compare a candidate phrase by
+phrase with:
 
-## Acceptance rule
+```powershell
+python tools\compare_parity.py `
+  metrics-work\m32-length-fine\baseline\parity.json `
+  metrics-work\m32-length-fine\length-0.0005\parity.json `
+  --json metrics-work\comparison.json `
+  --csv metrics-work\comparison.csv
+```
 
-Do not select a non-zero production strength for a fifth-decimal correlation
-movement alone. Prefer a candidate that improves waveform correlation and at
-least two independent error metrics (timing, F0, MFCC, RMS) without a material
-regression in any remaining metric. Inspect per-phrase rows for outliers before
-changing the defaults in `LegacyTimingPolicy`.
+Candidate directories contain WAVs and logs and remain ignored. Commit only
+summary/per-phrase JSON and CSV artifacts that contain no proprietary data.
 
-After selection, commit only the metric JSON/CSV summaries and update
-`M32_PC_PARITY_REPORT.md`; keep golden/portable WAVs and proprietary voice data
-outside Git.
+## Recommended M33 direction
+
+Do not tune M32 strengths further around the isolated `0.0005` alignment
+spike. The larger remaining parity limit is the synthesis/join path: recover
+the Windows pitch-mark, phase, and half-diphone join semantics, then re-evaluate
+the already implemented phone-local `[l]`/`[e]` authoring values without adding
+phrase-specific rules.

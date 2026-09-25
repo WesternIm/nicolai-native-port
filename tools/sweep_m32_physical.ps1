@@ -4,7 +4,10 @@ param(
     [Parameter(Mandatory = $true)][string]$ReferencePack,
     [Parameter(Mandatory = $true)][string]$OutputRoot,
     [Parameter(Mandatory = $true)][string]$Python,
-    [double[]]$Strengths = @(0.0625, 0.125, 0.25, 0.5, 1.0)
+    [double[]]$Strengths = @(0.0625, 0.125, 0.25, 0.5, 1.0),
+    [ValidateSet("length", "energy", "both")]
+    [string[]]$Modes = @("length", "energy", "both"),
+    [switch]$SummarizeOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -12,19 +15,30 @@ $runner = Join-Path $PSScriptRoot "run_m32_parity.ps1"
 $candidates = @(@{ Name = "baseline"; Length = 0.0; Energy = 0.0 })
 foreach ($strength in $Strengths) {
     $tag = [string]::Format([Globalization.CultureInfo]::InvariantCulture, "{0:g}", $strength)
-    $candidates += @{ Name = "length-$tag"; Length = $strength; Energy = 0.0 }
-    $candidates += @{ Name = "energy-$tag"; Length = 0.0; Energy = $strength }
-    $candidates += @{ Name = "both-$tag"; Length = $strength; Energy = $strength }
+    if ($Modes -contains "length") {
+        $candidates += @{ Name = "length-$tag"; Length = $strength; Energy = 0.0 }
+    }
+    if ($Modes -contains "energy") {
+        $candidates += @{ Name = "energy-$tag"; Length = 0.0; Energy = $strength }
+    }
+    if ($Modes -contains "both") {
+        $candidates += @{ Name = "both-$tag"; Length = $strength; Energy = $strength }
+    }
 }
 
 New-Item -ItemType Directory -Force -Path $OutputRoot | Out-Null
 $rows = @()
 foreach ($candidate in $candidates) {
     $output = Join-Path $OutputRoot $candidate.Name
-    & $runner -BuildDir $BuildDir -VoiceDataDir $VoiceDataDir `
-        -ReferencePack $ReferencePack -OutputDir $output -Python $Python `
-        -PhysicalLengthStrength $candidate.Length `
-        -PhysicalEnergyStrength $candidate.Energy
+    if (-not $SummarizeOnly) {
+        & $runner -BuildDir $BuildDir -VoiceDataDir $VoiceDataDir `
+            -ReferencePack $ReferencePack -OutputDir $output -Python $Python `
+            -PhysicalLengthStrength $candidate.Length `
+            -PhysicalEnergyStrength $candidate.Energy
+    }
+    if (-not (Test-Path -LiteralPath (Join-Path $output "parity.json"))) {
+        throw "Missing candidate parity report: $output"
+    }
     $result = Get-Content -LiteralPath (Join-Path $output "parity.json") -Raw | ConvertFrom-Json
     $summary = $result.summary
     $rows += [pscustomobject]@{

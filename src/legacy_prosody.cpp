@@ -978,7 +978,10 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
             left_scale=std::clamp(left_scale*lm,0.20,3.00);
             right_scale=std::clamp(right_scale*rm,0.20,3.00);
         }
-        const double effective_scale=(L+R)>0.0
+        // Preserve M31 bit-for-bit when the physical [l] layer is disabled.
+        // Re-averaging two nominally equal side scales can change the last
+        // floating-point bit and push llround across a sample boundary.
+        const double effective_scale=(physical_length_strength>0.0 && (L+R)>0.0)
             ? (L*left_scale+R*right_scale)/(L+R) : u.base_scale;
         u.target_ms=u.source_ms*effective_scale;
 

@@ -63,15 +63,34 @@ page.
 
 `tools/run_m32_parity.ps1` renders and measures one candidate, while
 `tools/sweep_m32_physical.ps1` evaluates the baseline and a configurable
-length/energy strength grid. A reference-vs-itself validation over all 22
+length/energy strength grid. Its `-Modes` option can isolate length, energy, or
+combined scans. `tools/compare_parity.py` reports per-phrase win/loss counts
+and worst regressions. Renderer and metric stdout are captured inside each
+candidate directory instead of flooding the sweep console. A
+reference-vs-itself validation over all 22
 golden WAVs returns correlation 1.0, duration/F0/RMS MAE 0, MFCC-DTW 0, and RMS
 ratio 1.0.
 
 ## Production decision
 
-The current source handoff contains the golden reference pack and M31 source,
-but not the proprietary `nicolai16.dat`, `exc_rus.txt`, or `abb_rus.txt` needed
-to render a portable corpus. M32 therefore does **not** invent a winning
-strength: both production strengths remain zero until the original local voice
-inputs are restored and the committed sweep is executed. See
-`M32_CONTINUATION.md` for the exact continuation point.
+The original local voice inputs were restored outside Git and used for three
+complete 22-WAV sweeps:
+
+- coarse length/energy/both: `0.0625, 0.125, 0.25, 0.5, 1.0`;
+- micro length/energy/both: `0.0005, 0.001, 0.002, 0.005, 0.01`;
+- fine length-only: `0.0001` through `0.0009` in `0.0001` steps.
+
+This covers 39 unique settings including baseline. Every run rendered 22/22
+WAVs. No energy strength improved RMS parity; the recovered envelope makes the
+already quiet portable signal quieter. The isolated `length=0.0005` point
+raises mean correlation and improves aggregate timing, but is not robust:
+correlation improves on 10 phrases and regresses on 9, while F0 and MFCC each
+regress on 13/22 and RMS regresses on 12/22. Its aggregate F0 MAE rises from
+13.4799% to 13.7524%.
+
+Both production strengths therefore remain **0.0**. M32 ships the corrected
+execution architecture without degrading the validated M31 output. A clean
+M31 build and the final M32 zero-strength corpus are SHA-256 identical on all
+22 WAVs. Exact
+summaries and the per-phrase audit are committed under `docs/metrics/`; see
+`M32_PC_PARITY_REPORT.md` for the scorecard.
