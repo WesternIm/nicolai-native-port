@@ -190,12 +190,12 @@ double grain_hann_m23(long rel, int radius) {
 Pcm16Mono td_psola_piecewise_m23(
     const Pcm16Mono& source,
     const SegPitchSchedule& schedule,
-    double pitch_scale,
+    const TdPsolaConfig& pitch_config,
     const PiecewiseDurationMapM23& tm,
     TdPsolaDiagnostics* diagnostics) {
 
     TdPsolaDiagnostics d;
-    d.pitch_scale = pitch_scale;
+    d.pitch_scale = pitch_config.pitch_scale;
     d.duration_scale = source.samples.empty() ? 1.0 : tm.target_len() / source.samples.size();
     d.source_marks = schedule.marks.size();
     if (!schedule.periods.empty()) {
@@ -203,14 +203,19 @@ Pcm16Mono td_psola_piecewise_m23(
                                static_cast<double>(schedule.periods.size());
     }
     Pcm16Mono out; out.sample_rate = source.sample_rate;
+    const double ps0 = td_psola_pitch_scale_at(pitch_config, 0.0);
+    const double psm = td_psola_pitch_scale_at(pitch_config, 0.5);
+    const double ps1 = td_psola_pitch_scale_at(pitch_config, 1.0);
     if (!schedule.valid || source.samples.empty() || source.sample_rate <= 0 ||
-        !(pitch_scale > 0.05 && pitch_scale < 8.0) ||
+        !(ps0 > 0.05 && ps0 < 8.0) || !(psm > 0.05 && psm < 8.0) ||
+        !(ps1 > 0.05 && ps1 < 8.0) ||
         !(tm.left > 0.05 && tm.left < 8.0 && tm.right > 0.05 && tm.right < 8.0)) {
         if (diagnostics) *diagnostics = d;
         return out;
     }
     if (std::abs(tm.left - tm.right) < 1e-12) {
-        TdPsolaConfig c; c.pitch_scale = pitch_scale; c.duration_scale = tm.left;
+        TdPsolaConfig c = pitch_config;
+        c.duration_scale = tm.left;
         return td_psola_resynthesize(source, schedule, c, diagnostics);
     }
 
@@ -240,7 +245,12 @@ Pcm16Mono td_psola_piecewise_m23(
         }
         ++d.grains_added;
         synth_marks.push_back(synth);
-        synth += std::max(4.0, static_cast<double>(p) / pitch_scale);
+        const double denom = std::max(1.0,
+            static_cast<double>(schedule.marks.back() - schedule.marks.front()));
+        const double pos = std::clamp(
+            (source_time - static_cast<double>(schedule.marks.front())) / denom, 0.0, 1.0);
+        const double local_pitch_scale = td_psola_pitch_scale_at(pitch_config, pos);
+        synth += std::max(4.0, static_cast<double>(p) / local_pitch_scale);
     }
 
     out.samples.resize(target_len, 0);
@@ -260,6 +270,33 @@ Pcm16Mono td_psola_piecewise_m23(
     d.valid = !out.samples.empty() && d.grains_added > 0;
     if (diagnostics) *diagnostics = d;
     return out;
+}
+
+void apply_phone_side_energy_m32(
+    Pcm16Mono& pcm, double split_fraction, double left_gain, double right_gain) {
+    if (pcm.samples.empty() ||
+        (std::abs(left_gain - 1.0) < 1e-12 && std::abs(right_gain - 1.0) < 1e-12)) return;
+    split_fraction = std::clamp(split_fraction, 0.0, 1.0);
+    // A boundary unit can have no support on one side. In that case do not
+    // manufacture a transition from the absent phone's gain.
+    if (split_fraction <= 0.0) left_gain = right_gain;
+    if (split_fraction >= 1.0) right_gain = left_gain;
+    const std::size_t split = static_cast<std::size_t>(std::llround(
+        split_fraction * static_cast<double>(pcm.samples.size())));
+    const std::size_t fade = std::min<std::size_t>(
+        static_cast<std::size_t>(std::max(1, pcm.sample_rate / 200)),
+        pcm.samples.size() / 8); // 5 ms at 16 kHz, bounded on short units
+    const std::size_t lo = split > fade ? split - fade : 0;
+    const std::size_t hi = std::min(pcm.samples.size(), split + fade);
+    for (std::size_t i = 0; i < pcm.samples.size(); ++i) {
+        double gain = left_gain;
+        if (i >= hi) gain = right_gain;
+        else if (i > lo && hi > lo) {
+            const double t = static_cast<double>(i - lo) / static_cast<double>(hi - lo);
+            gain = left_gain + (right_gain - left_gain) * t;
+        }
+        pcm.samples[i] = clip16(static_cast<double>(pcm.samples[i]) * gain);
+    }
 }
 
 Pcm16Mono stretch_unvoiced_piecewise_m23(
@@ -402,13 +439,49 @@ Pcm16Mono resynthesize_seg_m23_phone_sides(
     double right_duration_scale,
     M15UnitDiagnostics* diagnostics) {
 
-    if (std::abs(left_duration_scale - right_duration_scale) < 1e-12) {
-        TdPsolaConfig c; c.pitch_scale = pitch_scale; c.duration_scale = left_duration_scale;
-        return resynthesize_seg_m15(source, schedule, layout, c, diagnostics);
+    TdPsolaConfig c;
+    c.pitch_scale = pitch_scale;
+    return resynthesize_seg_m32_phone_sides(
+        source, schedule, layout, c,
+        left_duration_scale, right_duration_scale, 1.0, 1.0, diagnostics);
+}
+
+Pcm16Mono resynthesize_seg_m32_phone_sides(
+    const Pcm16Mono& source,
+    const SegScheduleM15& schedule,
+    const SegSpanLayout& layout,
+    const TdPsolaConfig& pitch_config,
+    double left_duration_scale,
+    double right_duration_scale,
+    double left_energy_gain,
+    double right_energy_gain,
+    M15UnitDiagnostics* diagnostics) {
+
+    const bool equal_duration = std::abs(left_duration_scale - right_duration_scale) < 1e-12;
+    const bool unity_energy = std::abs(left_energy_gain - 1.0) < 1e-12 &&
+                              std::abs(right_energy_gain - 1.0) < 1e-12;
+    if (equal_duration) {
+        TdPsolaConfig c = pitch_config;
+        c.duration_scale = left_duration_scale;
+        auto pcm = resynthesize_seg_m15(source, schedule, layout, c, diagnostics);
+        if (!pcm.samples.empty() && !unity_energy) {
+            const double split_fraction = source.samples.empty() ? 0.5 :
+                static_cast<double>(std::min(layout.split_sample_estimate, source.samples.size())) /
+                static_cast<double>(source.samples.size());
+            apply_phone_side_energy_m32(
+                pcm, split_fraction, left_energy_gain, right_energy_gain);
+        }
+        return pcm;
     }
     Pcm16Mono out; out.sample_rate = source.sample_rate;
     if (!schedule.valid || !layout.valid || schedule.runs.size() != layout.runs.size() ||
-        source.samples.empty() || !(pitch_scale > 0.05 && pitch_scale < 8.0)) return out;
+        source.samples.empty() || !(left_energy_gain > 0.0 && left_energy_gain < 8.0) ||
+        !(right_energy_gain > 0.0 && right_energy_gain < 8.0)) return out;
+    const double ps0 = td_psola_pitch_scale_at(pitch_config, 0.0);
+    const double psm = td_psola_pitch_scale_at(pitch_config, 0.5);
+    const double ps1 = td_psola_pitch_scale_at(pitch_config, 1.0);
+    if (!(ps0 > 0.05 && ps0 < 8.0) || !(psm > 0.05 && psm < 8.0) ||
+        !(ps1 > 0.05 && ps1 < 8.0)) return out;
 
     std::vector<Pcm16Mono> rendered;
     std::vector<int> left_hints, right_hints;
@@ -437,7 +510,18 @@ Pcm16Mono resynthesize_seg_m23_phone_sides(
         Pcm16Mono r;
         if (span.voiced) {
             auto ps = make_run_pitch_schedule(span, raw.samples.size());
-            r = td_psola_piecewise_m23(raw, ps, pitch_scale, tm, &rd.psola);
+            TdPsolaConfig run_config = pitch_config;
+            if (pitch_config.use_three_point_pitch && !source.samples.empty()) {
+                const double den = static_cast<double>(source.samples.size());
+                const double a = static_cast<double>(span.source_begin) / den;
+                const double b = static_cast<double>(span.source_end) / den;
+                const double m = 0.5 * (a + b);
+                run_config.pitch_scale_start = td_psola_pitch_scale_at(pitch_config, a);
+                run_config.pitch_scale_mid = td_psola_pitch_scale_at(pitch_config, m);
+                run_config.pitch_scale_end = td_psola_pitch_scale_at(pitch_config, b);
+                run_config.pitch_scale = run_config.pitch_scale_mid;
+            }
+            r = td_psola_piecewise_m23(raw, ps, run_config, tm, &rd.psola);
             if (rd.psola.valid && !r.samples.empty()) rd.used_td_psola = true;
             else r = stretch_unvoiced_piecewise_m23(raw, tm);
         } else {
@@ -454,14 +538,25 @@ Pcm16Mono resynthesize_seg_m23_phone_sides(
     out = rendered.front();
     for (std::size_t i = 1; i < rendered.size(); ++i) {
         OlaJoinDiagnostics jd;
+        const double den = std::max(1.0, static_cast<double>(source.samples.size()));
+        const double left_pos = static_cast<double>(layout.runs[i - 1].source_end) / den;
+        const double right_pos = static_cast<double>(layout.runs[i].source_begin) / den;
+        const double left_pitch = td_psola_pitch_scale_at(pitch_config, left_pos);
+        const double right_pitch = td_psola_pitch_scale_at(pitch_config, right_pos);
         const int lp = right_hints[i - 1] > 0 ?
-            static_cast<int>(std::lround(right_hints[i - 1] / pitch_scale)) : 0;
+            static_cast<int>(std::lround(right_hints[i - 1] / left_pitch)) : 0;
         const int rp = left_hints[i] > 0 ?
-            static_cast<int>(std::lround(left_hints[i] / pitch_scale)) : 0;
+            static_cast<int>(std::lround(left_hints[i] / right_pitch)) : 0;
         out = hann_ola_join(out, rendered[i], lp, rp, &jd);
         if (!jd.valid) return {};
         if (diagnostics) diagnostics->internal_joins.push_back(jd);
     }
+    const PiecewiseDurationMapM23 unit_tm{
+        static_cast<double>(std::min(layout.split_sample_estimate, source.samples.size())),
+        left_duration_scale, right_duration_scale, static_cast<double>(source.samples.size())};
+    const double split_fraction = unit_tm.target_len() > 1e-12
+        ? unit_tm.map(unit_tm.split) / unit_tm.target_len() : 0.5;
+    apply_phone_side_energy_m32(out, split_fraction, left_energy_gain, right_energy_gain);
     return out;
 }
 

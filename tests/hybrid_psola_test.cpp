@@ -1,6 +1,7 @@
 #include "nicolai/hybrid_psola.hpp"
 #include <cassert>
 #include <cmath>
+#include <cstdlib>
 #include <iostream>
 
 int main() {
@@ -30,5 +31,58 @@ int main() {
     assert(d.runs[1].used_td_psola);
     assert(d.runs[1].signed_period_reset);
     assert(d.internal_joins.size() == 1);
+
+    // M32's zero-effect dispatch must preserve the existing M15 renderer
+    // exactly, including the M24 three-point pitch contour.
+    nicolai::TdPsolaConfig contour;
+    contour.duration_scale = 1.10;
+    contour.use_three_point_pitch = true;
+    contour.pitch_scale_start = 1.20;
+    contour.pitch_scale_mid = 1.00;
+    contour.pitch_scale_end = 0.80;
+    contour.pitch_scale = 1.00;
+    auto baseline = nicolai::resynthesize_seg_m15(p, s, l, contour);
+    auto exact = nicolai::resynthesize_seg_m32_phone_sides(
+        p, s, l, contour, 1.10, 1.10, 1.0, 1.0);
+    assert(!baseline.samples.empty() && exact.samples == baseline.samples);
+
+    // Unequal phone-side timing must retain the contour instead of collapsing
+    // to the old M23 single-pitch fallback.
+    nicolai::TdPsolaConfig flat = contour;
+    flat.use_three_point_pitch = false;
+    flat.pitch_scale = 1.0;
+    auto shaped = nicolai::resynthesize_seg_m32_phone_sides(
+        p, s, l, contour, 0.85, 1.20, 1.0, 1.0);
+    auto flat_shaped = nicolai::resynthesize_seg_m32_phone_sides(
+        p, s, l, flat, 0.85, 1.20, 1.0, 1.0);
+    assert(!shaped.samples.empty() && !flat_shaped.samples.empty());
+    assert(shaped.samples != flat_shaped.samples);
+
+    // Energy is consumed locally: attenuating only the left phone side leaves
+    // the tail unchanged while reducing the leading quarter.
+    auto unity = nicolai::resynthesize_seg_m32_phone_sides(
+        p, s, l, contour, 1.0, 1.0, 1.0, 1.0);
+    auto local_energy = nicolai::resynthesize_seg_m32_phone_sides(
+        p, s, l, contour, 1.0, 1.0, 0.5, 1.0);
+    assert(local_energy.samples.size() == unity.samples.size());
+    long long lead_unity=0, lead_local=0, tail_unity=0, tail_local=0;
+    const std::size_t quarter=unity.samples.size()/4;
+    for(std::size_t i=0;i<quarter;++i){
+        lead_unity += std::abs(static_cast<int>(unity.samples[i]));
+        lead_local += std::abs(static_cast<int>(local_energy.samples[i]));
+    }
+    for(std::size_t i=unity.samples.size()-quarter;i<unity.samples.size();++i){
+        tail_unity += std::abs(static_cast<int>(unity.samples[i]));
+        tail_local += std::abs(static_cast<int>(local_energy.samples[i]));
+    }
+    assert(lead_local < lead_unity * 3 / 4);
+    assert(std::llabs(tail_local-tail_unity) <= static_cast<long long>(quarter));
+    auto right_only_layout = l;
+    right_only_layout.split_sample_estimate = 0;
+    auto right_only = nicolai::resynthesize_seg_m32_phone_sides(
+        p, s, right_only_layout, contour, 1.0, 1.0, 0.5, 1.0);
+    auto right_only_unity = nicolai::resynthesize_seg_m32_phone_sides(
+        p, s, right_only_layout, contour, 1.0, 1.0, 1.0, 1.0);
+    assert(right_only.samples == right_only_unity.samples);
     std::cout << "hybrid_psola_test: PASSED output=" << q.samples.size() << "\n";
 }
