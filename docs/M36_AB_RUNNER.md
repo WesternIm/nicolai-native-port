@@ -36,9 +36,9 @@ Current profiles:
 
 - `m34-unit`: `NICOLAI_STATEFUL_TDS=1`, shared-phone duration off;
 - `m34-shared`: `NICOLAI_STATEFUL_TDS=1`, shared-phone duration on;
-- `m36`: `NICOLAI_M36_TRANSITION_EXECUTOR=1`; `nicolai_batch_render` enables
-  the established stateful/shared-phone caller and the stateful adapter then
-  dispatches into the runnable M36 local transition experiment.
+- `m36`: `NICOLAI_M36_TRANSITION_EXECUTOR=1`; batch rendering enables the
+  established stateful/shared-phone caller and `resynthesize_stateful_m34()`
+  dispatches into the opt-in local M36 transition experiment.
 
 ### Current M36 scope
 
@@ -50,8 +50,7 @@ static M36 reconstruction. It executes, per portable diphone descriptor:
 - recovered deferred-terminal single-grain/fade path;
 - exact guarded M36 window-cache lookup;
 - original Q15 writer and M36 post-write state rotation;
-- the existing shared-phone upstream duration policy, so the comparison is not
-  confounded by switching back to whole-diphone M34 timing.
+- the existing shared-phone upstream duration policy.
 
 It does **not** yet call the recovered nonzero cross-descriptor executor.
 Static recovery proved that executor itself, but the present portable diphone
@@ -60,7 +59,7 @@ at the descriptor boundary. Inventing `deferred terminal == cross buffered
 step` would create a plausible-looking but false state machine. Cross therefore
 remains disabled until that caller/source ownership is captured or proven.
 
-This means `m36` is now useful for directional A/B correction of local grain
+This means `m36` is useful now for directional A/B correction of local grain
 selection/windows/terminal behavior, but its corpus score is not a claim of a
 complete PC renderer.
 
