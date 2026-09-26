@@ -23,7 +23,7 @@ The runner needs:
 Paths can be supplied explicitly:
 
 ```bat
-run_ab_compare.bat -ReferencePack C:\path\to\reference_pack_20260924_222948 -VoiceDir C:\path\to\nicolai -CandidateProfile m34-shared
+run_ab_compare.bat -ReferencePack C:\path\to\reference_pack_20260924_222948 -VoiceDir C:\path\to\nicolai -CandidateProfile m36
 ```
 
 or through `NICOLAI_REFERENCE_PACK` / `NICOLAI_VOICE_DIR`. Without explicit
@@ -36,17 +36,33 @@ Current profiles:
 
 - `m34-unit`: `NICOLAI_STATEFUL_TDS=1`, shared-phone duration off;
 - `m34-shared`: `NICOLAI_STATEFUL_TDS=1`, shared-phone duration on;
-- `m36`: reserved for the route-level M36 transition executor.
+- `m36`: `NICOLAI_M36_TRANSITION_EXECUTOR=1`; `nicolai_batch_render` enables
+  the established stateful/shared-phone caller and the stateful adapter then
+  dispatches into the runnable M36 local transition experiment.
 
-The `m36` profile deliberately refuses to run until
-`NICOLAI_M36_TRANSITION_EXECUTOR` is actually wired into
-`nicolai_batch_render`. This is a safety contract: an unknown environment
-variable would otherwise be ignored and produce a fake stable-vs-stable
-comparison.
+### Current M36 scope
 
-Once the M36 renderer integration lands, the launcher infrastructure does not
-need to change; the candidate profile only needs the synthesis path to honor the
-reserved environment switch.
+The first runnable `m36` profile is intentionally narrower than the complete
+static M36 reconstruction. It executes, per portable diphone descriptor:
+
+- recovered initial-transition first/repeated grain geometry;
+- recovered ordinary first/repeated grain source selection;
+- recovered deferred-terminal single-grain/fade path;
+- exact guarded M36 window-cache lookup;
+- original Q15 writer and M36 post-write state rotation;
+- the existing shared-phone upstream duration policy, so the comparison is not
+  confounded by switching back to whole-diphone M34 timing.
+
+It does **not** yet call the recovered nonzero cross-descriptor executor.
+Static recovery proved that executor itself, but the present portable diphone
+slice does not expose all caller step-buffer ownership/source context required
+at the descriptor boundary. Inventing `deferred terminal == cross buffered
+step` would create a plausible-looking but false state machine. Cross therefore
+remains disabled until that caller/source ownership is captured or proven.
+
+This means `m36` is now useful for directional A/B correction of local grain
+selection/windows/terminal behavior, but its corpus score is not a claim of a
+complete PC renderer.
 
 ## Output bundle
 
@@ -76,10 +92,16 @@ pYIN/autocorrelation diagnostics rather than collapsing them into one score.
 The runner opens the result directory in Explorer on success. Pass `-NoOpen` to
 suppress that behavior.
 
-## Why this exists before M36 audio integration
+## Recommended first comparison
 
-The recovered M36 source-selection/cross/window code is now large enough that
-continuing static reconstruction without corpus feedback is inefficient. The
-A/B runner freezes the measurement procedure before the new route-level renderer
-is connected, so future corrections are compared through the same reproducible
-pipeline rather than ad-hoc manual commands.
+Run:
+
+```bat
+run_ab_compare.bat -CandidateProfile m36
+```
+
+Use the result as a diagnostic checkpoint, not a promotion gate. The useful
+question is whether local M36 grain/window behavior moves timing and normalized
+shape away from the old stateful ~10.59% / ~39.50 direction and toward the
+stable ~3.60% / ~37.19 reference without a global correction. If it regresses,
+inspect phrase-level wins/losses before recovering more caller state.
