@@ -8,6 +8,7 @@ int main() {
     using nicolai::LegacyRuntimeCrossShoulderM36;
     using nicolai::legacy_runtime_cross_overlap_sample_m36;
     using nicolai::legacy_runtime_cross_primary_layout_m36;
+    using nicolai::legacy_runtime_cross_secondary_layout_m36;
 
     {
         const auto q = legacy_runtime_cross_primary_layout_m36(120, 90, 110);
@@ -36,6 +37,37 @@ int main() {
 
     assert(!legacy_runtime_cross_primary_layout_m36(100, 101, 80).valid);
     assert(!legacy_runtime_cross_primary_layout_m36(0, 0, 0).valid);
+
+    // The second temporary buffer reverses the region order: overlap first,
+    // optional shoulder, then zero suffix.
+    {
+        const auto q = legacy_runtime_cross_secondary_layout_m36(120, 100, 80);
+        assert(q.valid && q.total_length == 100);
+        assert(q.previous_extent == 100 && q.current_extent == 80);
+        assert(q.overlap_length == 80 && q.shoulder_length == 20);
+        assert(q.zero_suffix_length == 0);
+        assert(q.shoulder == LegacyRuntimeCrossShoulderM36::Previous);
+    }
+
+    {
+        const auto q = legacy_runtime_cross_secondary_layout_m36(60, 100, 90);
+        assert(q.valid && q.previous_extent == 60 && q.current_extent == 90);
+        assert(q.overlap_length == 60 && q.shoulder_length == 30);
+        assert(q.zero_suffix_length == 10);
+        assert(q.shoulder == LegacyRuntimeCrossShoulderM36::Current);
+        assert(q.overlap_length + q.shoulder_length + q.zero_suffix_length ==
+            q.total_length);
+    }
+
+    {
+        const auto q = legacy_runtime_cross_secondary_layout_m36(120, 100, 140);
+        assert(q.valid && q.previous_extent == 100 && q.current_extent == 100);
+        assert(q.overlap_length == 100 && q.shoulder_length == 0);
+        assert(q.zero_suffix_length == 0);
+        assert(q.shoulder == LegacyRuntimeCrossShoulderM36::None);
+    }
+
+    assert(!legacy_runtime_cross_secondary_layout_m36(120, 0, 80).valid);
 
     // Two nearly-unity Q15 products are summed and shifted by 16, so the
     // result is approximately one input amplitude, not two as a Q15 writer
