@@ -195,6 +195,66 @@ LegacyRuntimeSourceSelectionM36 legacy_runtime_initial_source_selection_m36(
     return out;
 }
 
+LegacyRuntimeCrossGeometryM36 legacy_runtime_cross_geometry_m36(
+    const std::vector<std::int32_t>& previous_positions,
+    const std::vector<std::int32_t>& current_positions,
+    const LegacyRuntimeStateM36& state,
+    int buffered_interval_index,
+    int current_interval_index) {
+    LegacyRuntimeCrossGeometryM36 out;
+    if (!monotonic_positions(previous_positions) ||
+        !monotonic_positions(current_positions)) return out;
+    const int previous_intervals = static_cast<int>(previous_positions.size()) - 1;
+    const int current_intervals = static_cast<int>(current_positions.size()) - 1;
+    if (buffered_interval_index < 0 || buffered_interval_index >= previous_intervals ||
+        current_interval_index < 0 || current_interval_index >= current_intervals)
+        return out;
+
+    const bool use_saved = state.word2c != 0;
+    const int previous_index = use_saved ? static_cast<int>(state.word2e) + 1 :
+        buffered_interval_index;
+    if (previous_index < 0 || previous_index >= previous_intervals) return out;
+
+    const int previous_width = static_cast<int>(
+        previous_positions[static_cast<std::size_t>(previous_index + 1)] -
+        previous_positions[static_cast<std::size_t>(previous_index)]);
+    const int previous_left_width = previous_index > 0 ? static_cast<int>(
+        previous_positions[static_cast<std::size_t>(previous_index)] -
+        previous_positions[static_cast<std::size_t>(previous_index - 1)]) :
+        previous_width;
+    const int current_width = static_cast<int>(
+        current_positions[static_cast<std::size_t>(current_interval_index + 1)] -
+        current_positions[static_cast<std::size_t>(current_interval_index)]);
+    const int current_next_width = current_interval_index < current_intervals - 1 ?
+        static_cast<int>(
+            current_positions[static_cast<std::size_t>(current_interval_index + 2)] -
+            current_positions[static_cast<std::size_t>(current_interval_index + 1)]) :
+        current_width;
+    if (previous_width <= 0 || previous_left_width <= 0 || current_width <= 0 ||
+        current_next_width <= 0) return out;
+
+    const int previous_window = std::min(previous_left_width, previous_width);
+    const int current_window = std::min(current_width, previous_width);
+
+    out.valid = true;
+    out.used_saved_interval = use_saved;
+    out.previous_interval_index = previous_index;
+    out.current_interval_index = current_interval_index;
+    out.previous_interval_width = previous_width;
+    out.previous_left_width = previous_left_width;
+    out.previous_window_length = previous_window;
+    out.current_interval_width = current_width;
+    out.current_window_length = current_window;
+    out.current_next_width = current_next_width;
+    out.previous_source_start = std::max(0,
+        static_cast<int>(previous_positions[static_cast<std::size_t>(previous_index)]) -
+            previous_window);
+    out.current_source_start = std::max(0,
+        static_cast<int>(current_positions[static_cast<std::size_t>(current_interval_index + 1)]) -
+            current_window);
+    return out;
+}
+
 bool legacy_runtime_cross_zero_fade_m36(
     std::vector<std::int16_t>& output,
     std::size_t start_cursor,
