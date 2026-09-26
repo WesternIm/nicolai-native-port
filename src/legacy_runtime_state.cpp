@@ -1,4 +1,5 @@
 #include "nicolai/legacy_runtime_state.hpp"
+#include "nicolai/legacy_window_m36.hpp"
 
 #include <algorithm>
 #include <cstdint>
@@ -7,6 +8,11 @@ namespace nicolai {
 namespace {
 std::int32_t wrap32(std::int64_t value) {
     return static_cast<std::int32_t>(static_cast<std::uint32_t>(value));
+}
+
+int sar15(std::int64_t value) {
+    return value >= 0 ? static_cast<int>(value / 32768) :
+        -static_cast<int>((-value + 32767) / 32768);
 }
 
 bool monotonic_positions(const std::vector<std::int32_t>& positions) {
@@ -82,12 +88,8 @@ LegacyRuntimeRollbackM36 legacy_runtime_drop_rollback_m36(
         state.clock_b = wrap32(static_cast<std::int64_t>(state.clock_b) + delta);
         state.selection_a = state.saved_selection_a;
         state.selection_b = state.saved_selection_b;
-
-        // 0x1010a860 returns state +0x48. In this rollback call its return is
-        // assigned to +0x80 only when saved cursor is before the prior marker.
         if (state.saved_cursor < state.end_cursor)
             state.end_cursor = state.saved_cursor;
-
         if (state.clock_a < 0) state.clock_a = 0;
         if (state.clock_b < 0) state.clock_b = 0;
         state.word2e = state.word28;
@@ -95,8 +97,6 @@ LegacyRuntimeRollbackM36 legacy_runtime_drop_rollback_m36(
         state.field30 = 0;
         out.rewound = true;
     }
-
-    // Common dropped-step tail at 0x10107ffe.
     state.word26 = 1;
     return out;
 }
@@ -118,18 +118,13 @@ LegacyRuntimeSourceSelectionM36 legacy_runtime_normal_source_selection_m36(
     if (current_width <= 0) return out;
 
     int left_width = current_width;
-    int left_position =
-        source_positions[static_cast<std::size_t>(interval_index)];
+    int left_position = source_positions[static_cast<std::size_t>(interval_index)];
     const bool bridge = state.word26 != 0;
     if (bridge) {
         const int dropped = static_cast<int>(state.word2a);
-        // 0x10108440 reads source[dropped+2]-source[dropped+1] and
-        // 0x101084cc selects source[dropped+1] as the first source pointer.
-        if (dropped < 0 ||
-            dropped + 2 >= static_cast<int>(source_positions.size()))
+        if (dropped < 0 || dropped + 2 >= static_cast<int>(source_positions.size()))
             return out;
-        left_position =
-            source_positions[static_cast<std::size_t>(dropped + 1)];
+        left_position = source_positions[static_cast<std::size_t>(dropped + 1)];
         left_width = static_cast<int>(
             source_positions[static_cast<std::size_t>(dropped + 2)] -
             source_positions[static_cast<std::size_t>(dropped + 1)]);
@@ -139,8 +134,7 @@ LegacyRuntimeSourceSelectionM36 legacy_runtime_normal_source_selection_m36(
     const int left_length = std::min(left_width, first_period);
     const int right_length = std::min(current_width, first_period);
     const int right_position = static_cast<int>(
-        source_positions[static_cast<std::size_t>(interval_index + 1)]) -
-        right_length;
+        source_positions[static_cast<std::size_t>(interval_index + 1)]) - right_length;
 
     out.valid = true;
     out.bridged_drop = bridge;
@@ -199,6 +193,27 @@ LegacyRuntimeSourceSelectionM36 legacy_runtime_initial_source_selection_m36(
         source_positions[static_cast<std::size_t>(buffered_interval_index + 1)]) -
         right_length;
     return out;
+}
+
+bool legacy_runtime_cross_zero_fade_m36(
+    std::vector<std::int16_t>& output,
+    std::size_t start_cursor,
+    int first_period) {
+    if (first_period <= 0 || first_period > 400 ||
+        start_cursor > output.size() ||
+        static_cast<std::size_t>(first_period) > output.size() - start_cursor)
+        return false;
+    const auto window = legacy_window_m36_lookup(first_period);
+    if (!window.valid || window.q15.size() != static_cast<std::size_t>(first_period))
+        return false;
+
+    for (int i = 0; i < first_period; ++i) {
+        const int w = window.q15[static_cast<std::size_t>(first_period - 1 - i)];
+        const int sample = output[start_cursor + static_cast<std::size_t>(i)];
+        output[start_cursor + static_cast<std::size_t>(i)] =
+            static_cast<std::int16_t>(sar15(static_cast<std::int64_t>(sample) * w));
+    }
+    return true;
 }
 
 } // namespace nicolai
