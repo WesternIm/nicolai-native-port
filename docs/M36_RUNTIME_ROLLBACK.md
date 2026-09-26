@@ -1,9 +1,10 @@
 # M36 runtime rollback and source-selection recovery
 
 This note records exact state and source-selection behavior recovered statically
-from the known original `mtsyc32.dll` around `0x10107c20`, `0x10107f65` and the
-ordinary `0x101083b0` write path. It remains deliberately separate from renderer
-integration: production and `StatefulTdsM34` do not call these primitives yet.
+from the known original `mtsyc32.dll` around `0x10107c20`, `0x10107f65`, the
+ordinary `0x101083b0` path and the initial `0x101086c0` transition. It remains
+deliberately separate from renderer integration: production and
+`StatefulTdsM34` do not call these primitives yet.
 
 ## Per-interval write routing
 
@@ -131,6 +132,56 @@ This is a concrete source-selection change, not merely a clock rewind.
 coordinates and lengths. It intentionally stops before `0x10109be0`; exact
 window table lookup/construction is still a separate recovery boundary.
 
+## Exact initial-transition first grain
+
+The first write in `0x101086c0` uses the buffered prior step record at state
+`+0x74` and the saved source index at state WORD `+0x2e`.
+
+Let:
+
+```text
+k = state.word2e
+b = buffered_step.interval_index
+P = buffered_step.first_period
+```
+
+The right side belongs to buffered interval `b`:
+
+```text
+right_interval_width  = source_position[b+1] - source_position[b]
+right_window_length   = min(right_interval_width, P)
+right_source_position = source_position[b+1] - right_window_length
+```
+
+The left source always starts at the right boundary of saved interval `k`:
+
+```text
+left_source_position = source_position[k+1]
+```
+
+For a non-terminal saved index, its support is the following interval:
+
+```text
+left_interval_width = source_position[k+2] - source_position[k+1]
+```
+
+At the terminal saved index (`k == node_count - 2`), the original instead uses
+that interval's own width:
+
+```text
+left_interval_width = source_position[k+1] - source_position[k]
+```
+
+Then:
+
+```text
+left_window_length = min(left_interval_width, P)
+```
+
+`legacy_runtime_initial_source_selection_m36()` reproduces this first-grain
+ownership. This closes the first source-selection layer of `0x101086c0`; its
+subsequent repeated-grain loop and higher-level descriptor gate still remain.
+
 ## Portable contracts
 
 `include/nicolai/legacy_runtime_state.hpp` and
@@ -146,19 +197,21 @@ connecting them to synthesis. `tests/legacy_runtime_state_test.cpp` covers:
 - the common `+0x26` dropped marker;
 - ordinary source ownership;
 - exact dropped-interval source bridging;
-- independent left/right period clamping.
+- independent left/right period clamping;
+- initial-transition buffered/saved source ownership;
+- terminal saved-index width fallback.
 
 ## Remaining source-transition boundary
 
-The ordinary first-grain bridge is no longer unknown. The remaining high-value
-static/runtime work is concentrated in:
+Ordinary first-grain bridging and initial-transition first-grain ownership are
+no longer unknown. The remaining high-value work is concentrated in:
 
-- `0x101086c0`: initial transition using buffered prior step/source state;
+- repeated-grain source movement inside `0x101083b0`;
+- the remaining `0x101086c0` repeated-grain loop/state update;
 - `0x10108cf0`: cross-descriptor transition and descriptor/base selection;
-- repeated-grain source movement after the first `0x101083b0` write;
 - the post-loop terminal path around `0x10108210`;
 - exact `0x10109be0` / `0x1010a020` window lookup/construction.
 
-These must be recovered before wiring rollback/source bridging into
+These must be recovered before wiring rollback/source selection into
 `StatefulTdsM34`, because a correct rewind combined with the wrong transition
 source would still produce incorrect audio.
