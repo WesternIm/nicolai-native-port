@@ -8,7 +8,7 @@ if(MSVC)
 endif()
 add_library(nicolai_port STATIC
     src/voice_db.cpp src/edat.cpp src/address_space.cpp src/assets.cpp src/stateful_tds.cpp
-    src/huffman.cpp src/ana_index.cpp src/cmp16.cpp src/cmp16_decode.cpp src/cmp16_codebook.cpp src/static_files.cpp src/legacy_tds.cpp src/legacy_phone_features.cpp
+    src/huffman.cpp src/ana_index.cpp src/cmp16.cpp src/cmp16_decode.cpp src/cmp16_codebook.cpp src/static_files.cpp src/legacy_tds.cpp src/legacy_phone_features.cpp src/legacy_runtime_state.cpp
     src/resource_registry.cpp src/voice_catalog.cpp src/diphone_catalog.cpp src/g711.cpp src/psola_join.cpp src/td_psola.cpp src/seg_schedule.cpp src/hybrid_psola.cpp src/russian_stress.cpp src/russian_legacy.cpp src/russian_frontend.cpp src/legacy_prosody.cpp src/pc_parity.cpp src/engine.cpp src/wav_writer.cpp)
 target_include_directories(nicolai_port PUBLIC include)
 if(NOT ANDROID)
@@ -33,7 +33,7 @@ if(ANDROID)
 endif()
 include(CTest)
 if(BUILD_TESTING AND NOT ANDROID)
-  foreach(test huffman_test ana_index_test cmp16_test static_files_test address_space_test resource_registry_test voice_catalog_test diphone_catalog_test cmp16_decode_test cmp16_codebook_test g711_test psola_join_test td_psola_test seg_schedule_test hybrid_psola_test russian_stress_test russian_legacy_test russian_frontend_test legacy_prosody_test pc_parity_test legacy_phone_features_test)
+  foreach(test huffman_test ana_index_test cmp16_test static_files_test address_space_test resource_registry_test voice_catalog_test diphone_catalog_test cmp16_decode_test cmp16_codebook_test g711_test psola_join_test td_psola_test seg_schedule_test hybrid_psola_test russian_stress_test russian_legacy_test russian_frontend_test legacy_prosody_test pc_parity_test legacy_phone_features_test legacy_runtime_state_test)
     add_executable(${test} tests/${test}.cpp)
     target_link_libraries(${test} PRIVATE nicolai_port)
     add_test(NAME ${test} COMMAND ${test})
