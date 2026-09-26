@@ -13,9 +13,10 @@ struct StatefulTdsM34 {
     std::int64_t target_samples = 0, budget_consumed_samples = 0, emitted_samples = 0;
     std::size_t clamped_delta_records = 0;
 
-    // M36 opt-in experiment. These fields are dormant for the M34 path and
-    // only preserve the deferred terminal record/source needed by the next
-    // descriptor's recovered cross-transition executor.
+    // Reserved M36 route/cross diagnostics and future caller-owned context.
+    // The first runnable A/B adapter deliberately keeps cross-descriptor
+    // ownership disabled until the original step-buffer/source context is
+    // proven, so these remain zero/empty in the current local experiment.
     bool m36_has_pending_terminal = false;
     int m36_pending_interval = -1;
     LegacyTdsStepM33 m36_pending_step;
@@ -34,11 +35,11 @@ Pcm16Mono resynthesize_stateful_m34(const Pcm16Mono& source,
     double left_duration, double right_duration,
     double left_energy, double right_energy, StatefulTdsM34& state);
 
-// M36 A/B-only route experiment. It composes the recovered M36 initial,
-// ordinary, nonzero cross and terminal PCM primitives while retaining the M34
-// carry/diagnostic owner. The caller interface cannot yet signal utterance-end,
-// so a final deferred terminal may remain pending; this path is deliberately
-// opt-in and must not be promoted to production from corpus metrics alone.
+// M36 A/B-only local transition experiment. It composes recovered M36
+// initial, ordinary and deferred-terminal PCM behavior plus exact M36 windows
+// and source selection. Nonzero cross-descriptor execution is intentionally
+// excluded until caller step-buffer ownership and source context outside one
+// portable diphone slice are proven. This path is opt-in and is not production.
 Pcm16Mono resynthesize_stateful_m36_experimental(const Pcm16Mono& source,
     const SegSourceTimelineM33& timeline, const TdPsolaConfig& pitch,
     double left_duration, double right_duration,
