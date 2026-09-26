@@ -7,6 +7,33 @@
 
 int main() {
     using nicolai::LegacyRuntimeStateM36;
+    using nicolai::LegacyRuntimeWritePathM36;
+
+    // 0x10107d54 dispatcher priority: drop -> cross -> initial -> terminal -> ordinary.
+    {
+        auto r = nicolai::legacy_runtime_route_m36(0, 1, 5, true, true);
+        assert(r.valid && r.path == LegacyRuntimeWritePathM36::Dropped);
+        assert(!r.checkpoint_before_write);
+
+        r = nicolai::legacy_runtime_route_m36(2, 1, 5, true, false);
+        assert(r.valid && r.path == LegacyRuntimeWritePathM36::CrossTransition);
+        assert(!r.checkpoint_before_write);
+
+        r = nicolai::legacy_runtime_route_m36(2, 1, 5, false, false);
+        assert(r.valid && r.path == LegacyRuntimeWritePathM36::InitialTransition);
+        assert(!r.checkpoint_before_write);
+
+        r = nicolai::legacy_runtime_route_m36(2, 3, 5, false, true);
+        assert(r.valid && r.path == LegacyRuntimeWritePathM36::DeferredTerminal);
+        assert(!r.checkpoint_before_write);
+
+        r = nicolai::legacy_runtime_route_m36(2, 1, 5, false, true);
+        assert(r.valid && r.path == LegacyRuntimeWritePathM36::Ordinary);
+        assert(r.checkpoint_before_write);
+
+        r = nicolai::legacy_runtime_route_m36(-1, 1, 5, false, true);
+        assert(!r.valid && r.path == LegacyRuntimeWritePathM36::Invalid);
+    }
 
     {
         LegacyRuntimeStateM36 s;
