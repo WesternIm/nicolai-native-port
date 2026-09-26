@@ -138,7 +138,15 @@ unequal source widths, boundary carry and terminal behavior.
 when the known original DLL is supplied, it calls original RVA `0x1a2780` and
 compares repaired anchors plus descriptor duration/pitch/voicing fields.
 
-One-command local run:
+One-command local run on a machine where Nicolai is already installed:
+
+```powershell
+.\tools\run_m36_original_probe.ps1
+```
+
+The script searches the Program Files roots for `mtsyc32.dll` and accepts a
+candidate only when its SHA256 is the known original hash above. An explicit
+path is still supported when needed:
 
 ```powershell
 .\tools\run_m36_original_probe.ps1 -Dll C:\path\to\mtsyc32.dll
