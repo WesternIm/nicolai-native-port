@@ -17,8 +17,11 @@ if ($actualSha256 -ne $expectedSha256) {
 
 Write-Host "Verified original mtsyc32.dll SHA256 $actualSha256"
 
-& cmake -S . -B $BuildDir -G "Visual Studio 17 2022" -A Win32 -DBUILD_TESTING=ON
-if ($LASTEXITCODE -ne 0) { throw "CMake configure failed" }
+# Do not hardcode a Visual Studio generator version. GitHub and local systems
+# may have VS 2022, VS 2026 or newer; CMake selects the installed default while
+# -A Win32 requests the required x86 target architecture.
+& cmake -S . -B $BuildDir -A Win32 -DBUILD_TESTING=ON
+if ($LASTEXITCODE -ne 0) { throw "CMake Win32 configure failed" }
 
 & cmake --build $BuildDir --config Debug --target nicolai_m36_phone_probe legacy_phone_features_test --parallel
 if ($LASTEXITCODE -ne 0) { throw "Win32 M36 build failed" }
