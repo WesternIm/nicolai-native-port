@@ -64,17 +64,19 @@ LegacyRuntimeOrdinaryGrainM36 legacy_runtime_ordinary_grain_m36(
         if (next_width <= 0) return out;
     }
 
-    // 0x10108568..0x10108585 ends with a 16-bit add into DI, so wrap is
-    // observable and must not be widened away by the portable implementation.
     const int period = repeated_period(first_period, delta_q11, ordinal);
     if (period <= 0) return out;
 
-    const int left_length = std::min(current_width, period);
-    const int right_length = std::min(next_width, period);
+    // Writer call 0x10108616..0x10108652:
+    // arg7 (left length) is min(next_width, period), while arg9 (right length)
+    // is min(current_width, period). arg2 starts at the boundary and arg3 is
+    // the current/past tail ending at that boundary.
+    const int left_length = std::min(next_width, period);
+    const int right_length = std::min(current_width, period);
     const std::int64_t boundary =
         source_positions[static_cast<std::size_t>(interval_index + 1)];
-    const std::int64_t left_source = boundary - left_length;
-    if (!int32_coordinate(left_source)) return out;
+    const std::int64_t right_source = boundary - right_length;
+    if (!int32_coordinate(right_source) || !int32_coordinate(boundary)) return out;
 
     out.valid = true;
     out.ordinal = ordinal;
@@ -83,8 +85,8 @@ LegacyRuntimeOrdinaryGrainM36 legacy_runtime_ordinary_grain_m36(
     out.next_interval_width = next_width;
     out.left_window_length = left_length;
     out.right_window_length = right_length;
-    out.left_source_position = static_cast<int>(left_source);
-    out.right_source_position = static_cast<int>(boundary);
+    out.left_source_position = static_cast<int>(boundary);
+    out.right_source_position = static_cast<int>(right_source);
     out.terminal_interval = terminal;
     return out;
 }
@@ -108,30 +110,30 @@ LegacyRuntimeInitialRepeatedGrainM36 legacy_runtime_initial_repeated_grain_m36(
     if (current_width <= 0) return out;
 
     int next_width = 0;
-    std::int64_t right_source = 0;
+    std::int64_t left_source = 0;
     if (cross_descriptor) {
         if (next_positions.size() < 2) return out;
         next_width = word_delta(next_positions[1], next_positions[0]);
-        right_source = next_positions[0];
+        left_source = next_positions[0];
     } else {
         if (buffered_interval_index + 2 >=
             static_cast<int>(previous_positions.size())) return out;
         next_width = word_delta(
             previous_positions[static_cast<std::size_t>(buffered_interval_index + 2)],
             previous_positions[static_cast<std::size_t>(buffered_interval_index + 1)]);
-        right_source =
+        left_source =
             previous_positions[static_cast<std::size_t>(buffered_interval_index + 1)];
     }
     if (next_width <= 0) return out;
 
     const int period = repeated_period(first_period, delta_q11, ordinal);
     if (period <= 0) return out;
-    const int left_length = std::min(current_width, period);
-    const int right_length = std::min(next_width, period);
+    const int left_length = std::min(next_width, period);
+    const int right_length = std::min(current_width, period);
 
     const std::int64_t previous_boundary =
         previous_positions[static_cast<std::size_t>(buffered_interval_index + 1)];
-    const std::int64_t left_source = previous_boundary - left_length;
+    const std::int64_t right_source = previous_boundary - right_length;
     if (!int32_coordinate(left_source) || !int32_coordinate(right_source))
         return out;
 
