@@ -19,6 +19,20 @@ jobs:
         run: cmake --build build --config Debug --parallel
       - name: Test
         run: ctest --test-dir build -C Debug --output-on-failure
+      - name: Parse A/B PowerShell launcher
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path '.\tools\run_ab_compare.ps1'),
+            [ref]$tokens,
+            [ref]$errors) | Out-Null
+          if ($errors.Count -ne 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
 
   win32-phone-probe:
     runs-on: windows-latest
