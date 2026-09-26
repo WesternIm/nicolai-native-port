@@ -1,13 +1,14 @@
-# M36 continuation — original phone-feature builder
+# M36 continuation — original phone-feature and runtime state recovery
 
 Branch: `m36-original-phone-features`.
 Base: merged M35 on `main` at `a9d24018a8b84a9982b2ab8ab4dddb381dbe5002`.
 
-Production synthesis remains unchanged. M36 now has a static portable builder,
-a guarded direct-DLL synthetic oracle, a real Win32 runtime capture debugger and
-an independent Python replay audit.
+Production synthesis remains unchanged. M36 now has a static portable
+phone-feature builder, guarded original oracles, recovered rollback/state
+primitives, exact guarded window-cache reconstruction, and increasingly exact
+source-transition geometry.
 
-The exact local original recovered from the installer is:
+The local original remains:
 
 ```text
 mtsyc32.dll
@@ -22,99 +23,77 @@ SHA256 471bf1266c913784187dae25a2e5784a6ec309162e7dee2167ca9887c253e74d
 
 Neither proprietary file belongs in Git.
 
-## Gate A — direct synthetic original oracle
+## Remaining live evidence gates
 
-Run on Windows from the repository root:
+Gate A, on Windows with the original installed DLL:
 
 ```powershell
-.\tools\run_m36_original_probe.ps1 -Dll C:\path\to\mtsyc32.dll
+.\tools\run_m36_original_probe.ps1
 ```
 
-The gate is exactly:
+Expected direct-original result:
 
 ```json
 {"portable_cases":259,"original_matches":259}
 ```
 
-CI proves the same executable builds and runs as Win32 x86, but cannot supply
-the proprietary DLL; its expected no-DLL result is 259 portable cases and zero
-original matches.
-
-Any original mismatch means fix the builder first. Do not tune audio around it.
-
-## Gate B — real installed-engine records
-
-M36 no longer needs manual WinDbg memory capture. With the original Nicolai
-installed and its Acapela engine usable through 32-bit SAPI5, run:
+Gate B, on the installed original engine:
 
 ```powershell
 .\tools\run_m36_runtime_capture.ps1
 ```
 
-The wrapper:
+The resulting phone-record audit must contain nonzero records with zero invalid
+and zero mismatched records. CI cannot execute these two proprietary-runtime
+gates but does build the Win32 x86 tooling and run all portable contracts.
 
-1. warms up Nicolai through 32-bit SAPI5;
-2. locates the active `ettsengine.exe`;
-3. builds `nicolai_m36_runtime_capture` for Win32 x86;
-4. attaches via the Windows Debug API;
-5. records pre/post `0x101a2780` structures while the canonical 22 phrases are
-   synthesized;
-6. cleanly restores breakpoints and detaches;
-7. runs `audit_phone_features_m36.py` over the resulting JSONL.
+## Static runtime state now recovered
 
-Expected output directory:
+The branch now has portable contracts for:
 
-```text
-metrics-work/m36/runtime-capture/
-  phone-records.jsonl
-  phone-records-audit.json
-  capture.stdout.log
-  capture.stderr.log
-  trigger-wavs/
-```
+- route selection between dropped / cross / initial / ordinary / deferred-terminal paths;
+- checkpoint and last-dropped rollback state;
+- ordinary first-grain source selection including dropped-bridge ownership;
+- ordinary repeated-grain Q11 period, WORD arithmetic, left/right window lengths
+  and exact boundary-centred source starts;
+- initial-transition first-grain source selection;
+- initial-transition repeated grains both within one descriptor and while
+  crossing to the next descriptor PCM base;
+- nonzero cross-transition geometry and its distinct central SAR16 overlap
+  arithmetic;
+- zero-branch cross fade;
+- original packed window-cache topology and guarded lookup for lengths 1..400.
 
-The runtime audit must report zero mismatched and zero invalid records before any
-coefficient lane is connected to the portable stateful renderer.
+Relevant notes:
 
-If original SAPI itself fails during warm-up, resolve the installed voice/server
-first; that is distinct from a builder parity failure.
+- `M36_RUNTIME_ROLLBACK.md`
+- `M36_ORDINARY_GRAINS.md`
+- `M36_INITIAL_TRANSITION.md`
+- `M36_WINDOWS.md`
 
-## Gate C — opt-in authentic-lane timing experiment
+## Why the M34 stateful renderer is still untouched
 
-Only after Gate A and Gate B pass:
+The current `StatefulTdsM34` still treats every grain as a simplified
+current-interval front/tail selection and uses analytic half-Hann windows.
+Static tracing now proves that this is not how the PC renderer works: first,
+repeated, initial and cross-descriptor grains use different source ownership and
+the nonzero cross mixer even uses a different final shift.
 
-1. add an opt-in path that feeds the recovered original duration/pitch ownership
-   rules into `StatefulTdsM34`;
-2. keep stable production untouched;
-3. rerun the same 22 PC golden phrases and all M35 clock diagnostics;
-4. compare target+flush and actual total duration separately.
+Do not partially promote only one recovered primitive. The next implementation
+checkpoint is an opt-in M36 transition executor that composes the proven route,
+source geometry, rollback and window contracts while preserving the M34 path as
+an exact fallback for comparison.
 
-The first timing target is to move stateful target+flush MAE from the M35 shared
-~10.68% toward or below the stable ~3.60% baseline without a global scale or
-phrase-specific rule.
+## Next implementation checkpoint
 
-## After coefficient timing is no longer the blocker
+1. Finish the remaining nonzero `0x10108cf0` buffer/index ownership around the
+   already recovered cross geometry and SAR16 kernel.
+2. Build an opt-in M36 executor beside `StatefulTdsM34`; do not replace it.
+3. Re-run the 22 PC golden phrases and M35 timing/shape/energy diagnostics.
+4. Require improvement without a global duration scale or phrase rules before
+   considering any production promotion.
 
-Recover the original execution state oracle around `0x10107c20` /
-`0x10107f65`:
-
-- dropped-node selection;
-- last-node rollback;
-- saved positions `+0x54/+0x58/+0x5c`;
-- cursor/clock restoration;
-- boundary/final-flush conditions.
-
-Then recover source transitions `0x101086c0` / `0x10108cf0` and exact window
-lookup/construction `0x10109be0` / `0x1010a020`.
-
-## Validation expected at every checkpoint
-
-- all host C++ tests pass on Windows and Ubuntu;
-- Win32 x86 probe/capture tools compile in CI;
-- `nicolai_m36_phone_probe_contract` passes without proprietary data;
-- M35/M36 Python contracts remain green;
-- original-DLL and installed-engine evidence is kept local as scalar/JSONL
-  artifacts only;
-- stable production WAV output remains unchanged until explicit promotion;
-- no phrase-specific rule or global duration correction substitutes for missing
-  original behavior.
+The practical first gate for that executor is to stop the experimental path
+from being worse than the stable M31 baseline: stateful total-duration MAE must
+move down from ~10.59% toward the stable ~3.60%, while normalized spectral shape
+must improve from the current stateful ~39.50 toward or below baseline ~37.19.
