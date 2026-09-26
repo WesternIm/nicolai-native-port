@@ -1,8 +1,7 @@
 # M36 ordinary repeated-grain geometry
 
-This note isolates the statically proven part of the repeated-grain loop inside
-original `mtsyc32.dll` function `0x101083b0`. It is deliberately separate from
-renderer promotion and from still-unproven source-pointer offsets.
+This note isolates the statically proven repeated-grain loop inside original
+`mtsyc32.dll` function `0x101083b0`. It remains separate from renderer promotion.
 
 ## Original loop
 
@@ -48,19 +47,44 @@ These two lengths are independently passed through the recovered window lookup
 path before the Q15 writer. This differs from the old M34 adapter, which used a
 single `support = min(current_width, period)` for both sides.
 
+## Repeated-grain source coordinates
+
+The writer call at `0x1010862f..0x10108652` proves that repeated grains are
+centred on the source boundary at `pos[i + 1]`:
+
+```text
+left_source_start  = pos[i + 1] - left_window_length
+right_source_start = pos[i + 1]
+```
+
+The assembly obtains the left coordinate as:
+
+```text
+pos[i] - left_window_length + current_width
+```
+
+which is exactly `pos[i+1] - left_window_length` in the positive source domain.
+This is intentionally different from the *first* grain of the interval, whose
+bridge/front-tail selection is handled by `legacy_runtime_normal_source_selection_m36()`.
+
+That difference matters acoustically: the old experimental stateful adapter
+reselected `[interval_start ...]` and `[..., interval_end]` for every grain,
+whereas the original moves repeated grains to the shared interval boundary.
+
 ## Portable contract
 
-`legacy_runtime_ordinary_grain_m36()` reproduces the proven arithmetic and
-geometry only. It intentionally does not name the later source-pointer
-adjustments until those offsets are fully traced.
+`legacy_runtime_ordinary_grain_m36()` now reproduces:
 
-`legacy_runtime_grain_m36_test` locks:
+- Q11 period progression;
+- WORD-wrap period semantics;
+- current/next interval widths;
+- terminal next-width reuse;
+- independent left/right window lengths;
+- repeated-grain left/right source starts.
 
-- positive Q11 period progression;
-- negative arithmetic-shift behavior;
-- terminal reuse of current width;
-- WORD subtraction of source positions;
-- WORD wrap of the final period add.
+`legacy_runtime_grain_m36_test` locks positive and negative Q11 cases, terminal
+behavior, WORD source-position subtraction, period wrap and explicit source
+coordinates.
 
 The helper is linked into `nicolai_port` but is not yet used by
 `StatefulTdsM34` or production synthesis.
@@ -68,5 +92,5 @@ The helper is linked into `nicolai_port` but is not yet used by
 ## Integration boundary
 
 Do not promote this helper by itself. The first-grain bridge selection,
-repeated-grain source pointers, cross-descriptor transition path and recovered
-window cache must agree as one state machine before an opt-in audio experiment.
+repeated-grain geometry, cross-descriptor transition path and recovered window
+cache must agree as one state machine before an opt-in audio experiment.
