@@ -22,8 +22,9 @@ resource is materialized to `context +0x2c4`.
 20 <= requested_length < 400
 ```
 
-Lengths outside that domain are allocated and resampled by separate fallback
-branches; those fallbacks are not yet part of `legacy_window_m36_direct()`.
+Positive lengths outside that interval use allocation/resampling branches. M36
+now reconstructs the guarded runtime domain `1..400`; lengths above 400 remain
+outside the portable contract until their full packed-buffer bounds are proven.
 
 ## Anchor lengths
 
@@ -67,7 +68,7 @@ right_pad = A - left_pad - L
 
 [32767 repeated left_pad]
 +
-[ floor(0.5 * (1 + cos(pi*n/L)) * 32767), n=0..L-1 ]
+[ trunc(0.5 * (1 + cos(pi*n/L)) * 32767), n=0..L-1 ]
 +
 [0 repeated right_pad]
 ```
@@ -91,47 +92,91 @@ For requested `T = L + d`, where `L < T < A`:
 
 ```text
 zero_slots = A - L - 1
-start = L + floor(zero_slots / 2) - d + 1
+start = end_of(W_L) + floor(zero_slots / 2) - d + 1
 ```
 
-Expressed against the conceptual concatenation:
+The cached window is `T` WORDs beginning at that packed offset. It may therefore
+span an anchor-buffer boundary; reproducing every request by computing a fresh
+Hann window loses original pointer/cache behavior.
+
+## Small-length fallback (`1..19`)
+
+At `0x10109c64`, factor starts at 2 and doubles while:
 
 ```text
-W_L || W_A
+2 + factor * requested_length <= 20
 ```
 
-the cached window for `T` is exactly:
+The table offset slot is then:
 
 ```text
-(W_L || W_A)[start : start + T]
+slot = factor * requested_length
 ```
 
-This explains why the original direct table can return a pointer immediately:
-the intermediate windows share storage with neighboring anchors rather than
-owning separately generated cosine arrays.
+(where slot zero corresponds to cached length 20). The output copies exactly
+`requested_length` WORDs from that packed source pointer using stride `factor`.
+
+Example:
+
+```text
+requested 10 -> factor 2 -> slot 20 -> nominal cached length 40
+```
+
+and the result is every second WORD from that packed pointer.
+
+## Maximum-length fallback (`400`)
+
+The direct cache comparison is `<400`, so 400 enters the large-length branch.
+The original starts factor at 2 and doubles it while:
+
+```text
+requested_length / factor + 2 >= 400
+```
+
+For 400, factor remains 2 and selects:
+
+```text
+slot = 400 / 2 = 200
+nominal cached length = 20 + 200 = 220
+```
+
+The branch writes the first source WORD, then for factor 2 inserts the signed
+integer midpoint of the current and next packed WORD, advances the packed source
+index by one, and repeats. The portable helper follows the original signed IDIV
+truncation and WORD storage.
+
+The same branch contains behavior for lengths greater than 400, but those cases
+can walk far across the shared packed area. M36 deliberately does not claim
+that upper domain until its caller/runtime bounds are independently captured.
 
 ## Portable boundary
 
 `include/nicolai/legacy_window_m36.hpp` and
-`src/legacy_window_m36.cpp` implement the recovered direct cached domain
-`[20,400)`. `tests/legacy_window_m36_test.cpp` locks:
+`src/legacy_window_m36.cpp` now expose:
+
+- `legacy_window_m36_direct()` for `[20,400)`;
+- `legacy_window_m36_lookup()` for the guarded `1..400` domain.
+
+`tests/legacy_window_m36_test.cpp` locks:
 
 - exact anchor sequence;
 - first-anchor descending cosine topology;
 - anchor padding at 24;
 - packed pointer slicing for 21 and 23;
 - 94/115 ownership for requested length 100;
-- rejection of the still-unrecovered fallback domain.
+- `<20` power-of-two decimation at lengths 10 and 1;
+- the exact factor-2 / cached-220 path for requested length 400.
 
 The helper is linked into `nicolai_port` but is not used by `StatefulTdsM34` or
 production synthesis yet.
 
 ## Remaining exact-window work
 
-Before an audio experiment, recover and contract:
+Before an audio promotion:
 
-1. `0x10109be0` resampling for requested lengths below 20;
-2. the symmetric large-length fallback for requested lengths >=400;
-3. x87/Q15 last-bit behavior with an original Win32 oracle;
-4. only then replace analytic M14 windows in an opt-in stateful experiment and
-   rerun the 22-phrase timing/shape/energy audit.
+1. verify Q15 last-bit identity against original x87 `fcos` on Win32;
+2. capture whether any real runtime caller requests a window above 400;
+3. finish the remaining `0x101083b0 / 0x101086c0 / 0x10108cf0` transition
+   state so exact windows are applied to the correct source path;
+4. then enable the recovered table only in an opt-in stateful experiment and
+   rerun the same 22-phrase timing/shape/energy audit.
