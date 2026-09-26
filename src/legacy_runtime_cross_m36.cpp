@@ -20,6 +20,14 @@ std::int16_t word(int value) {
     return static_cast<std::int16_t>(static_cast<std::uint16_t>(value));
 }
 
+LegacyRuntimeCrossShoulderM36 shoulder_for(int previous_extent, int current_extent) {
+    if (previous_extent > current_extent)
+        return LegacyRuntimeCrossShoulderM36::Previous;
+    if (current_extent > previous_extent)
+        return LegacyRuntimeCrossShoulderM36::Current;
+    return LegacyRuntimeCrossShoulderM36::None;
+}
+
 } // namespace
 
 LegacyRuntimeCrossPrimaryLayoutM36 legacy_runtime_cross_primary_layout_m36(
@@ -40,12 +48,33 @@ LegacyRuntimeCrossPrimaryLayoutM36 legacy_runtime_cross_primary_layout_m36(
     out.zero_prefix_length = previous_interval_width - larger;
     out.shoulder_length = larger - smaller;
     out.overlap_length = smaller;
-    if (previous_window_length > current_window_length)
-        out.shoulder = LegacyRuntimeCrossShoulderM36::Previous;
-    else if (current_window_length > previous_window_length)
-        out.shoulder = LegacyRuntimeCrossShoulderM36::Current;
-    else
-        out.shoulder = LegacyRuntimeCrossShoulderM36::None;
+    out.shoulder = shoulder_for(previous_window_length, current_window_length);
+    return out;
+}
+
+LegacyRuntimeCrossSecondaryLayoutM36 legacy_runtime_cross_secondary_layout_m36(
+    int previous_interval_width,
+    int current_interval_width,
+    int current_next_width) {
+    LegacyRuntimeCrossSecondaryLayoutM36 out;
+    if (previous_interval_width <= 0 || current_interval_width <= 0 ||
+        current_next_width <= 0) return out;
+
+    const int previous_extent =
+        std::min(previous_interval_width, current_interval_width);
+    const int current_extent =
+        std::min(current_interval_width, current_next_width);
+    const int larger = std::max(previous_extent, current_extent);
+    const int smaller = std::min(previous_extent, current_extent);
+
+    out.valid = true;
+    out.total_length = current_interval_width;
+    out.previous_extent = previous_extent;
+    out.current_extent = current_extent;
+    out.overlap_length = smaller;
+    out.shoulder_length = larger - smaller;
+    out.zero_suffix_length = current_interval_width - larger;
+    out.shoulder = shoulder_for(previous_extent, current_extent);
     return out;
 }
 
