@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <limits>
 
 namespace nicolai {
 namespace {
@@ -62,13 +61,28 @@ LegacyRuntimeOrdinaryGrainM36 legacy_runtime_ordinary_grain_m36(
     const int period = word(static_cast<std::int64_t>(correction) + first_period);
     if (period <= 0) return out;
 
+    const int left_length = std::min(current_width, period);
+    const int right_length = std::min(next_width, period);
+
+    // 0x1010862f..0x10108648 uses the boundary source position as the right
+    // source start and backs the left source up by the selected left length:
+    //   left  = pos[i] - left_len + current_width == pos[i+1] - left_len
+    //   right = pos[i+1]
+    const std::int64_t boundary =
+        source_positions[static_cast<std::size_t>(interval_index + 1)];
+    const std::int64_t left_source = boundary - left_length;
+    if (left_source < std::numeric_limits<std::int32_t>::min() ||
+        left_source > std::numeric_limits<std::int32_t>::max()) return out;
+
     out.valid = true;
     out.ordinal = ordinal;
     out.period = period;
     out.current_interval_width = current_width;
     out.next_interval_width = next_width;
-    out.left_window_length = std::min(current_width, period);
-    out.right_window_length = std::min(next_width, period);
+    out.left_window_length = left_length;
+    out.right_window_length = right_length;
+    out.left_source_position = static_cast<int>(left_source);
+    out.right_source_position = static_cast<int>(boundary);
     out.terminal_interval = terminal;
     return out;
 }
