@@ -57,6 +57,21 @@ struct LegacyRuntimeSourceSelectionM36 {
     int right_source_position = 0;
 };
 
+struct LegacyRuntimeCrossGeometryM36 {
+    bool valid = false;
+    bool used_saved_interval = false;
+    int previous_interval_index = 0;
+    int current_interval_index = 0;
+    int previous_interval_width = 0;
+    int previous_left_width = 0;
+    int previous_window_length = 0;
+    int current_interval_width = 0;
+    int current_window_length = 0;
+    int current_next_width = 0;
+    int previous_source_start = 0;
+    int current_source_start = 0;
+};
+
 void legacy_runtime_checkpoint_m36(LegacyRuntimeStateM36& state);
 
 LegacyRuntimeRouteM36 legacy_runtime_route_m36(
@@ -86,10 +101,19 @@ LegacyRuntimeSourceSelectionM36 legacy_runtime_initial_source_selection_m36(
     int buffered_interval_index,
     int buffered_first_period);
 
+// Nonzero descriptor-flag branch at 0x10108dcf..0x10108f1d. This captures the
+// exact support geometry before the original allocates/blends its temporary
+// transition buffer. It deliberately does not claim the later PCM mix yet.
+LegacyRuntimeCrossGeometryM36 legacy_runtime_cross_geometry_m36(
+    const std::vector<std::int32_t>& previous_positions,
+    const std::vector<std::int32_t>& current_positions,
+    const LegacyRuntimeStateM36& state,
+    int buffered_interval_index,
+    int current_interval_index);
+
 // Zero-byte branch of 0x10108cf0: after ordinary 0x101083b0 rendering, the
 // original multiplies the first `first_period` newly-written PCM samples by
-// the recovered window in reverse order. This is the descriptor-boundary
-// fade-in before 0x10109fc0 releases temporary lookup buffers.
+// the recovered window in reverse order.
 bool legacy_runtime_cross_zero_fade_m36(
     std::vector<std::int16_t>& output,
     std::size_t start_cursor,
