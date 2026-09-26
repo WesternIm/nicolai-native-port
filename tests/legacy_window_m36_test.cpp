@@ -49,11 +49,45 @@ int main() {
     assert(w100.lower_anchor == 94 && w100.upper_anchor == 115);
     assert(w100.q15.size() == 100);
 
-    // 0x10109be0 direct cache test is min <= n < max. 400 and out-of-range
-    // lengths deliberately remain for the recovered resampling fallback.
+    // Small fallback: len 10 immediately selects factor 2 and table slot 20,
+    // which is the cached length-40 pointer, then copies every second WORD.
+    const auto w40 = nicolai::legacy_window_m36_direct(40);
+    const auto w10 = nicolai::legacy_window_m36_lookup(10);
+    assert(w40.valid && w10.valid && w10.resampled);
+    assert(w10.resample_factor == 2 && w10.source_cache_length == 40);
+    assert(w10.q15.size() == 10);
+    for (int i = 0; i < 10; ++i)
+        assert(w10.q15[static_cast<std::size_t>(i)] ==
+            w40.q15[static_cast<std::size_t>(i * 2)]);
+
+    // len 1 repeatedly doubles the decimation factor until 2+factor > 20.
+    const auto w52 = nicolai::legacy_window_m36_direct(52);
+    const auto w1 = nicolai::legacy_window_m36_lookup(1);
+    assert(w52.valid && w1.valid && w1.resampled);
+    assert(w1.resample_factor == 32 && w1.source_cache_length == 52);
+    assert(w1.q15.size() == 1 && w1.q15[0] == w52.q15[0]);
+
+    // max=400 is excluded from direct lookup and enters the >=max branch.
+    // The first factor is 2, selecting slot 200 => nominal cached length 220.
+    const auto w220 = nicolai::legacy_window_m36_direct(220);
+    const auto w400 = nicolai::legacy_window_m36_lookup(400);
+    assert(w220.valid && w400.valid && w400.resampled);
+    assert(w400.resample_factor == 2 && w400.source_cache_length == 220);
+    assert(w400.q15.size() == 400);
+    for (int i = 0; i < 200; ++i) {
+        assert(w400.q15[static_cast<std::size_t>(2 * i)] ==
+            w220.q15[static_cast<std::size_t>(i)]);
+        const int sum = static_cast<int>(w220.q15[static_cast<std::size_t>(i)]) +
+            static_cast<int>(w220.q15[static_cast<std::size_t>(i + 1)]);
+        assert(w400.q15[static_cast<std::size_t>(2 * i + 1)] ==
+            static_cast<std::int16_t>(sum / 2));
+    }
+
     assert(!nicolai::legacy_window_m36_direct(19).valid);
     assert(!nicolai::legacy_window_m36_direct(400).valid);
     assert(!nicolai::legacy_window_m36_direct(401).valid);
+    assert(!nicolai::legacy_window_m36_lookup(0).valid);
+    assert(!nicolai::legacy_window_m36_lookup(401).valid);
 
     std::cout << "legacy_window_m36_test: PASSED\n";
 }
