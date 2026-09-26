@@ -1,5 +1,4 @@
 #include "nicolai/stateful_tds.hpp"
-#include "nicolai/legacy_runtime_cross_m36.hpp"
 #include "nicolai/legacy_runtime_executor_m36.hpp"
 #include "nicolai/legacy_runtime_grain_m36.hpp"
 #include "nicolai/legacy_runtime_state.hpp"
@@ -123,8 +122,6 @@ Pcm16Mono resynthesize_stateful_m34_legacy(const Pcm16Mono& source,
         timeline.nodes.back().sample != source.samples.size()-1 ||
         !(ld >= 0.125 && ld <= 4.0 && rd >= 0.125 && rd <= 4.0) ||
         !(le > 0.0 && le < 8.0 && re > 0.0 && re < 8.0)) return out;
-    // Validate before mutating caller-owned state; malformed intervals never
-    // silently fall back to the stable renderer inside an experimental run.
     for (std::size_t i=0; i+1<timeline.nodes.size(); ++i) {
         const auto a=timeline.nodes[i].sample, b=timeline.nodes[i+1].sample;
         if (a >= b || b-a > 3200) return out;
@@ -163,8 +160,6 @@ Pcm16Mono resynthesize_stateful_m34_legacy(const Pcm16Mono& source,
             const auto w=window_m34(support);
             const auto cursor=out.samples.size();
             if (!legacy_tds_write_m34(out.samples,cursor,period,left,right,w,w)) return {};
-            // M32 phone-local energy remains live; no whole-diphone averaging.
-            // A 5 ms blend is evaluated in SOURCE coordinates at the split.
             const double split=static_cast<double>(timeline.nodes[timeline.split_node].sample);
             for (int k=0; k<period; ++k) {
                 const double x=a+static_cast<double>(width)*k/period;
@@ -204,10 +199,17 @@ Pcm16Mono resynthesize_stateful_m36_experimental(const Pcm16Mono& source,
 
     auto next_state = state;
     LegacyRuntimeStateM36 runtime;
-    runtime.cursor = 0;
-    runtime.end_cursor = 0;
     bool local_started = false;
-    bool consumed_pending = false;
+
+    // Cross-descriptor PCM ownership is deliberately not guessed here. The
+    // recovered 0x10108cf0 executor needs source context beyond one portable
+    // diphone slice plus caller step-buffer ownership that is not yet proven.
+    // The runnable A/B profile therefore isolates exact local initial,
+    // ordinary and deferred-terminal behavior first.
+    next_state.m36_has_pending_terminal = false;
+    next_state.m36_pending_interval = -1;
+    next_state.m36_pending_pcm.clear();
+    next_state.m36_pending_positions.clear();
 
     auto pitch_at=[&](std::size_t index) {
         if (!timeline.nodes[index].voiced) return 2048;
@@ -216,8 +218,7 @@ Pcm16Mono resynthesize_stateful_m36_experimental(const Pcm16Mono& source,
     };
 
     for (std::size_t i=0; i+1<timeline.nodes.size(); ++i) {
-        const auto a=timeline.nodes[i].sample, b=timeline.nodes[i+1].sample;
-        const int width=static_cast<int>(b-a);
+        const int width=static_cast<int>(timeline.nodes[i+1].sample-timeline.nodes[i].sample);
         const std::size_t ni=std::min(i+1,timeline.nodes.size()-2);
         const int next_width=static_cast<int>(timeline.nodes[ni+1].sample-timeline.nodes[ni].sample);
         const int duration_q11=q11(i < timeline.split_node ? ld : rd);
@@ -242,80 +243,8 @@ Pcm16Mono resynthesize_stateful_m36_experimental(const Pcm16Mono& source,
             continue;
         }
 
-        // The previous descriptor's deferred terminal is consumed by the first
-        // positive step of this descriptor. Unknown caller gate/flag ownership
-        // is intentionally not invented: use the proven nonzero cross branch,
-        // with a transactional terminal+ordinary fallback when its guarded
-        // geometry rejects the case.
-        if (next_state.m36_has_pending_terminal && !consumed_pending) {
-            const auto geometry=legacy_runtime_cross_geometry_m36(
-                next_state.m36_pending_positions,positions,runtime,
-                next_state.m36_pending_interval,static_cast<int>(i));
-            bool ok=false;
-            if (geometry.valid) {
-                const int previous_boundary=next_state.m36_pending_positions[
-                    static_cast<std::size_t>(geometry.previous_interval_index+1)];
-                const int current_boundary=positions[i+1];
-                const auto cross=legacy_runtime_execute_cross_m36(
-                    out.samples,runtime,next_state.m36_pending_pcm,source.samples,
-                    geometry,previous_boundary,current_boundary,
-                    next_state.m36_pending_step,step);
-                if (cross.valid) {
-                    next_state.grains+=static_cast<std::size_t>(cross.total_grains_written);
-                    next_state.emitted_samples+=cross.total_samples_written;
-                    ++next_state.m36_cross_paths;
-                    ok=true;
-                }
-            }
-            if (!ok) {
-                ++next_state.m36_fallbacks;
-                const auto terminal=legacy_runtime_execute_terminal_m36(
-                    out.samples,runtime,next_state.m36_pending_pcm,
-                    next_state.m36_pending_positions,next_state.m36_pending_interval,
-                    next_state.m36_pending_step);
-                if (terminal.valid) {
-                    ++next_state.grains;
-                    next_state.emitted_samples+=terminal.total_samples_written;
-                    ++next_state.m36_terminal_flushes;
-                } else if (!m36_execute_compat_interval(out.samples,runtime,
-                    next_state.m36_pending_pcm,next_state.m36_pending_positions,
-                    next_state.m36_pending_interval,next_state.m36_pending_step)) {
-                    return {};
-                } else {
-                    next_state.grains+=static_cast<std::size_t>(
-                        next_state.m36_pending_step.count);
-                    for(int ordinal=0;ordinal<next_state.m36_pending_step.count;++ordinal)
-                        next_state.emitted_samples+=next_state.m36_pending_step.first_period+
-                            rounded_delta(next_state.m36_pending_step.delta_q11,ordinal);
-                }
-
-                legacy_runtime_checkpoint_m36(runtime);
-                const auto ordinary=legacy_runtime_execute_ordinary_m36(
-                    out.samples,runtime,source.samples,positions,static_cast<int>(i),step);
-                if (ordinary.valid) {
-                    next_state.grains+=static_cast<std::size_t>(ordinary.grains_written);
-                    next_state.emitted_samples+=ordinary.total_samples_written;
-                } else if (!m36_execute_compat_interval(out.samples,runtime,
-                    source.samples,positions,static_cast<int>(i),step)) {
-                    return {};
-                } else {
-                    next_state.grains+=static_cast<std::size_t>(step.count);
-                    for(int ordinal=0;ordinal<step.count;++ordinal)
-                        next_state.emitted_samples+=step.first_period+
-                            rounded_delta(step.delta_q11,ordinal);
-                }
-            }
-            next_state.m36_has_pending_terminal=false;
-            next_state.m36_pending_interval=-1;
-            next_state.m36_pending_pcm.clear();
-            next_state.m36_pending_positions.clear();
-            consumed_pending=true;
-            local_started=true;
-            runtime.word26=0;
-            continue;
-        }
-
-        if (!local_started) {
+        const bool terminal = i+2==timeline.nodes.size();
+        if (!local_started && !terminal) {
             if (m36_execute_initial(out.samples,runtime,source.samples,positions,
                     static_cast<int>(i),step)) {
                 ++next_state.m36_initial_paths;
@@ -328,72 +257,46 @@ Pcm16Mono resynthesize_stateful_m36_experimental(const Pcm16Mono& source,
                 continue;
             }
             ++next_state.m36_fallbacks;
+        }
+
+        if (terminal) {
+            const auto terminal_result=legacy_runtime_execute_terminal_m36(
+                out.samples,runtime,source.samples,positions,static_cast<int>(i),step);
+            if (terminal_result.valid) {
+                ++next_state.grains;
+                next_state.emitted_samples+=terminal_result.total_samples_written;
+                ++next_state.m36_terminal_flushes;
+                local_started=true;
+                runtime.word26=0;
+                continue;
+            }
+            ++next_state.m36_fallbacks;
+        } else {
             legacy_runtime_checkpoint_m36(runtime);
             const auto ordinary=legacy_runtime_execute_ordinary_m36(
                 out.samples,runtime,source.samples,positions,static_cast<int>(i),step);
             if (ordinary.valid) {
                 next_state.grains+=static_cast<std::size_t>(ordinary.grains_written);
                 next_state.emitted_samples+=ordinary.total_samples_written;
-            } else if (!m36_execute_compat_interval(out.samples,runtime,
-                source.samples,positions,static_cast<int>(i),step)) {
-                return {};
-            } else {
-                next_state.grains+=static_cast<std::size_t>(step.count);
-                for(int ordinal=0;ordinal<step.count;++ordinal)
-                    next_state.emitted_samples+=step.first_period+
-                        rounded_delta(step.delta_q11,ordinal);
+                local_started=true;
+                runtime.word26=0;
+                continue;
             }
-            local_started=true;
-            runtime.word26=0;
-            continue;
-        }
-
-        const bool terminal = i+2==timeline.nodes.size();
-        if (terminal) {
-            next_state.m36_has_pending_terminal=true;
-            next_state.m36_pending_interval=static_cast<int>(i);
-            next_state.m36_pending_step=step;
-            next_state.m36_pending_pcm=source.samples;
-            next_state.m36_pending_positions=positions;
-            continue;
-        }
-
-        legacy_runtime_checkpoint_m36(runtime);
-        const auto ordinary=legacy_runtime_execute_ordinary_m36(
-            out.samples,runtime,source.samples,positions,static_cast<int>(i),step);
-        if (ordinary.valid) {
-            next_state.grains+=static_cast<std::size_t>(ordinary.grains_written);
-            next_state.emitted_samples+=ordinary.total_samples_written;
-        } else {
             ++next_state.m36_fallbacks;
-            if (!m36_execute_compat_interval(out.samples,runtime,
-                    source.samples,positions,static_cast<int>(i),step)) return {};
-            next_state.grains+=static_cast<std::size_t>(step.count);
-            for(int ordinal=0;ordinal<step.count;++ordinal)
-                next_state.emitted_samples+=step.first_period+
-                    rounded_delta(step.delta_q11,ordinal);
         }
-        runtime.word26=0;
-    }
 
-    // A descriptor made solely of a deferred positive terminal cannot return an
-    // empty unit through the legacy chain API. Flush that edge case locally;
-    // normal multi-interval descriptors keep the terminal buffered for the next
-    // descriptor cross path.
-    if (out.samples.empty() && next_state.m36_has_pending_terminal &&
-        next_state.m36_pending_pcm==source.samples) {
-        const auto terminal=legacy_runtime_execute_terminal_m36(
-            out.samples,runtime,next_state.m36_pending_pcm,
-            next_state.m36_pending_positions,next_state.m36_pending_interval,
-            next_state.m36_pending_step);
-        if (!terminal.valid) return {};
-        ++next_state.grains;
-        next_state.emitted_samples+=terminal.total_samples_written;
-        ++next_state.m36_terminal_flushes;
-        next_state.m36_has_pending_terminal=false;
-        next_state.m36_pending_interval=-1;
-        next_state.m36_pending_pcm.clear();
-        next_state.m36_pending_positions.clear();
+        // Guarded compatibility fallback keeps the A/B run complete when a
+        // recovered M36 window/source request leaves the currently proven
+        // domain. It deliberately uses the old analytic source-front/tail
+        // selection and is counted so a candidate cannot hide behind fallback.
+        if (!m36_execute_compat_interval(out.samples,runtime,source.samples,
+                positions,static_cast<int>(i),step)) return {};
+        next_state.grains+=static_cast<std::size_t>(step.count);
+        for(int ordinal=0;ordinal<step.count;++ordinal)
+            next_state.emitted_samples+=step.first_period+
+                rounded_delta(step.delta_q11,ordinal);
+        local_started=true;
+        runtime.word26=0;
     }
 
     state=std::move(next_state);
