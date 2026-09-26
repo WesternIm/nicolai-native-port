@@ -86,6 +86,10 @@ int main(int argc,char**argv){
    if(!a.valid){std::cerr<<id<<" synth "<<a.error<<"\n";continue;}
    if(policy.use_stateful_tds_m34)
        std::cout<<"TDS\t"<<id<<"\t"<<a.tds_intervals_m34<<"\t"<<a.tds_grains_m34<<"\t"<<a.tds_dropped_m34<<"\t"<<a.tds_final_carry_m34<<"\n";
+   if(policy.use_stateful_tds_m34)
+       std::cout<<"CLOCK\t"<<id<<"\t"<<a.pcm.samples.size()<<"\t"<<a.tds_target_samples_m35
+           <<"\t"<<a.tds_budget_samples_m35<<"\t"<<a.tds_emitted_samples_m35
+           <<"\t"<<a.tds_clamped_records_m35<<"\n";
    nicolai::apply_pc_reference_output_gain(a.pcm);
    nicolai::append_legacy_pc_terminal_silence(a.pcm,wordstr,16000);
    nicolai::write_wav_pcm16_mono(std::filesystem::path(argv[5])/(id+".wav"),a.pcm);

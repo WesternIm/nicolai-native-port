@@ -19,3 +19,14 @@ jobs:
         run: cmake --build build --config Debug --parallel
       - name: Test
         run: ctest --test-dir build -C Debug --output-on-failure
+  metric-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install metric dependencies
+        run: python -m pip install -r tools/requirements-parity.txt
+      - name: Voice-free metric calibration and contracts
+        run: python tools/test_m35_metrics.py

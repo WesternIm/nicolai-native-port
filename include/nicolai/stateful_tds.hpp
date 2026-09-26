@@ -8,6 +8,8 @@ namespace nicolai {
 struct StatefulTdsM34 {
     std::int16_t carry = 0;
     std::size_t intervals = 0, grains = 0, dropped = 0;
+    std::int64_t target_samples = 0, budget_consumed_samples = 0, emitted_samples = 0;
+    std::size_t clamped_delta_records = 0;
 };
 // Experimental adapter, NOT the complete PC selection/rollback state machine.
 // Exact SEG nodes + Q11 step + Q15 writer; analytic M14 windows and simplified
