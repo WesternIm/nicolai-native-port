@@ -1,0 +1,173 @@
+{
+  "phrases": 22,
+  "rule": "No aggregate metric regression (>1e-9), at least one improvement",
+  "caveat": "Fixed selection corpus; not independent held-out validation",
+  "candidates": [
+    {
+      "candidate": "baseline",
+      "settings": {
+        "candidate": "baseline",
+        "stateful_tds": false,
+        "shared_phone_duration": false,
+        "physical_length_strength": 0.0,
+        "physical_energy_strength": 0.0
+      },
+      "eligible": false,
+      "improved_metrics": [],
+      "regressed_metrics": [],
+      "directional_deltas": {
+        "mean_active_waveform_correlation": 0.0,
+        "active_duration_mae_percent": -0.0,
+        "total_duration_mae_percent": -0.0,
+        "f0_contour_mae_percent": -0.0,
+        "mean_mfcc_dtw": -0.0,
+        "rms_ratio_mae_percent": -0.0
+      }
+    },
+    {
+      "candidate": "stateful-unit",
+      "settings": {
+        "candidate": "stateful-unit",
+        "stateful_tds": true,
+        "shared_phone_duration": false,
+        "physical_length_strength": 0.0,
+        "physical_energy_strength": 0.0
+      },
+      "eligible": false,
+      "improved_metrics": [
+        "mean_active_waveform_correlation",
+        "rms_ratio_mae_percent"
+      ],
+      "regressed_metrics": [
+        "active_duration_mae_percent",
+        "total_duration_mae_percent",
+        "f0_contour_mae_percent",
+        "mean_mfcc_dtw"
+      ],
+      "directional_deltas": {
+        "mean_active_waveform_correlation": 0.0032343571205269706,
+        "active_duration_mae_percent": -21.259648428989074,
+        "total_duration_mae_percent": -13.235862187748047,
+        "f0_contour_mae_percent": -0.38422617122696323,
+        "mean_mfcc_dtw": -1.1651618998046729,
+        "rms_ratio_mae_percent": 0.8978071505510226
+      }
+    },
+    {
+      "candidate": "stateful-shared",
+      "settings": {
+        "candidate": "stateful-shared",
+        "stateful_tds": true,
+        "shared_phone_duration": true,
+        "physical_length_strength": 0.0,
+        "physical_energy_strength": 0.0
+      },
+      "eligible": false,
+      "improved_metrics": [
+        "mean_active_waveform_correlation",
+        "rms_ratio_mae_percent"
+      ],
+      "regressed_metrics": [
+        "active_duration_mae_percent",
+        "total_duration_mae_percent",
+        "f0_contour_mae_percent",
+        "mean_mfcc_dtw"
+      ],
+      "directional_deltas": {
+        "mean_active_waveform_correlation": 0.011199082733480081,
+        "active_duration_mae_percent": -10.838680333801303,
+        "total_duration_mae_percent": -6.995382367838428,
+        "f0_contour_mae_percent": -2.4048042077305496,
+        "mean_mfcc_dtw": -3.7185840640095194,
+        "rms_ratio_mae_percent": 2.7391229324578985
+      }
+    },
+    {
+      "candidate": "stateful-length",
+      "settings": {
+        "candidate": "stateful-length",
+        "stateful_tds": true,
+        "shared_phone_duration": true,
+        "physical_length_strength": 0.002,
+        "physical_energy_strength": 0.0
+      },
+      "eligible": false,
+      "improved_metrics": [
+        "mean_active_waveform_correlation",
+        "rms_ratio_mae_percent"
+      ],
+      "regressed_metrics": [
+        "active_duration_mae_percent",
+        "total_duration_mae_percent",
+        "f0_contour_mae_percent",
+        "mean_mfcc_dtw"
+      ],
+      "directional_deltas": {
+        "mean_active_waveform_correlation": 0.012034073011676055,
+        "active_duration_mae_percent": -10.82358276894405,
+        "total_duration_mae_percent": -6.967466062836521,
+        "f0_contour_mae_percent": -2.238646606781364,
+        "mean_mfcc_dtw": -4.009257804577814,
+        "rms_ratio_mae_percent": 2.8480440504190367
+      }
+    },
+    {
+      "candidate": "stateful-energy",
+      "settings": {
+        "candidate": "stateful-energy",
+        "stateful_tds": true,
+        "shared_phone_duration": true,
+        "physical_length_strength": 0.0,
+        "physical_energy_strength": 0.002
+      },
+      "eligible": false,
+      "improved_metrics": [
+        "mean_active_waveform_correlation",
+        "rms_ratio_mae_percent"
+      ],
+      "regressed_metrics": [
+        "active_duration_mae_percent",
+        "total_duration_mae_percent",
+        "f0_contour_mae_percent",
+        "mean_mfcc_dtw"
+      ],
+      "directional_deltas": {
+        "mean_active_waveform_correlation": 0.01118856788515532,
+        "active_duration_mae_percent": -10.838680333801303,
+        "total_duration_mae_percent": -6.995382367838428,
+        "f0_contour_mae_percent": -2.4048075392436363,
+        "mean_mfcc_dtw": -3.7164804830305727,
+        "rms_ratio_mae_percent": 2.721664918682529
+      }
+    },
+    {
+      "candidate": "stateful-both",
+      "settings": {
+        "candidate": "stateful-both",
+        "stateful_tds": true,
+        "shared_phone_duration": true,
+        "physical_length_strength": 0.002,
+        "physical_energy_strength": 0.002
+      },
+      "eligible": false,
+      "improved_metrics": [
+        "mean_active_waveform_correlation",
+        "rms_ratio_mae_percent"
+      ],
+      "regressed_metrics": [
+        "active_duration_mae_percent",
+        "total_duration_mae_percent",
+        "f0_contour_mae_percent",
+        "mean_mfcc_dtw"
+      ],
+      "directional_deltas": {
+        "mean_active_waveform_correlation": 0.012023626001751136,
+        "active_duration_mae_percent": -10.82358276894405,
+        "total_duration_mae_percent": -6.967466062836521,
+        "f0_contour_mae_percent": -2.238645638269036,
+        "mean_mfcc_dtw": -4.007107415710294,
+        "rms_ratio_mae_percent": 2.830566869935474
+      }
+    }
+  ]
+}

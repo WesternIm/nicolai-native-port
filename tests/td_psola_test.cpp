@@ -5,6 +5,19 @@
 #include <iostream>
 
 int main() {
+    assert(nicolai::legacy_reciprocal_pitch_m34(100,100,200,0)==2684354);
+    assert(nicolai::legacy_reciprocal_pitch_m34(100,100,200,50)==2013304);
+    assert(nicolai::legacy_reciprocal_pitch_m34(0,100,200,50)==0);
+    std::vector<std::int16_t> written{77};
+    assert(nicolai::legacy_tds_write_m34(written,1,3,{100,-100},{200,-200},{32767,32767},{32767,32767}));
+    assert((written==std::vector<std::int16_t>{77,99,99,-200}));
+    const auto saved=written;
+    assert(!nicolai::legacy_tds_write_m34(written,0,1,{1,2},{},{1,2},{}));
+    assert(written==saved);
+    std::vector<std::int16_t> gap;
+    assert(nicolai::legacy_tds_write_m34(gap,0,5,{100},{200},{32767},{32767}));
+    assert((gap==std::vector<std::int16_t>{99,0,0,0,199}));
+    assert(!nicolai::legacy_tds_write_m34(gap,6,1,{},{},{},{}));
     const auto step = nicolai::legacy_tds_step_m33(100,2048,2048,100,2048,0);
     assert(step.valid && step.count==1 && step.first_period==100 && step.carry==0);
     const auto drop = nicolai::legacy_tds_step_m33(100,2048,1024,100,2048,0);

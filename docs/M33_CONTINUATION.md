@@ -71,6 +71,10 @@ in `tools/requirements-reverse.txt`; generated disassembly remains local.
 
 ## Next implementation boundary (M34)
 
+Historical checkpoint: M34 tracing corrected the role of 0x1010d330 to
+descriptor packaging. Follow M34_FINDINGS.md and M34_CONTINUATION.md for the
+current stateful loop/coefficient/window ownership and M35 boundary.
+
 Do not promote the isolated timeline adapter merely because its source lattice
 is exact. Port the stateful half-phone regulator around `0x1010d330` and its
 source-node selection first. Connect its Q11 coefficient lanes to the tested

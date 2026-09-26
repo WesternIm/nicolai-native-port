@@ -1,3 +1,27 @@
+# Nicolai Native Port — M34
+
+M34 adds a stateful experimental execution adapter and proves the PC Q15
+window writer (1024 original-DLL matches), reciprocal interpolation (400) and
+sequential Q11 carry (1000). Shared-phone duration/energy and the three-point
+F0 contour remain live. Tracing corrects 0x1010d330 to descriptor packaging;
+coefficient production, source selection/rewind and exact window generation
+are explicitly distinguished from the proven primitives.
+
+Six settings were run on all 22 PC golden WAVs; all 20 host tests pass.
+The stable baseline is SHA256-identical to M33, 22/22. Experiments stay
+disabled: their raw duration errors are larger. A calibration audit also
+shows that historical F0 ranking is sensitive to its 150-Hz ceiling,
+whole-WAV RMS includes silence, and MFCC responds to level changes.
+Historical metrics are retained, not presented as perceptual ground truth.
+
+See [M34 findings](docs/M34_FINDINGS.md),
+[parity and metric audit](docs/M34_PC_PARITY_REPORT.md),
+and [reproduction / M35 continuation](docs/M34_CONTINUATION.md).
+Sources, tests, reproducibility tools and metric artifacts are tracked;
+proprietary DLLs/voice data and all WAVs remain local.
+
+---
+
 # Nicolai Native Port — M33
 
 M33 recovers the original PC source-node timeline and Q11 synthesis-step

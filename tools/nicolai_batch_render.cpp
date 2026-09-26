@@ -41,6 +41,8 @@ int main(int argc,char**argv){
             <<"\tUJU_L="<<rh.u_j_u_left_u<<"\tUJU_J="<<rh.u_j_u_center_j
             <<"\tUJU_R="<<rh.u_j_u_right_u<<"\n";
    nicolai::LegacyTimingPolicy policy;
+   if(const char* v=std::getenv("NICOLAI_STATEFUL_TDS")) policy.use_stateful_tds_m34=std::atoi(v)!=0;
+   if(const char* v=std::getenv("NICOLAI_SHARED_PHONE_DURATION")) policy.shared_phone_duration_m34=std::atoi(v)!=0;
    if(const char* v=std::getenv("NICOLAI_PC_SEG_TIMELINE")) policy.use_pc_seg_timeline=std::atoi(v)!=0;
    if(const char* v=std::getenv("NICOLAI_SEARCH_JOIN_PHASE")) policy.search_join_phase=std::atoi(v)!=0;
    if(const char* v=std::getenv("NICOLAI_PHONE_SCALE")) policy.phone_duration_scale=std::atof(v);
@@ -82,6 +84,8 @@ int main(int argc,char**argv){
    if(const char* v=std::getenv("NICOLAI_PITCH_SCALE")) pitch_scale=std::atof(v);
    auto a=nicolai::synthesize_diphone_chain_legacy_duration(db.bytes(),catalog,fr.phones,duration,&wordstr,pitch_scale,16000,fr.boundaries,policy,physical.valid?&physical:nullptr,&fr);
    if(!a.valid){std::cerr<<id<<" synth "<<a.error<<"\n";continue;}
+   if(policy.use_stateful_tds_m34)
+       std::cout<<"TDS\t"<<id<<"\t"<<a.tds_intervals_m34<<"\t"<<a.tds_grains_m34<<"\t"<<a.tds_dropped_m34<<"\t"<<a.tds_final_carry_m34<<"\n";
    nicolai::apply_pc_reference_output_gain(a.pcm);
    nicolai::append_legacy_pc_terminal_silence(a.pcm,wordstr,16000);
    nicolai::write_wav_pcm16_mono(std::filesystem::path(argv[5])/(id+".wav"),a.pcm);

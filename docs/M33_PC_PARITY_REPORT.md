@@ -16,7 +16,9 @@ golden corpus phrases.
 - Same PC pack `reference_pack_20260924_222948`, voice Nicolai 16 kHz.
 - Same `measure_parity.py` definitions as committed M32: active waveform
   correlation, active/total duration, 12-bin normalized F0 contour MAE,
-  active-region 12-coefficient MFCC-DTW, active-region RMS ratio/error.
+  active-region 12-coefficient MFCC-DTW, whole-WAV RMS ratio/error.
+  M34's metric audit corrected this RMS label and documents F0 extractor
+  sensitivity; historical numerical values are unchanged.
 - No golden/reference/rendered PCM, DLL, dictionary, or voice database is
   committed. Reports contain only phrases, scalar metrics, and hashes.
 
