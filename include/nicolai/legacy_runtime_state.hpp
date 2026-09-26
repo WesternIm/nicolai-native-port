@@ -49,11 +49,9 @@ struct LegacyRuntimeRouteM36 {
     bool checkpoint_before_write = false;
 };
 
-// First-grain source ownership visible in the ordinary 0x101083b0 path.
-// Positions are source sample coordinates from descriptor +0x30. When +0x26
-// records a preceding dropped interval, the left source is bridged from the
-// right edge of that dropped interval (+0x2a), while the right source remains
-// the tail of the current interval. Window lengths are clamped by first_period.
+// First-grain source ownership for ordinary and initial-transition paths.
+// Positions are source sample coordinates from descriptor +0x30. Window lengths
+// are the source support lengths passed to 0x10109980 after clamping by period.
 struct LegacyRuntimeSourceSelectionM36 {
     bool valid = false;
     bool bridged_drop = false;
@@ -91,12 +89,23 @@ LegacyRuntimeRollbackM36 legacy_runtime_drop_rollback_m36(
     int gate_b);
 
 // Exact first write selection at 0x10108426..0x10108516 for the ordinary
-// 0x101083b0 path. This models source coordinates/length ownership only; exact
-// 0x10109be0 window lookup/construction remains a separate recovery boundary.
+// 0x101083b0 path. When +0x26 records a preceding drop, the left source bridges
+// from source[+0x2a+1] instead of source[current].
 LegacyRuntimeSourceSelectionM36 legacy_runtime_normal_source_selection_m36(
     const std::vector<std::int32_t>& source_positions,
     int interval_index,
     const LegacyRuntimeStateM36& state,
     int first_period);
+
+// Exact first write selection at 0x10108765..0x10108841 in 0x101086c0.
+// The left source starts at source[state.word2e+1]. Its support normally uses
+// the following interval (word2e+1 -> word2e+2), falling back to the current
+// interval at the terminal boundary. The right source is the tail ending at
+// source[buffered_interval+1].
+LegacyRuntimeSourceSelectionM36 legacy_runtime_initial_source_selection_m36(
+    const std::vector<std::int32_t>& source_positions,
+    const LegacyRuntimeStateM36& state,
+    int buffered_interval_index,
+    int buffered_first_period);
 
 } // namespace nicolai
