@@ -30,6 +30,25 @@ struct LegacyRuntimeRollbackM36 {
     std::int32_t cursor_delta = 0;
 };
 
+// Per-interval dispatcher visible at 0x10107d54..0x10107ebe.
+// DeferredTerminal means the positive-count final interval is not sent through
+// the ordinary writer in-loop; the original handles terminal work after the
+// interval loop through a separate path.
+enum class LegacyRuntimeWritePathM36 {
+    Invalid = 0,
+    Dropped,
+    CrossTransition,
+    InitialTransition,
+    Ordinary,
+    DeferredTerminal,
+};
+
+struct LegacyRuntimeRouteM36 {
+    bool valid = false;
+    LegacyRuntimeWritePathM36 path = LegacyRuntimeWritePathM36::Invalid;
+    bool checkpoint_before_write = false;
+};
+
 // First-grain source ownership visible in the ordinary 0x101083b0 path.
 // Positions are source sample coordinates from descriptor +0x30. When +0x26
 // records a preceding dropped interval, the left source is bridged from the
@@ -48,6 +67,16 @@ struct LegacyRuntimeSourceSelectionM36 {
 
 // Snapshot emitted by 0x10107e9f..0x10107ebb before the ordinary grain path.
 void legacy_runtime_checkpoint_m36(LegacyRuntimeStateM36& state);
+
+// Exact branch selection after 0x10109800 produced a step record. The original
+// tests positive/zero count first, then an outer cross-descriptor gate, then an
+// utterance-local "already started" flag, and only then the terminal interval.
+LegacyRuntimeRouteM36 legacy_runtime_route_m36(
+    int step_count,
+    int interval_index,
+    int node_count,
+    bool cross_descriptor_pending,
+    bool already_started);
 
 // Exact state mutation visible in the dropped-step branch at 0x10107f65.
 // gate_a is the low WORD tested from the third caller argument; gate_b is the
