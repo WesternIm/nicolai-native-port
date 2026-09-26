@@ -1,5 +1,6 @@
 #include "nicolai/legacy_tds.hpp"
 #include <algorithm>
+#include <limits>
 namespace nicolai {
 namespace {
 // Explicit x86 arithmetic shift / signed WORD truncation, portable to ARM.
@@ -44,5 +45,35 @@ LegacyTdsStepM33 legacy_tds_step_m33(
     out.carry = word(carry - sum + target);
     out.valid = true;
     return out;
+}
+int legacy_reciprocal_pitch_m34(int start, int length, int end, int position) {
+    if (start < 1 || end < 1 || length < 1 || position < 0 || position > length) return 0;
+    const int a = 0x10000000 / start;
+    const int slope = (0x10000000 / end - a) / length;
+    return a + slope * position;
+}
+bool legacy_tds_write_m34(std::vector<std::int16_t>& output, std::size_t cursor,
+    int period, const std::vector<std::int16_t>& left,
+    const std::vector<std::int16_t>& right,
+    const std::vector<std::int16_t>& lw,
+    const std::vector<std::int16_t>& rw) {
+    if (period < 1 || period > 3200 || lw.size() > static_cast<std::size_t>(period) ||
+        rw.size() > static_cast<std::size_t>(period) || left.size() < lw.size() ||
+        right.size() < rw.size() || cursor > output.size() ||
+        cursor > std::numeric_limits<std::size_t>::max() - period) return false;
+    output.resize(std::max(output.size(), cursor + period));
+    const int right_start = period - static_cast<int>(rw.size());
+    for (int i = 0; i < period; ++i) {
+        // Two signed WORD products fit in int64 even for -32768 inputs.
+        std::int64_t sum = 0;
+        if (i < static_cast<int>(lw.size())) sum += static_cast<int>(left[i]) * lw[i];
+        if (i >= right_start) {
+            const auto j = static_cast<std::size_t>(i - right_start);
+            sum += static_cast<int>(right[j]) * rw[rw.size() - 1 - j];
+        }
+        const auto shifted = sum >= 0 ? sum / 32768 : -((-sum + 32767) / 32768);
+        output[cursor + i] = word(static_cast<int>(shifted));
+    }
+    return true;
 }
 } // namespace nicolai

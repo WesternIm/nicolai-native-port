@@ -1,3 +1,56 @@
+# Nicolai Native Port — M35
+
+M35 audits the measurement and execution clocks without changing synthesis.
+The M34 duration target itself is already too long: shared-phone target plus
+flush has 10.6806% total-duration MAE; actual output has 10.5941%. The writer
+differs from its requested duration by only 2.47 ms per phrase on average.
+This localizes the dominant drift upstream of writing, without claiming the
+PC feature builder or missing rollback is now reproduced.
+
+A separately versioned diagnostic measures pYIN F0/voicing, independent
+autocorrelation, gain-normalized spectral shape and aligned raw energy.
+Known-tone, harmonic-chirp, noise/voicing, gain and octave controls pass,
+but real-speech F0 coverage remains low: baseline matches only 29.2–33.0%
+of reference pYIN-voiced frames across the two tested window lengths.
+These conditional F0 scores are **not a promotion gate or speech ground truth**.
+
+All 20 portable tests and 6 voice-free metric contracts pass. All six
+22-WAV settings are byte-identical to M34 (132/132); the original-DLL
+primitive probes also pass again. Production defaults and physical [l]/[e]
+strengths remain unchanged. No phrase-specific rules or global timing fit.
+
+See [M35 findings](docs/M35_FINDINGS.md),
+[metric and clock report](docs/M35_PC_PARITY_REPORT.md),
+and [reproduction / M36 continuation](docs/M35_CONTINUATION.md).
+Only code, documentation, scalar metrics and hashes are tracked; voice data,
+DLLs, WAVs and feature caches remain local.
+
+---
+
+# Nicolai Native Port — M34
+
+M34 adds a stateful experimental execution adapter and proves the PC Q15
+window writer (1024 original-DLL matches), reciprocal interpolation (400) and
+sequential Q11 carry (1000). Shared-phone duration/energy and the three-point
+F0 contour remain live. Tracing corrects 0x1010d330 to descriptor packaging;
+coefficient production, source selection/rewind and exact window generation
+are explicitly distinguished from the proven primitives.
+
+Six settings were run on all 22 PC golden WAVs; all 20 host tests pass.
+The stable baseline is SHA256-identical to M33, 22/22. Experiments stay
+disabled: their raw duration errors are larger. A calibration audit also
+shows that historical F0 ranking is sensitive to its 150-Hz ceiling,
+whole-WAV RMS includes silence, and MFCC responds to level changes.
+Historical metrics are retained, not presented as perceptual ground truth.
+
+See [M34 findings](docs/M34_FINDINGS.md),
+[parity and metric audit](docs/M34_PC_PARITY_REPORT.md),
+and [reproduction / M35 continuation](docs/M34_CONTINUATION.md).
+Sources, tests, reproducibility tools and metric artifacts are tracked;
+proprietary DLLs/voice data and all WAVs remain local.
+
+---
+
 # Nicolai Native Port — M33
 
 M33 recovers the original PC source-node timeline and Q11 synthesis-step

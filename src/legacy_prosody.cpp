@@ -1,4 +1,5 @@
 #include "nicolai/legacy_prosody.hpp"
+#include "nicolai/stateful_tds.hpp"
 #include "nicolai/address_space.hpp"
 #include "nicolai/g711.hpp"
 #include "nicolai/static_files.hpp"
@@ -841,6 +842,7 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         Pcm16Mono raw;
         SegScheduleM15 sched;
         SegSpanLayout layout;
+        SegSourceTimelineM33 timeline;
         std::string label;
         double source_ms = 0.0;
         double target_ms = 0.0;
@@ -860,7 +862,9 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         u.raw=decode_g711_alaw_pcm(enc,sample_rate);
         if(u.raw.samples.empty()){out.error="decode_failed";return out;}
         u.sched=parse_seg_schedule_m15(*unit);
-        u.layout=policy.use_pc_seg_timeline
+        if(policy.use_stateful_tds_m34)
+            u.timeline=source_timeline_seg_m33(u.sched,u.raw.samples.size(),unit->signed_end>=0,sample_rate);
+        u.layout=(policy.use_pc_seg_timeline || policy.use_stateful_tds_m34)
             ? layout_seg_runs_m33(u.sched,u.raw.samples.size(),unit->signed_end>=0,sample_rate)
             : layout_seg_runs_m15(u.sched,u.raw.samples.size());
         if(!u.sched.valid||!u.layout.valid){out.error="seg_failed";return out;}
@@ -906,7 +910,8 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         double support=0.0;
         if(pi>0 && pi-1<units.size()){
             const auto&u=units[pi-1];
-            support += static_cast<double>(u.raw.samples.size()-std::min(u.layout.split_sample_estimate,u.raw.samples.size()));
+            const auto extent=policy.use_stateful_tds_m34 ? u.raw.samples.size()-1 : u.raw.samples.size();
+            support += static_cast<double>(extent-std::min(u.layout.split_sample_estimate,extent));
         }
         if(pi<units.size()){
             const auto&u=units[pi];
@@ -935,6 +940,7 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
     const auto phone_pitch_percent=m25_phone_pitch_percent_lattice(phones,word_count,policy);
     const auto physical_lattice=m27_physical_phone_pitch_lattice(phones,boundaries,physical,wordstr,policy,frontend);
     const auto& physical_pitch=physical_lattice.pitch;
+    StatefulTdsM34 tds_state; // one carry owner per utterance, not per run/unit
 
     for(std::size_t i=0;i<units.size();++i){
         auto&u=units[i];
@@ -970,6 +976,12 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         // record represented by each side of this diphone. Unlike M31's
         // weighted whole-unit projection, this deliberately changes the two
         // half durations independently and is not renormalized away.
+        if(policy.use_stateful_tds_m34 && policy.shared_phone_duration_m34){
+            // One phone coefficient owns the previous right + next left half.
+            // Unlike M23 this is not renormalized to each diphone's target.
+            if(phone_side_valid[i]) left_scale=phone_side_hint[i];
+            if(phone_side_valid[i+1]) right_scale=phone_side_hint[i+1];
+        }
         if(physical_length_strength>0.0){
             const double lp0=(i<physical_le_lattice.length_percent.size())
                 ? physical_le_lattice.length_percent[i] : 0.0;
@@ -983,7 +995,7 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         // Preserve M31 bit-for-bit when the physical [l] layer is disabled.
         // Re-averaging two nominally equal side scales can change the last
         // floating-point bit and push llround across a sample boundary.
-        const double effective_scale=(physical_length_strength>0.0 && (L+R)>0.0)
+        const double effective_scale=((physical_length_strength>0.0 || policy.use_stateful_tds_m34) && (L+R)>0.0)
             ? (L*left_scale+R*right_scale)/(L+R) : u.base_scale;
         u.target_ms=u.source_ms*effective_scale;
 
@@ -1082,7 +1094,10 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         const bool side_duration=std::abs(left_scale-right_scale)>=1e-10;
         const bool side_energy=std::abs(left_energy_gain-1.0)>=1e-12 ||
                                std::abs(right_energy_gain-1.0)>=1e-12;
-        if(!side_duration && !side_energy){
+        if(policy.use_stateful_tds_m34){
+            pcm=resynthesize_stateful_m34(u.raw,u.timeline,cfg,left_scale,right_scale,
+                left_energy_gain,right_energy_gain,tds_state);
+        } else if(!side_duration && !side_energy){
             pcm=resynthesize_seg_m15(u.raw,u.sched,u.layout,cfg,&ud);
         } else {
             pcm=resynthesize_seg_m32_phone_sides(
@@ -1098,6 +1113,14 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
                                left_scale,right_scale,left_energy_gain,right_energy_gain});
     }
 
+    out.tds_intervals_m34=tds_state.intervals;
+    out.tds_grains_m34=tds_state.grains;
+    out.tds_dropped_m34=tds_state.dropped;
+    out.tds_final_carry_m34=tds_state.carry;
+    out.tds_target_samples_m35=tds_state.target_samples;
+    out.tds_budget_samples_m35=tds_state.budget_consumed_samples;
+    out.tds_emitted_samples_m35=tds_state.emitted_samples;
+    out.tds_clamped_records_m35=tds_state.clamped_delta_records;
     out.pcm=rendered.front();
     for(std::size_t i=1;i<rendered.size();++i){
         OlaJoinDiagnostics jd;
@@ -1105,6 +1128,12 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         const double rps=(i<unit_pitch_left.size()?unit_pitch_left[i]:pitch_scale);
         const int lp=rh[i-1]>0?int(std::lround(rh[i-1]/lps)):0;
         const int rp=lh[i]>0?int(std::lround(lh[i]/rps)):0;
+        if(policy.use_stateful_tds_m34){
+            // The adapter emits a continuous integer grain clock. Never trim
+            // it again with the old waveform-correlation diphone join.
+            out.pcm.samples.insert(out.pcm.samples.end(),rendered[i].samples.begin(),rendered[i].samples.end());
+            continue;
+        }
         out.pcm=hann_ola_join(out.pcm,rendered[i],lp,rp,&jd,policy.search_join_phase);
         if(!jd.valid){out.error="join_failed";return out;}
     }

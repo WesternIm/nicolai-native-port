@@ -153,6 +153,8 @@ struct LegacyTimingPolicy {
     // decides promotion; false preserves M32 sample-for-sample.
     bool use_pc_seg_timeline = false;
     bool search_join_phase = true;
+    bool use_stateful_tds_m34 = false;
+    bool shared_phone_duration_m34 = false;
     // M20 PC-reference conformance pass. These are intentionally separate from
     // duration.par: the old Russian prosody layer applies additional word- and
     // boundary-level timing coefficients after the phone-duration lookup.
@@ -345,6 +347,10 @@ struct DiphoneChainLegacyResult {
     std::string error;
     Pcm16Mono pcm;
     std::vector<LegacyTimedDiphone> timings;
+    std::size_t tds_intervals_m34 = 0, tds_grains_m34 = 0, tds_dropped_m34 = 0;
+    int tds_final_carry_m34 = 0;
+    std::int64_t tds_target_samples_m35 = 0, tds_budget_samples_m35 = 0, tds_emitted_samples_m35 = 0;
+    std::size_t tds_clamped_records_m35 = 0;
 };
 
 // M20 duration/prosody conformance renderer. Nicolai's embedded rusvox
