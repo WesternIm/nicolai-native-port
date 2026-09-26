@@ -2,11 +2,24 @@
 
 from __future__ import annotations
 
+import copy
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import audit_phone_features_m36 as audit  # noqa: E402
+
+
+def descriptor(positions: list[int], split: int, voicing: list[int]) -> dict:
+    intervals = len(positions) - 1
+    return {
+        "node_count": len(positions),
+        "split_index": split,
+        "source_position": positions,
+        "voicing": voicing,
+        "duration_q11": [111] * intervals,
+        "pitch_q11": [222] * intervals,
+    }
 
 
 def main() -> int:
@@ -68,8 +81,59 @@ def main() -> int:
     assert report["matched"] == 1
     assert report["mismatched"] == 1
     assert report["invalid"] == 1
-    assert report["mismatches"][0]["id"] == "duration-mismatch"
-    assert report["invalid_records"][0]["id"] == "invalid-geometry"
+
+    # Independent runtime replay contract. The exact 2047 pitch value is an
+    # important x86 integer-truncation fingerprint, not an idealized Q11 unity.
+    runtime = {
+        "schema": audit.RUNTIME_SCHEMA,
+        "sequence": 1,
+        "thread_id": 7,
+        "feature_before": {
+            "count": 3,
+            "interval_duration": [160, 160],
+            "pitch_anchor": [80, 80, 80],
+        },
+        "previous_before": descriptor([0, 80, 160, 240], 1, [1, 1, 1]),
+        "next_before": descriptor([1000, 1080, 1160, 1240], 2, [1, 1, 1]),
+    }
+    expected = audit.simulate_runtime_record(runtime)
+    assert expected["feature_after"]["pitch_anchor"] == [80, 80, 80]
+    assert expected["previous_after"]["duration_q11"] == [111, 2048, 2048]
+    assert expected["previous_after"]["pitch_q11"] == [222, 2047, 2047]
+    assert expected["next_after"]["duration_q11"] == [2048, 2048, 111]
+    assert expected["next_after"]["pitch_q11"] == [2047, 2047, 222]
+
+    runtime.update(copy.deepcopy(expected))
+    full = audit.audit_runtime_records([runtime])
+    assert full["records"] == 1
+    assert full["matched"] == 1
+    assert full["mismatched"] == 0
+    assert full["invalid"] == 0
+
+    broken = copy.deepcopy(runtime)
+    broken["next_after"]["pitch_q11"][0] += 1
+    full_bad = audit.audit_runtime_records([broken])
+    assert full_bad["matched"] == 0
+    assert full_bad["mismatched"] == 1
+    assert "next.pitch_q11" in full_bad["mismatches"][0]["reasons"]
+
+    # Missing anchor repair is part of the runtime model now.
+    repaired = {
+        "schema": audit.RUNTIME_SCHEMA,
+        "sequence": 2,
+        "thread_id": 7,
+        "feature_before": {
+            "count": 3,
+            "interval_duration": [80, 80],
+            "pitch_anchor": [80, 0, 120],
+        },
+        "previous_before": descriptor([0, 80, 160, 240], 1, [1, 1, 1]),
+        "next_before": descriptor([1000, 1080, 1160, 1240], 2, [1, 1, 1]),
+    }
+    repaired_expected = audit.simulate_runtime_record(repaired)
+    assert repaired_expected["feature_after"]["pitch_anchor"] == [80, 80, 120]
+    assert repaired_expected["previous_after"]["pitch_q11"] == [222, 2047, 2047]
+    assert repaired_expected["next_after"]["pitch_q11"] == [1706, 1706, 222]
 
     print("test_m36_phone_features: PASSED")
     return 0
