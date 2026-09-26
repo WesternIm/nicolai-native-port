@@ -1,7 +1,9 @@
 #include "nicolai/legacy_runtime_state.hpp"
 
 #include <cassert>
+#include <cstdint>
 #include <iostream>
+#include <vector>
 
 int main() {
     using nicolai::LegacyRuntimeStateM36;
@@ -100,6 +102,66 @@ int main() {
         assert(s.clock_a == 220);
         assert(s.clock_b == 320);
         assert(s.end_cursor == 100); // +0x80 is untouched when saved >= marker
+    }
+
+    // Ordinary 0x101083b0 source ownership without a dropped predecessor.
+    {
+        const std::vector<std::int32_t> p{0, 50, 140, 260, 400};
+        LegacyRuntimeStateM36 s;
+        const auto q = nicolai::legacy_runtime_normal_source_selection_m36(
+            p, 2, s, 100);
+        assert(q.valid && !q.bridged_drop);
+        assert(q.current_interval_width == 120);
+        assert(q.left_interval_width == 120);
+        assert(q.left_window_length == 100);
+        assert(q.right_window_length == 100);
+        assert(q.left_source_position == 140);
+        assert(q.right_source_position == 160);
+    }
+
+    // After a dropped interval, +0x26/+0x2a bridge the next first grain from
+    // the dropped interval's right edge instead of current source[i].
+    {
+        const std::vector<std::int32_t> p{0, 50, 140, 260, 400};
+        LegacyRuntimeStateM36 s;
+        s.word26 = 1;
+        s.word2a = 0;
+        const auto q = nicolai::legacy_runtime_normal_source_selection_m36(
+            p, 2, s, 100);
+        assert(q.valid && q.bridged_drop);
+        assert(q.current_interval_width == 120);
+        assert(q.left_interval_width == 90); // source[1] -> source[2]
+        assert(q.left_window_length == 90);
+        assert(q.right_window_length == 100);
+        assert(q.left_source_position == 50); // source[dropped+1]
+        assert(q.right_source_position == 160); // source[current+1]-100
+    }
+
+    // Narrow period clamps both windows while preserving their different
+    // source ownership.
+    {
+        const std::vector<std::int32_t> p{0, 50, 140, 260, 400};
+        LegacyRuntimeStateM36 s;
+        s.word26 = 1;
+        s.word2a = 0;
+        const auto q = nicolai::legacy_runtime_normal_source_selection_m36(
+            p, 2, s, 60);
+        assert(q.valid && q.bridged_drop);
+        assert(q.left_window_length == 60);
+        assert(q.right_window_length == 60);
+        assert(q.left_source_position == 50);
+        assert(q.right_source_position == 200);
+    }
+
+    // A bridge requires dropped+2 to be a valid source point.
+    {
+        const std::vector<std::int32_t> p{0, 50, 140, 260};
+        LegacyRuntimeStateM36 s;
+        s.word26 = 1;
+        s.word2a = 2;
+        const auto q = nicolai::legacy_runtime_normal_source_selection_m36(
+            p, 1, s, 80);
+        assert(!q.valid);
     }
 
     std::cout << "legacy_runtime_state_test: PASSED\n";
