@@ -127,13 +127,14 @@ replay audit form Gate B: nonzero records with zero invalid/mismatched records.
   the active container cannot execute the Win32 x86 DLL;
 - live installed-engine Gate B capture still requires the Windows host;
 - upstream producer parity for feature records / voicing;
-- exact nonzero cross-transition temporary PCM mix and post-write state;
+- nonzero cross-transition post-write state and executor composition;
 - repeated-grain movement after first writes;
 - post-loop terminal path around `0x10108210`;
 - proof of any real window request above 400;
 - exact x87/Q15 last-bit window oracle;
 - any production or Android promotion.
 
-The next implementation target is the nonzero `0x10108cf0` temporary PCM
-blend/final writer path, then a guarded opt-in stateful A/B using recovered
-routing/windows rather than the current analytic approximations.
+The next implementation target is a guarded opt-in executor that composes the
+recovered nonzero `0x10108cf0` buffers with its four writer phases and runtime
+state transitions, then a stateful A/B using recovered routing/windows rather
+than the current analytic approximations.

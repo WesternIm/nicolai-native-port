@@ -167,6 +167,8 @@ int main() {
         assert(q.current_next_width == 130);
         assert(q.previous_source_start == 50);
         assert(q.current_source_start == 1080);
+        assert(q.previous_forward_source_start == 140);
+        assert(q.current_forward_source_start == 1190);
     }
 
     // With word2c set, cross transition ignores the buffered interval index and
@@ -189,6 +191,22 @@ int main() {
         assert(q.current_next_width == 150);
         assert(q.previous_source_start == 0);
         assert(q.current_source_start == 1230);
+        assert(q.previous_forward_source_start == 50);
+        assert(q.current_forward_source_start == 1320);
+    }
+
+    // At the terminal current interval 0x10108cf0 keeps the forward source on
+    // the interval's left marker instead of reading a nonexistent next marker.
+    {
+        const std::vector<std::int32_t> previous{0, 50, 140, 260, 400};
+        const std::vector<std::int32_t> current{1000, 1080, 1190, 1320, 1470};
+        LegacyRuntimeStateM36 s;
+        const auto q = nicolai::legacy_runtime_cross_geometry_m36(
+            previous, current, s, 2, 3);
+        assert(q.valid && q.current_interval_index == 3);
+        assert(q.current_interval_width == 150);
+        assert(q.current_next_width == 150);
+        assert(q.current_forward_source_start == 1320);
     }
 
     {

@@ -61,6 +61,8 @@ The branch now has portable contracts for:
   crossing to the next descriptor PCM base;
 - nonzero cross-transition geometry and its distinct central SAR16 overlap
   arithmetic;
+- exact nonzero cross-transition primary/secondary temporary PCM buffers,
+  including reverse/forward window orientation and both shoulder cases;
 - zero-branch cross fade;
 - original packed window-cache topology and guarded lookup for lengths 1..400.
 
@@ -86,9 +88,9 @@ an exact fallback for comparison.
 
 ## Next implementation checkpoint
 
-1. Finish the remaining nonzero `0x10108cf0` buffer/index ownership around the
-   already recovered cross geometry and SAR16 kernel.
-2. Build an opt-in M36 executor beside `StatefulTdsM34`; do not replace it.
+1. Build an opt-in M36 executor beside `StatefulTdsM34`; do not replace it.
+2. Compose the proven route, rollback, exact windows, temporary cross buffers
+   and four writer phases while keeping state mutation transactional.
 3. Re-run the 22 PC golden phrases and M35 timing/shape/energy diagnostics.
 4. Require improvement without a global duration scale or phrase rules before
    considering any production promotion.

@@ -70,6 +70,8 @@ struct LegacyRuntimeCrossGeometryM36 {
     int current_next_width = 0;
     int previous_source_start = 0;
     int current_source_start = 0;
+    int previous_forward_source_start = 0;
+    int current_forward_source_start = 0;
 };
 
 void legacy_runtime_checkpoint_m36(LegacyRuntimeStateM36& state);

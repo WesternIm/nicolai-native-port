@@ -1,6 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
+
+#include "nicolai/legacy_runtime_state.hpp"
 
 namespace nicolai {
 
@@ -60,6 +63,16 @@ struct LegacyRuntimeCrossSecondaryLayoutM36 {
     LegacyRuntimeCrossShoulderM36 shoulder = LegacyRuntimeCrossShoulderM36::None;
 };
 
+// Exact temporary PCM buffers constructed by the nonzero branch of
+// 0x10108cf0. They are kept separate from the runtime executor: primary is
+// consumed by the buffered-step writer phases, while secondary bridges into
+// the current descriptor.
+struct LegacyRuntimeCrossBuffersM36 {
+    bool valid = false;
+    std::vector<std::int16_t> primary;
+    std::vector<std::int16_t> secondary;
+};
+
 LegacyRuntimeCrossPrimaryLayoutM36 legacy_runtime_cross_primary_layout_m36(
     int previous_interval_width,
     int previous_window_length,
@@ -69,6 +82,15 @@ LegacyRuntimeCrossSecondaryLayoutM36 legacy_runtime_cross_secondary_layout_m36(
     int previous_interval_width,
     int current_interval_width,
     int current_next_width);
+
+// Materialize both temporary buffers from the source spans selected by
+// legacy_runtime_cross_geometry_m36(). Exact recovered M36 windows are used.
+// The function is deliberately pure and does not mutate renderer/runtime
+// state or write output PCM.
+LegacyRuntimeCrossBuffersM36 legacy_runtime_cross_buffers_m36(
+    const std::vector<std::int16_t>& previous_pcm,
+    const std::vector<std::int16_t>& current_pcm,
+    const LegacyRuntimeCrossGeometryM36& geometry);
 
 // Writer phase 1, 0x1010944a..0x10109480: raw previous PCM at its selected
 // boundary against the tail of primary temp.

@@ -82,6 +82,50 @@ out = WORD(sar16(sum))
 `legacy_runtime_cross_overlap_sample_m36()` preserves this exact wrapped
 32-bit + `SAR 16` behavior. It must not be replaced by the ordinary Q15 writer.
 
+## Exact temporary PCM materialization
+
+The loops at `0x10108f2d..0x10109328` are now represented by
+`legacy_runtime_cross_buffers_m36()`. The primitive consumes the source spans
+selected by `legacy_runtime_cross_geometry_m36()`, resolves the exact recovered
+M36 windows and returns both buffers without touching renderer state.
+
+For the primary buffer, let `W=previous_width`, `A=previous_window` and
+`B=current_window`. The previous contribution starts at `W-A`, the current
+contribution starts at `W-B`, and both source spans advance forward while their
+windows are read backwards. Therefore the buffer is exactly:
+
+```text
+zero prefix -> longer-source SAR15 shoulder -> wrapped-sum SAR16 overlap
+```
+
+The primary source spans are:
+
+```text
+previous: prev[k]   - A .. prev[k]   - 1
+current:  cur[i+1]  - B .. cur[i+1]  - 1
+```
+
+For the secondary buffer:
+
+```text
+P = min(previous_width, current_width)
+C = min(current_width, current_next_width)
+```
+
+Both contributions begin at output offset zero and both windows are read
+forward. The previous source starts at `prev[k]`. The current source starts at
+`cur[i+1]`, except at the terminal current interval where it starts at
+`cur[i]`. Its exact order is:
+
+```text
+wrapped-sum SAR16 overlap -> longer-source SAR15 shoulder -> zero suffix
+```
+
+Single-source shoulders use signed multiply followed by arithmetic `SAR 15`.
+The overlap uses the distinct wrapped 32-bit sum and `SAR 16` above. Source
+bounds and the recovered `1..400` exact-window domain are guarded; unsupported
+inputs fail without partially returning a buffer.
+
 ## Four exact writer phases
 
 After the temporary buffers are constructed, the tail of `0x10108cf0` makes
@@ -148,11 +192,11 @@ repeated grains.
 
 ## Current integration boundary
 
-The nonzero cross path no longer has unknown writer source ownership or region
-lengths in the statically traced positive domain. Remaining executor work is to
-materialize both temporary PCM buffers with the recovered region arithmetic,
-resolve source objects from each writer plan, use exact recovered windows, and
-apply the existing output/runtime state transitions around those calls.
+The nonzero cross path no longer has unknown temporary-buffer samples, writer
+source ownership or region lengths in the statically traced positive domain.
+Remaining executor work is to compose the two materialized buffers with the
+four writer plans and apply the existing output/runtime state transitions
+around those calls.
 
 The helper near `0x1010a930` appears to service a side metadata/event object,
 not the PCM mixer itself; it is intentionally kept outside the audio executor

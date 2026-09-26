@@ -252,6 +252,11 @@ LegacyRuntimeCrossGeometryM36 legacy_runtime_cross_geometry_m36(
     out.current_source_start = std::max(0,
         static_cast<int>(current_positions[static_cast<std::size_t>(current_interval_index + 1)]) -
             current_window);
+    out.previous_forward_source_start = static_cast<int>(
+        previous_positions[static_cast<std::size_t>(previous_index)]);
+    out.current_forward_source_start = current_interval_index < current_intervals - 1 ?
+        static_cast<int>(current_positions[static_cast<std::size_t>(current_interval_index + 1)]) :
+        static_cast<int>(current_positions[static_cast<std::size_t>(current_interval_index)]);
     return out;
 }
 

@@ -158,9 +158,10 @@ This is a descriptor-boundary fade-in. It is implemented by
 
 ## Cross transition: nonzero-flag support geometry
 
-The other `0x10108cf0` branch constructs a temporary transition buffer. The
-actual PCM mixing loops are still being recovered, but source/support ownership
-before those loops is now exact.
+The other `0x10108cf0` branch constructs two temporary transition buffers.
+Their source/support ownership and exact PCM mixing loops are now recovered;
+the formulas and portable primitive are documented in
+`M36_CROSS_TRANSITION.md`.
 
 Previous descriptor interval selection:
 
@@ -195,6 +196,14 @@ previous_source_start = max(0, prev[k]   - previous_window)
 current_source_start  = max(0, cur[i+1] - current_window)
 ```
 
+The forward-aligned secondary buffer additionally starts at:
+
+```text
+previous_forward_source_start = prev[k]
+current_forward_source_start =
+    (i < last_interval) ? cur[i+1] : cur[i]
+```
+
 `legacy_runtime_cross_geometry_m36()` contracts these values and whether the
 saved-state override selected `word2e+1` instead of the buffered interval.
 
@@ -209,14 +218,16 @@ saved-state override selected `word2e+1` instead of the buffered interval.
 - zero-flag cross-transition reverse-window fade;
 - nonzero cross-transition support geometry with both buffered and saved-state
   previous-interval selection;
+- exact primary/secondary temporary PCM materialization, including both
+  shoulder owners, zero regions and window directions;
 - invalid saved-index rejection.
 
 ## Remaining transition work
 
 The large unknown area is now narrower:
 
-- exact temporary PCM blend loops inside nonzero `0x10108cf0`;
-- its final `0x10109980` call and post-write state rotation;
+- executor composition of the recovered temporary buffers, four
+  `0x10109980` writer phases and post-write state rotation;
 - repeated-grain movement after first writes in `0x101083b0` / `0x101086c0`;
 - post-loop terminal path around `0x10108210`;
 - live Gate A/B capture validation and x87 last-bit window validation.
