@@ -148,6 +148,59 @@ int main() {
         assert(q.left_source_position == 400 && q.right_source_position == 60);
     }
 
+    // Nonzero cross-descriptor branch: without saved-state override the old
+    // side comes from the buffered interval. Its left support is independently
+    // limited by that interval's own width before mixing with the new side.
+    {
+        const std::vector<std::int32_t> previous{0, 50, 140, 260, 400};
+        const std::vector<std::int32_t> current{1000, 1080, 1190, 1320, 1470};
+        LegacyRuntimeStateM36 s;
+        const auto q = nicolai::legacy_runtime_cross_geometry_m36(
+            previous, current, s, 2, 1);
+        assert(q.valid && !q.used_saved_interval);
+        assert(q.previous_interval_index == 2 && q.current_interval_index == 1);
+        assert(q.previous_interval_width == 120);
+        assert(q.previous_left_width == 90);
+        assert(q.previous_window_length == 90);
+        assert(q.current_interval_width == 110);
+        assert(q.current_window_length == 110);
+        assert(q.current_next_width == 130);
+        assert(q.previous_source_start == 50);
+        assert(q.current_source_start == 1080);
+    }
+
+    // With word2c set, cross transition ignores the buffered interval index and
+    // uses word2e+1 from the saved previous descriptor state.
+    {
+        const std::vector<std::int32_t> previous{0, 50, 140, 260, 400};
+        const std::vector<std::int32_t> current{1000, 1080, 1190, 1320, 1470};
+        LegacyRuntimeStateM36 s;
+        s.word2c = 1;
+        s.word2e = 0;
+        const auto q = nicolai::legacy_runtime_cross_geometry_m36(
+            previous, current, s, 2, 2);
+        assert(q.valid && q.used_saved_interval);
+        assert(q.previous_interval_index == 1 && q.current_interval_index == 2);
+        assert(q.previous_interval_width == 90);
+        assert(q.previous_left_width == 50);
+        assert(q.previous_window_length == 50);
+        assert(q.current_interval_width == 130);
+        assert(q.current_window_length == 90);
+        assert(q.current_next_width == 150);
+        assert(q.previous_source_start == 0);
+        assert(q.current_source_start == 1230);
+    }
+
+    {
+        const std::vector<std::int32_t> previous{0, 50, 140, 260};
+        const std::vector<std::int32_t> current{1000, 1080, 1190};
+        LegacyRuntimeStateM36 s;
+        s.word2c = 1;
+        s.word2e = 2; // word2e+1 would be outside previous interval domain
+        assert(!nicolai::legacy_runtime_cross_geometry_m36(
+            previous, current, s, 0, 0).valid);
+    }
+
     // 0x10108d51..0x10108da7 applies the reverse lookup window to the first
     // period written by the ordinary path. It is a fade-in: early samples are
     // strongly attenuated, the final sample is nearly unchanged, and data
