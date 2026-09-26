@@ -5,8 +5,8 @@ Base: merged M35 on `main` at `a9d24018a8b84a9982b2ab8ab4dddb381dbe5002`.
 
 Production synthesis remains unchanged. M36 now has a static portable
 phone-feature builder, guarded original oracles, recovered rollback/state
-primitives, exact guarded window-cache reconstruction, and increasingly exact
-source-transition geometry.
+primitives, exact guarded window-cache reconstruction, increasingly exact
+source-transition geometry, and a reproducible one-click A/B measurement path.
 
 The local original remains:
 
@@ -47,6 +47,26 @@ The resulting phone-record audit must contain nonzero records with zero invalid
 and zero mismatched records. CI cannot execute these two proprietary-runtime
 gates but does build the Win32 x86 tooling and run all portable contracts.
 
+## One-click A/B measurement path
+
+The Windows entry point is now:
+
+```bat
+run_ab_compare.bat
+```
+
+It delegates to `tools/run_ab_compare.ps1`, builds `nicolai_batch_render`,
+derives the exact 22-phrase corpus from the PC reference `manifest.json`, renders
+stable and candidate directories, and produces historical parity metrics,
+phrase-by-phrase comparison CSV/JSON, M35 2048/1024 diagnostic reports and a
+compact summary under a timestamped `metrics-work/ab-*` directory.
+
+Current executable candidate profiles are `m34-unit` and `m34-shared`. The
+`m36` profile is intentionally reserved and blocked until the route-level M36
+audio path actually honors `NICOLAI_M36_TRANSITION_EXECUTOR`; this prevents an
+unknown environment variable from silently producing a fake stable-vs-stable
+comparison. See `M36_AB_RUNNER.md`.
+
 ## Static runtime state now recovered
 
 The branch now has portable contracts for:
@@ -78,6 +98,7 @@ Relevant notes:
 - `M36_ORDINARY_GRAINS.md`
 - `M36_INITIAL_TRANSITION.md`
 - `M36_WINDOWS.md`
+- `M36_AB_RUNNER.md`
 
 ## Why the M34 stateful renderer is still untouched
 
@@ -95,12 +116,14 @@ an exact fallback for comparison.
 ## Next implementation checkpoint
 
 1. Build a route-level opt-in M36 experiment beside `StatefulTdsM34`; do not
-   replace it. Reuse the completed transactional executor for nonzero cross.
+   replace it. Reuse the completed transactional executor for nonzero cross and
+   expose it through the reserved `NICOLAI_M36_TRANSITION_EXECUTOR` switch.
 2. Compose dropped rollback and initial transition with the completed ordinary,
    zero-cross, nonzero-cross and deferred-terminal PCM executors.
 3. Recover the post-terminal descriptor metadata/event finalization after
    `0x10108210` and keep an explicit fallback until it is proven.
-4. Re-run the 22 PC golden phrases and M35 timing/shape/energy diagnostics.
+4. Run `run_ab_compare.bat -CandidateProfile m36` against the same 22 PC golden
+   phrases; inspect headline parity plus both M35 diagnostic windows.
 5. Require improvement without a global duration scale or phrase rules before
    considering any production promotion.
 
