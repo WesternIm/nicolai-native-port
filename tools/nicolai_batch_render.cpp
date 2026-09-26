@@ -43,6 +43,13 @@ int main(int argc,char**argv){
    nicolai::LegacyTimingPolicy policy;
    if(const char* v=std::getenv("NICOLAI_STATEFUL_TDS")) policy.use_stateful_tds_m34=std::atoi(v)!=0;
    if(const char* v=std::getenv("NICOLAI_SHARED_PHONE_DURATION")) policy.shared_phone_duration_m34=std::atoi(v)!=0;
+   if(const char* v=std::getenv("NICOLAI_M36_TRANSITION_EXECUTOR")) if(std::atoi(v)!=0){
+       // The M36 A/B path deliberately reuses the established stateful caller
+       // contract and shared-phone timing coefficients. resynthesize_stateful_m34
+       // dispatches to the guarded M36 transition executor when this env flag is set.
+       policy.use_stateful_tds_m34=true;
+       policy.shared_phone_duration_m34=true;
+   }
    if(const char* v=std::getenv("NICOLAI_PC_SEG_TIMELINE")) policy.use_pc_seg_timeline=std::atoi(v)!=0;
    if(const char* v=std::getenv("NICOLAI_SEARCH_JOIN_PHASE")) policy.search_join_phase=std::atoi(v)!=0;
    if(const char* v=std::getenv("NICOLAI_PHONE_SCALE")) policy.phone_duration_scale=std::atof(v);
