@@ -96,6 +96,10 @@ right_window_length  = min(current_interval_width, P)
 right_source_position = source_position[i+1] - right_window_length
 ```
 
+As in the repeated loop, the original computes these interval widths with
+signed WORD subtraction of the DWORD positions. The portable selector rejects
+results outside the positive WORD runtime domain.
+
 So a dropped interval changes the actual source PCM of the next grain; it is not
 only a clock bookkeeping event.
 
@@ -136,6 +140,8 @@ source_position[k+1] - source_position[k]
 ```
 
 `legacy_runtime_initial_source_selection_m36()` contracts this ownership.
+Its interval-width arithmetic also preserves the original signed WORD
+subtraction.
 
 ## Cross transition (`0x10108cf0`): zero-flag branch
 
@@ -222,6 +228,8 @@ saved-state override selected `word2e+1` instead of the buffered interval.
   shoulder owners, zero regions and window directions;
 - exact post-write cursor/selection rotation and transactional execution of all
   four nonzero cross writer phases;
+- exact deferred-terminal checkpoint, single-grain write and descending
+  fade-out around `0x10108210`;
 - invalid saved-index rejection.
 
 ## Remaining transition work
@@ -230,7 +238,7 @@ The large unknown area is now narrower:
 
 - route-level executor composition around the completed nonzero cross path;
 - repeated-grain movement after first writes in `0x101083b0` / `0x101086c0`;
-- post-loop terminal path around `0x10108210`;
+- post-terminal descriptor metadata/event finalization;
 - live Gate A/B capture validation and x87 last-bit window validation.
 
 Exact window cache topology and the guarded `1..400` lookup are documented in

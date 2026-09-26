@@ -89,8 +89,16 @@ source coordinates.
 The helper is linked into `nicolai_port` but is not yet used by
 `StatefulTdsM34` or production synthesis.
 
+`legacy_runtime_execute_ordinary_m36()` now composes the first-grain selector,
+every repeated-grain geometry record, exact M36 windows, the original writer
+and the post-write state rotation. It stages PCM and runtime state until every
+source slice/window validates. The function intentionally does not checkpoint
+or mutate caller-owned interval/step-buffer markers: original `0x101083b0`
+does neither, and its ordinary and zero-cross call sites have different caller
+bookkeeping.
+
 ## Integration boundary
 
-Do not promote this helper by itself. The first-grain bridge selection,
-repeated-grain geometry, cross-descriptor transition path and recovered window
-cache must agree as one state machine before an opt-in audio experiment.
+Do not promote this executor by itself. Route-level interval/step-buffer
+bookkeeping and the initial cross-descriptor transition must agree as one state
+machine before an opt-in audio experiment.

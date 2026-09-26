@@ -21,6 +21,12 @@ bool monotonic_positions(const std::vector<std::int32_t>& positions) {
         if (positions[i] <= positions[i - 1]) return false;
     return true;
 }
+
+int word_delta(std::int32_t right, std::int32_t left) {
+    const auto r = static_cast<std::uint16_t>(right);
+    const auto l = static_cast<std::uint16_t>(left);
+    return static_cast<std::int16_t>(static_cast<std::uint16_t>(r - l));
+}
 }
 
 void legacy_runtime_checkpoint_m36(LegacyRuntimeStateM36& state) {
@@ -127,8 +133,8 @@ LegacyRuntimeSourceSelectionM36 legacy_runtime_normal_source_selection_m36(
         interval_index >= static_cast<int>(source_positions.size()) - 1)
         return out;
 
-    const int current_width = static_cast<int>(
-        source_positions[static_cast<std::size_t>(interval_index + 1)] -
+    const int current_width = word_delta(
+        source_positions[static_cast<std::size_t>(interval_index + 1)],
         source_positions[static_cast<std::size_t>(interval_index)]);
     if (current_width <= 0) return out;
 
@@ -140,8 +146,8 @@ LegacyRuntimeSourceSelectionM36 legacy_runtime_normal_source_selection_m36(
         if (dropped < 0 || dropped + 2 >= static_cast<int>(source_positions.size()))
             return out;
         left_position = source_positions[static_cast<std::size_t>(dropped + 1)];
-        left_width = static_cast<int>(
-            source_positions[static_cast<std::size_t>(dropped + 2)] -
+        left_width = word_delta(
+            source_positions[static_cast<std::size_t>(dropped + 2)],
             source_positions[static_cast<std::size_t>(dropped + 1)]);
         if (left_width <= 0) return out;
     }
@@ -177,19 +183,19 @@ LegacyRuntimeSourceSelectionM36 legacy_runtime_initial_source_selection_m36(
     const int intervals = static_cast<int>(source_positions.size()) - 1;
     if (saved < 0 || saved >= intervals) return out;
 
-    const int current_width = static_cast<int>(
-        source_positions[static_cast<std::size_t>(buffered_interval_index + 1)] -
+    const int current_width = word_delta(
+        source_positions[static_cast<std::size_t>(buffered_interval_index + 1)],
         source_positions[static_cast<std::size_t>(buffered_interval_index)]);
     if (current_width <= 0) return out;
 
     int left_width = 0;
     if (saved < intervals - 1) {
-        left_width = static_cast<int>(
-            source_positions[static_cast<std::size_t>(saved + 2)] -
+        left_width = word_delta(
+            source_positions[static_cast<std::size_t>(saved + 2)],
             source_positions[static_cast<std::size_t>(saved + 1)]);
     } else {
-        left_width = static_cast<int>(
-            source_positions[static_cast<std::size_t>(saved + 1)] -
+        left_width = word_delta(
+            source_positions[static_cast<std::size_t>(saved + 1)],
             source_positions[static_cast<std::size_t>(saved)]);
     }
     if (left_width <= 0) return out;

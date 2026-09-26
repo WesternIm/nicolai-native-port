@@ -56,6 +56,8 @@ The branch now has portable contracts for:
 - ordinary first-grain source selection including dropped-bridge ownership;
 - ordinary repeated-grain Q11 period, WORD arithmetic, left/right window lengths
   and exact boundary-centred source starts;
+- transactional ordinary writer composition and the complete zero-byte cross
+  wrapper with its first-period fade-in;
 - initial-transition first-grain source selection;
 - initial-transition repeated grains both within one descriptor and while
   crossing to the next descriptor PCM base;
@@ -65,6 +67,8 @@ The branch now has portable contracts for:
   including reverse/forward window orientation and both shoulder cases;
 - exact per-write cursor/selection rotation and a transactional nonzero cross
   executor composing both buffers with all four writer phases;
+- exact deferred-terminal single-grain PCM write, checkpoint and descending
+  fade-out around `0x10108210`;
 - zero-branch cross fade;
 - original packed window-cache topology and guarded lookup for lengths 1..400.
 
@@ -92,9 +96,10 @@ an exact fallback for comparison.
 
 1. Build a route-level opt-in M36 experiment beside `StatefulTdsM34`; do not
    replace it. Reuse the completed transactional executor for nonzero cross.
-2. Compose dropped rollback, initial, ordinary and zero-cross paths around the
-   same post-write rotation, with explicit fallback for deferred terminal work.
-3. Recover the post-loop terminal path around `0x10108210`.
+2. Compose dropped rollback and initial transition with the completed ordinary,
+   zero-cross, nonzero-cross and deferred-terminal PCM executors.
+3. Recover the post-terminal descriptor metadata/event finalization after
+   `0x10108210` and keep an explicit fallback until it is proven.
 4. Re-run the 22 PC golden phrases and M35 timing/shape/energy diagnostics.
 5. Require improvement without a global duration scale or phrase rules before
    considering any production promotion.

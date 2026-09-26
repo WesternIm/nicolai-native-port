@@ -65,7 +65,8 @@ partial waveform nor partial cursor/selection rotation.
 This executor closes the nonzero cross PCM/state composition only. It is linked
 into `nicolai_port` but has no production caller. A route-level M36 experiment
 still needs to combine dropped rollback, initial, ordinary, zero-cross and this
-nonzero-cross executor, then preserve the unresolved deferred-terminal path as
-an explicit fallback until `0x10108210` is proven.
+nonzero-cross executor with the completed deferred-terminal PCM path. The
+post-terminal descriptor metadata/event finalization remains an explicit
+fallback boundary.
 
 No proprietary DLL or voice-data bytes are stored in the repository.

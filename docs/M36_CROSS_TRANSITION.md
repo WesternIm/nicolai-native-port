@@ -219,3 +219,8 @@ The earlier helper near `0x1010a930` appears to service a side metadata/event
 object and remains outside the audio executor until that ownership is proven.
 
 No recovered M36 executor is wired into production or `StatefulTdsM34` yet.
+
+The zero-byte branch is also composed transactionally by
+`legacy_runtime_execute_zero_cross_m36()`: it executes the recovered ordinary
+writer sequence and applies the reverse-window fade to the first emitted period
+only. Caller-owned route bookkeeping remains outside that PCM contract.

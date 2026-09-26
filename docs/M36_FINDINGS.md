@@ -85,6 +85,18 @@ executor: exact temporary buffers, four writer phases, recovered windows and
 the repeated cursor/selection state rotation. Output and state commit only when
 the complete phase sequence validates. It remains disconnected from production.
 
+The deferred terminal PCM path around `0x10108210` is also recovered: one
+terminal first-grain write, even for a larger positive step count, followed by
+the caller-side descending-window fade-out. The portable executor checkpoints
+and commits PCM/runtime state transactionally. Descriptor metadata/event
+finalization after the fade is not yet claimed.
+
+The complete positive-count `0x101083b0` ordinary PCM sequence and the
+zero-byte `0x10108cf0` wrapper are now separate transactional executors. They
+compose the already-proven first/repeated grain plans, exact windows, writer,
+state rotations and first-period cross fade without assuming caller-owned
+interval or step-buffer bookkeeping.
+
 ## Exact window cache topology
 
 The old stateful adapter still uses an analytic M14 half-Hann approximation.
@@ -128,7 +140,7 @@ replay audit form Gate B: nonzero records with zero invalid/mismatched records.
 - upstream producer parity for feature records / voicing;
 - route-level executor composition across drop / initial / ordinary / cross;
 - repeated-grain movement after first writes;
-- post-loop terminal path around `0x10108210`;
+- post-terminal descriptor metadata/event finalization;
 - proof of any real window request above 400;
 - exact x87/Q15 last-bit window oracle;
 - any production or Android promotion.

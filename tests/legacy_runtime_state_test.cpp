@@ -150,6 +150,19 @@ int main() {
             p, 1, s, 80).valid);
     }
 
+    // First-grain interval widths are signed WORD subtractions in the
+    // original. A monotonic DWORD span outside the positive WORD domain must
+    // not be silently accepted as a large portable support.
+    {
+        const std::vector<std::int32_t> p{0, 40000, 40100};
+        LegacyRuntimeStateM36 s;
+        assert(!nicolai::legacy_runtime_normal_source_selection_m36(
+            p, 0, s, 80).valid);
+        s.word2e = 0;
+        assert(!nicolai::legacy_runtime_initial_source_selection_m36(
+            p, s, 0, 80).valid);
+    }
+
     {
         const std::vector<std::int32_t> p{0, 50, 140, 260, 400};
         LegacyRuntimeStateM36 s; s.word2e = 0;

@@ -33,6 +33,8 @@ right_source_start = p[buffered + 1] - right_len      # writer arg3
 ```
 
 This is exposed by `legacy_runtime_initial_source_selection_m36()`.
+The three interval differences above are signed WORD subtractions from the
+DWORD position array, matching the original positive runtime domain.
 
 ## Repeated grains
 
