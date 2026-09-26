@@ -1,6 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [string]$Dll,
+    [string]$Dll = "",
 
     [string]$BuildDir = "build_m36_win32",
     [string]$Output = "metrics-work/m36/m36-original-phone-probe.json"
@@ -9,13 +8,50 @@ param(
 $ErrorActionPreference = "Stop"
 $expectedSha256 = "f6b7e926c46a0259a866260cafb9d24d6ebed3dd7198829d16179348a186abc7"
 
-$dllPath = (Resolve-Path $Dll).Path
-$actualSha256 = (Get-FileHash -Algorithm SHA256 $dllPath).Hash.ToLowerInvariant()
-if ($actualSha256 -ne $expectedSha256) {
-    throw "Unexpected mtsyc32.dll SHA256: $actualSha256"
+function Resolve-NicolaiDll([string]$ExplicitPath) {
+    $candidates = New-Object System.Collections.Generic.List[string]
+    if ($ExplicitPath) { $candidates.Add($ExplicitPath) }
+
+    if (${env:ProgramFiles(x86)}) {
+        $candidates.Add((Join-Path ${env:ProgramFiles(x86)} "Elan\mtsyc32.dll"))
+        $candidates.Add((Join-Path ${env:ProgramFiles(x86)} "Acapela\mtsyc32.dll"))
+    }
+    if ($env:ProgramFiles) {
+        $candidates.Add((Join-Path $env:ProgramFiles "Elan\mtsyc32.dll"))
+        $candidates.Add((Join-Path $env:ProgramFiles "Acapela\mtsyc32.dll"))
+    }
+
+    # The exact filename matters more than the install-root spelling. Keep the
+    # recursive fallback bounded to the two Program Files roots and accept a
+    # candidate only after the historical SHA256 has matched.
+    foreach ($root in @(${env:ProgramFiles(x86)}, $env:ProgramFiles)) {
+        if (-not $root -or -not (Test-Path $root)) { continue }
+        Get-ChildItem -Path $root -Filter "mtsyc32.dll" -File -Recurse -ErrorAction SilentlyContinue |
+            ForEach-Object { $candidates.Add($_.FullName) }
+    }
+
+    $seen = @{}
+    foreach ($candidate in $candidates) {
+        if (-not $candidate) { continue }
+        try { $resolved = (Resolve-Path $candidate -ErrorAction Stop).Path } catch { continue }
+        if ($seen.ContainsKey($resolved)) { continue }
+        $seen[$resolved] = $true
+        $sha = (Get-FileHash -Algorithm SHA256 $resolved).Hash.ToLowerInvariant()
+        if ($sha -eq $expectedSha256) {
+            return $resolved
+        }
+    }
+
+    if ($ExplicitPath) {
+        throw "Specified DLL was not the supported Nicolai mtsyc32.dll (expected SHA256 $expectedSha256)"
+    }
+    throw "Could not find the supported Nicolai mtsyc32.dll automatically. Re-run with -Dll C:\\path\\to\\mtsyc32.dll"
 }
 
-Write-Host "Verified original mtsyc32.dll SHA256 $actualSha256"
+$dllPath = Resolve-NicolaiDll $Dll
+$actualSha256 = (Get-FileHash -Algorithm SHA256 $dllPath).Hash.ToLowerInvariant()
+Write-Host "Verified original mtsyc32.dll: $dllPath"
+Write-Host "SHA256 $actualSha256"
 
 # Do not hardcode a Visual Studio generator version. GitHub and local systems
 # may have VS 2022, VS 2026 or newer; CMake selects the installed default while
@@ -51,6 +87,7 @@ if ($outputDir) { New-Item -ItemType Directory -Force -Path $outputDir | Out-Nul
 
 $artifact = [ordered]@{
     schema = "nicolai-m36-original-phone-probe-v1"
+    dll_path = $dllPath
     dll_sha256 = $actualSha256
     portable_cases = [int]$result.portable_cases
     original_matches = [int]$result.original_matches
