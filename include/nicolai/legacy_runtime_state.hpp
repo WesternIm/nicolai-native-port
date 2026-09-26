@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <vector>
 
 namespace nicolai {
 
@@ -16,6 +17,7 @@ struct LegacyRuntimeStateM36 {
     std::int16_t word24 = 0;
     std::int16_t word26 = 0;
     std::int16_t word28 = 0;
+    std::int16_t word2a = 0;
     std::int16_t word2c = 0;
     std::int16_t word2e = 0;
     std::int32_t field30 = 0;
@@ -26,6 +28,22 @@ struct LegacyRuntimeRollbackM36 {
     bool dropped = false;
     bool rewound = false;
     std::int32_t cursor_delta = 0;
+};
+
+// First-grain source ownership visible in the ordinary 0x101083b0 path.
+// Positions are source sample coordinates from descriptor +0x30. When +0x26
+// records a preceding dropped interval, the left source is bridged from the
+// right edge of that dropped interval (+0x2a), while the right source remains
+// the tail of the current interval. Window lengths are clamped by first_period.
+struct LegacyRuntimeSourceSelectionM36 {
+    bool valid = false;
+    bool bridged_drop = false;
+    int current_interval_width = 0;
+    int left_interval_width = 0;
+    int left_window_length = 0;
+    int right_window_length = 0;
+    int left_source_position = 0;
+    int right_source_position = 0;
 };
 
 // Snapshot emitted by 0x10107e9f..0x10107ebb before the ordinary grain path.
@@ -42,5 +60,14 @@ LegacyRuntimeRollbackM36 legacy_runtime_drop_rollback_m36(
     int node_count,
     int gate_a,
     int gate_b);
+
+// Exact first write selection at 0x10108426..0x10108516 for the ordinary
+// 0x101083b0 path. This models source coordinates/length ownership only; exact
+// 0x10109be0 window lookup/construction remains a separate recovery boundary.
+LegacyRuntimeSourceSelectionM36 legacy_runtime_normal_source_selection_m36(
+    const std::vector<std::int32_t>& source_positions,
+    int interval_index,
+    const LegacyRuntimeStateM36& state,
+    int first_period);
 
 } // namespace nicolai
