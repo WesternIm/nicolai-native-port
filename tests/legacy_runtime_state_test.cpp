@@ -191,5 +191,40 @@ int main() {
         assert(!q.valid);
     }
 
+    // Initial 0x101086c0 transition uses the buffered previous-step interval on
+    // the right and state.word2e on the left. For a non-terminal saved index,
+    // left support is the following interval.
+    {
+        const std::vector<std::int32_t> p{0, 50, 140, 260, 400};
+        LegacyRuntimeStateM36 s;
+        s.word2e = 0;
+        const auto q = nicolai::legacy_runtime_initial_source_selection_m36(
+            p, s, 2, 100);
+        assert(q.valid);
+        assert(q.current_interval_width == 120); // buffered 2: 140 -> 260
+        assert(q.left_interval_width == 90); // saved 0 uses 50 -> 140
+        assert(q.left_window_length == 90);
+        assert(q.right_window_length == 100);
+        assert(q.left_source_position == 50); // source[word2e+1]
+        assert(q.right_source_position == 160); // source[buffered+1]-100
+    }
+
+    // At the terminal saved index, 0x101086c0 falls back to that interval's own
+    // width while still starting from its right boundary.
+    {
+        const std::vector<std::int32_t> p{0, 50, 140, 260, 400};
+        LegacyRuntimeStateM36 s;
+        s.word2e = 3;
+        const auto q = nicolai::legacy_runtime_initial_source_selection_m36(
+            p, s, 1, 80);
+        assert(q.valid);
+        assert(q.current_interval_width == 90);
+        assert(q.left_interval_width == 140); // 260 -> 400
+        assert(q.left_window_length == 80);
+        assert(q.right_window_length == 80);
+        assert(q.left_source_position == 400);
+        assert(q.right_source_position == 60);
+    }
+
     std::cout << "legacy_runtime_state_test: PASSED\n";
 }
