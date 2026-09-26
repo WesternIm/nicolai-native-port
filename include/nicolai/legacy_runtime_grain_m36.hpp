@@ -6,9 +6,8 @@
 namespace nicolai {
 
 // Exact positive-domain geometry of the repeated-grain loop at
-// mtsyc32.dll 0x10108564..0x1010869e. This deliberately stops before source
-// pointer construction: the window/period ownership is proven independently
-// of the still-being-named pointer offsets.
+// mtsyc32.dll 0x10108564..0x1010869e. It includes the source-coordinate
+// starts passed to the Q15 writer, but not the surrounding transition state.
 struct LegacyRuntimeOrdinaryGrainM36 {
     bool valid = false;
     int ordinal = 0;
@@ -17,6 +16,8 @@ struct LegacyRuntimeOrdinaryGrainM36 {
     int next_interval_width = 0;
     int left_window_length = 0;
     int right_window_length = 0;
+    int left_source_position = 0;
+    int right_source_position = 0;
     bool terminal_interval = false;
 };
 
