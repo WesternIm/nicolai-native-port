@@ -1,6 +1,7 @@
 param(
     [string]$BuildDir = "build_m36_win32",
     [string]$OutputRoot = "metrics-work/m36/runtime-capture",
+    [string]$Python = "python",
     [int]$ReadyTimeoutSeconds = 20
 )
 
@@ -16,10 +17,12 @@ try {
     $outputDir = [System.IO.Path]::GetFullPath($OutputRoot)
     New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
     $records = Join-Path $outputDir "phone-records.jsonl"
+    $auditReport = Join-Path $outputDir "phone-records-audit.json"
     $captureStdout = Join-Path $outputDir "capture.stdout.log"
     $captureStderr = Join-Path $outputDir "capture.stderr.log"
     $stopFile = Join-Path $outputDir "capture.stop"
-    Remove-Item -Force -ErrorAction SilentlyContinue $records,$captureStdout,$captureStderr,$stopFile
+    Remove-Item -Force -ErrorAction SilentlyContinue `
+        $records,$auditReport,$captureStdout,$captureStderr,$stopFile
 
     # Warm up the original voice first. This starts/activates the out-of-process
     # Acapela engine so the debugger can attach to the process that owns mtsyc32.
@@ -97,8 +100,16 @@ try {
     $recordCount = @(Get-Content $records).Count
     if ($recordCount -le 0) { throw "Capture produced zero feature records" }
 
-    Write-Host "M36 runtime capture complete: $recordCount records"
+    Write-Host "Auditing captured original records against independent M36 replay"
+    & $Python (Join-Path $PSScriptRoot "audit_phone_features_m36.py") `
+        $records --output $auditReport
+    if ($LASTEXITCODE -ne 0) {
+        throw "M36 runtime phone-feature audit found mismatches; see $auditReport"
+    }
+
+    Write-Host "M36 runtime capture + audit complete: $recordCount records"
     Write-Host "Records: $records"
+    Write-Host "Audit:   $auditReport"
 } finally {
     Pop-Location
 }
