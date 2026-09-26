@@ -23,6 +23,39 @@ void legacy_runtime_checkpoint_m36(LegacyRuntimeStateM36& state) {
     state.saved_selection_b = state.selection_b;
 }
 
+LegacyRuntimeRouteM36 legacy_runtime_route_m36(
+    int step_count,
+    int interval_index,
+    int node_count,
+    bool cross_descriptor_pending,
+    bool already_started) {
+    LegacyRuntimeRouteM36 out;
+    if (node_count < 2 || interval_index < 0 ||
+        interval_index >= node_count - 1 || step_count < 0 ||
+        step_count > 32767) return out;
+
+    out.valid = true;
+    if (step_count == 0) {
+        out.path = LegacyRuntimeWritePathM36::Dropped;
+        return out;
+    }
+    if (cross_descriptor_pending) {
+        out.path = LegacyRuntimeWritePathM36::CrossTransition;
+        return out;
+    }
+    if (!already_started) {
+        out.path = LegacyRuntimeWritePathM36::InitialTransition;
+        return out;
+    }
+    if (interval_index == node_count - 2) {
+        out.path = LegacyRuntimeWritePathM36::DeferredTerminal;
+        return out;
+    }
+    out.path = LegacyRuntimeWritePathM36::Ordinary;
+    out.checkpoint_before_write = true;
+    return out;
+}
+
 LegacyRuntimeRollbackM36 legacy_runtime_drop_rollback_m36(
     LegacyRuntimeStateM36& state,
     int step_count,
