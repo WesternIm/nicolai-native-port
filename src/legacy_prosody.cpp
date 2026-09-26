@@ -1117,6 +1117,10 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
     out.tds_grains_m34=tds_state.grains;
     out.tds_dropped_m34=tds_state.dropped;
     out.tds_final_carry_m34=tds_state.carry;
+    out.tds_target_samples_m35=tds_state.target_samples;
+    out.tds_budget_samples_m35=tds_state.budget_consumed_samples;
+    out.tds_emitted_samples_m35=tds_state.emitted_samples;
+    out.tds_clamped_records_m35=tds_state.clamped_delta_records;
     out.pcm=rendered.front();
     for(std::size_t i=1;i<rendered.size();++i){
         OlaJoinDiagnostics jd;

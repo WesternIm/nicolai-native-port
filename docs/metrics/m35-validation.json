@@ -1,0 +1,25 @@
+{
+  "checkpoint": "M35 diagnostic audit; synthesis unchanged",
+  "base_commit": "a88a2a25b2fb57ffcb2b722e6ef29e4b9ceb0076",
+  "local_build": "Windows x64 MSVC 19.51 Debug, clean build",
+  "portable_tests": {"passed": 20, "total": 20},
+  "voice_free_metric_contracts": {"passed": 6, "total": 6},
+  "reference_identity_controls": {"passed": 22, "total": 22, "pitch_windows": [1024, 2048]},
+  "rendered_corpus": {"settings": 6, "phrases_per_setting": 22, "unchanged_vs_m34": 132, "total": 132},
+  "clock_contracts": {"passed": 110, "total": 110, "terminal_flush_frames": 4800},
+  "original_dll_probe": {
+    "architecture": "x86; rebuilt probes",
+    "dll_sha256": "f6b7e926c46a0259a866260cafb9d24d6ebed3dd7198829d16179348a186abc7",
+    "writer_matches": 1024,
+    "reciprocal_matches": 400,
+    "sequential_step_matches": 1000,
+    "source_timeline_matches": 2665,
+    "isolated_step_matches": 683,
+    "mismatches": 0
+  },
+  "promotion": false,
+  "speech_f0_ground_truth_validated": false,
+  "source_and_input_fingerprints": "m35-run-manifest.json",
+  "reproduction": "../../tools/run_m35_audit.ps1",
+  "ci_results": "Inspect PR checks; not included in local validation counts"
+}

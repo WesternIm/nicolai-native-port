@@ -45,9 +45,16 @@ Pcm16Mono resynthesize_stateful_m34(const Pcm16Mono& source,
             return q11(td_psola_pitch_scale_at(pitch,
                 static_cast<double>(timeline.nodes[index].sample)/(source.samples.size()-1)));
         };
+        const int duration_q11=q11(i < timeline.split_node ? ld : rd);
+        const int old_carry=next_state.carry;
         const auto step=legacy_tds_step_m33(width,pitch_at(i),
-            q11(i < timeline.split_node ? ld : rd),next_width,pitch_at(ni),next_state.carry);
+            duration_q11,next_width,pitch_at(ni),old_carry);
         if (!step.valid) return {};
+        int target=width*duration_q11/2048;
+        if (!target) target=width*2048/pitch_at(i);
+        next_state.target_samples+=target;
+        next_state.budget_consumed_samples+=old_carry+target-step.carry;
+        if (step.delta_q11==32767 || step.delta_q11==-32768) ++next_state.clamped_delta_records;
         next_state.carry=step.carry; ++next_state.intervals;
         if (!step.count) ++next_state.dropped;
         for (int j=0; j<step.count; ++j) {
@@ -70,6 +77,7 @@ Pcm16Mono resynthesize_stateful_m34(const Pcm16Mono& source,
                     out.samples[cursor+k]*gain,-32768.0,32767.0)));
             }
             ++next_state.grains;
+            next_state.emitted_samples+=period;
         }
     }
     // The PC final source node is the last sample, not one-past-end. This

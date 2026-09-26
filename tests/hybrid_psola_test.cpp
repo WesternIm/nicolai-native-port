@@ -14,8 +14,10 @@ int main() {
     nicolai::StatefulTdsM34 state;
     auto stateful=nicolai::resynthesize_stateful_m34(regular,timeline,{},0.5,0.5,1,1,state);
     assert(stateful.samples.size()==100 && state.carry==50 && state.dropped==2);
+    assert(state.target_samples==150 && state.budget_consumed_samples==100 && state.emitted_samples==100);
     auto continued=nicolai::resynthesize_stateful_m34(regular,timeline,{},0.5,0.5,1,1,state);
     assert(continued.samples.size()==200 && state.carry==0 && state.intervals==6);
+    assert(state.target_samples==300 && state.budget_consumed_samples==300 && state.emitted_samples==300);
     nicolai::StatefulTdsM34 shaped_state,flat_state,energy_state;
     nicolai::TdPsolaConfig state_contour; state_contour.use_three_point_pitch=true;
     state_contour.pitch_scale_start=1.2; state_contour.pitch_scale_mid=1.0; state_contour.pitch_scale_end=0.8;
@@ -23,11 +25,15 @@ int main() {
     const auto sf=nicolai::resynthesize_stateful_m34(regular,timeline,{},1,1,1,1,flat_state);
     const auto se=nicolai::resynthesize_stateful_m34(regular,timeline,{},1,1,0.5,1,energy_state);
     assert(!sc.samples.empty() && sc.samples!=sf.samples && se.samples.size()==sf.samples.size());
+    assert(shaped_state.target_samples-shaped_state.carry==shaped_state.budget_consumed_samples);
+    assert(shaped_state.emitted_samples==static_cast<std::int64_t>(sc.samples.size()));
+    assert(energy_state.target_samples==flat_state.target_samples && energy_state.emitted_samples==flat_state.emitted_samples);
     assert(se.samples.front()!=sf.samples.front() && se.samples.back()==sf.samples.back());
     const auto before=state;
     timeline.nodes[1].sample=0;
     assert(nicolai::resynthesize_stateful_m34(regular,timeline,{},1,1,1,1,state).samples.empty());
     assert(state.carry==before.carry && state.intervals==before.intervals);
+    assert(state.target_samples==before.target_samples && state.emitted_samples==before.emitted_samples);
     nicolai::DiphoneUnit u;
     u.metadata = {-2,17,10,-9,8,-104,105,149,171,172,198,200,220};
     const auto s = nicolai::parse_seg_schedule_m15(u);

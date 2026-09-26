@@ -1,0 +1,22 @@
+ 1/20 Test  #1: huffman_test .....................   Passed    0.04 sec
+ 2/20 Test  #2: ana_index_test ...................   Passed    0.04 sec
+ 3/20 Test  #3: cmp16_test .......................   Passed    0.04 sec
+ 4/20 Test  #4: static_files_test ................   Passed    0.04 sec
+ 5/20 Test  #5: address_space_test ...............   Passed    0.04 sec
+ 6/20 Test  #6: resource_registry_test ...........   Passed    0.04 sec
+ 7/20 Test  #7: voice_catalog_test ...............   Passed    0.07 sec
+ 8/20 Test  #8: diphone_catalog_test .............   Passed    0.04 sec
+ 9/20 Test  #9: cmp16_decode_test ................   Passed    0.04 sec
+10/20 Test #10: cmp16_codebook_test ..............   Passed    0.04 sec
+11/20 Test #11: g711_test ........................   Passed    0.04 sec
+12/20 Test #12: psola_join_test ..................   Passed    0.07 sec
+13/20 Test #13: td_psola_test ....................   Passed    0.04 sec
+14/20 Test #14: seg_schedule_test ................   Passed    0.04 sec
+15/20 Test #15: hybrid_psola_test ................   Passed    0.07 sec
+16/20 Test #16: russian_stress_test ..............   Passed    0.04 sec
+17/20 Test #17: russian_legacy_test ..............   Passed    0.04 sec
+18/20 Test #18: russian_frontend_test ............   Passed    0.04 sec
+19/20 Test #19: legacy_prosody_test ..............   Passed    0.04 sec
+20/20 Test #20: pc_parity_test ...................   Passed    0.04 sec
+100% tests passed, 0 tests failed out of 20
+Total Test time (real) =   0.90 sec
