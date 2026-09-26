@@ -26,8 +26,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure Win32 x86
         run: cmake -S . -B build-win32 -A Win32 -DBUILD_TESTING=ON
-      - name: Build M36 Win32 contracts
-        run: cmake --build build-win32 --config Debug --target nicolai_m36_phone_probe legacy_phone_features_test --parallel
+      - name: Build M36 Win32 contracts and capture debugger
+        run: cmake --build build-win32 --config Debug --target nicolai_m36_phone_probe legacy_phone_features_test nicolai_m36_runtime_capture --parallel
       - name: Run portable Win32 phone-feature corpus
         shell: pwsh
         run: |
