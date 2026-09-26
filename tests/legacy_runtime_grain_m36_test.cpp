@@ -16,10 +16,10 @@ int main() {
         assert(g.period == 81);
         assert(g.current_interval_width == 80);
         assert(g.next_interval_width == 100);
-        assert(g.left_window_length == 80);
-        assert(g.right_window_length == 81);
-        assert(g.left_source_position == 0);
-        assert(g.right_source_position == 80);
+        assert(g.left_window_length == 81);
+        assert(g.right_window_length == 80);
+        assert(g.left_source_position == 80);
+        assert(g.right_source_position == 0);
     }
 
     {
@@ -27,7 +27,7 @@ int main() {
         const auto g = legacy_runtime_ordinary_grain_m36(p, 0, 90, -2048, 2);
         assert(g.valid && g.period == 88);
         assert(g.left_window_length == 88 && g.right_window_length == 88);
-        assert(g.left_source_position == 32 && g.right_source_position == 120);
+        assert(g.left_source_position == 120 && g.right_source_position == 32);
     }
 
     {
@@ -35,7 +35,7 @@ int main() {
         const auto g = legacy_runtime_ordinary_grain_m36(p, 2, 100, 0, 1);
         assert(g.valid && !g.terminal_interval);
         assert(g.left_window_length == 100 && g.right_window_length == 100);
-        assert(g.left_source_position == 160 && g.right_source_position == 260);
+        assert(g.left_source_position == 260 && g.right_source_position == 160);
     }
 
     {
@@ -44,7 +44,7 @@ int main() {
         assert(g.valid && g.terminal_interval);
         assert(g.current_interval_width == 130 && g.next_interval_width == 130);
         assert(g.left_window_length == 100 && g.right_window_length == 100);
-        assert(g.left_source_position == 210 && g.right_source_position == 310);
+        assert(g.left_source_position == 310 && g.right_source_position == 210);
     }
 
     {
@@ -52,8 +52,8 @@ int main() {
         const auto g = legacy_runtime_ordinary_grain_m36(p, 0, 80, 0, 1);
         assert(g.valid && g.current_interval_width == 80 &&
             g.next_interval_width == 100);
-        assert(g.left_source_position == 65536 &&
-            g.right_source_position == 65616);
+        assert(g.left_source_position == 65616 &&
+            g.right_source_position == 65536);
     }
 
     // Initial-transition repeated grain staying inside the buffered descriptor.
@@ -65,11 +65,12 @@ int main() {
         assert(g.valid && !g.cross_descriptor);
         assert(g.current_interval_width == 100 && g.next_interval_width == 130);
         assert(g.left_window_length == 80 && g.right_window_length == 80);
-        assert(g.left_source_position == 100 && g.right_source_position == 180);
+        assert(g.left_source_position == 180 && g.right_source_position == 100);
     }
 
-    // state+0x30 nonzero switches the right side to the next descriptor's
-    // first source interval while the left side still ends at prev[k+1].
+    // state+0x30 nonzero switches writer arg2 / the left-window input to the
+    // next descriptor's first source interval. Writer arg3 remains the tail of
+    // the buffered previous interval.
     {
         const std::vector<std::int32_t> previous{0, 80, 180, 310};
         const std::vector<std::int32_t> next{1000, 1090, 1200};
@@ -77,8 +78,8 @@ int main() {
             previous, next, 1, true, 120, 0, 1);
         assert(g.valid && g.cross_descriptor);
         assert(g.current_interval_width == 100 && g.next_interval_width == 90);
-        assert(g.left_window_length == 100 && g.right_window_length == 90);
-        assert(g.left_source_position == 80 && g.right_source_position == 1000);
+        assert(g.left_window_length == 90 && g.right_window_length == 100);
+        assert(g.left_source_position == 1000 && g.right_source_position == 80);
     }
 
     {
