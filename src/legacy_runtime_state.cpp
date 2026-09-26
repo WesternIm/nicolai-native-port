@@ -1,11 +1,19 @@
 #include "nicolai/legacy_runtime_state.hpp"
 
+#include <algorithm>
 #include <cstdint>
 
 namespace nicolai {
 namespace {
 std::int32_t wrap32(std::int64_t value) {
     return static_cast<std::int32_t>(static_cast<std::uint32_t>(value));
+}
+
+bool monotonic_positions(const std::vector<std::int32_t>& positions) {
+    if (positions.size() < 2) return false;
+    for (std::size_t i = 1; i < positions.size(); ++i)
+        if (positions[i] <= positions[i - 1]) return false;
+    return true;
 }
 }
 
@@ -57,6 +65,58 @@ LegacyRuntimeRollbackM36 legacy_runtime_drop_rollback_m36(
 
     // Common dropped-step tail at 0x10107ffe.
     state.word26 = 1;
+    return out;
+}
+
+LegacyRuntimeSourceSelectionM36 legacy_runtime_normal_source_selection_m36(
+    const std::vector<std::int32_t>& source_positions,
+    int interval_index,
+    const LegacyRuntimeStateM36& state,
+    int first_period) {
+    LegacyRuntimeSourceSelectionM36 out;
+    if (!monotonic_positions(source_positions) || first_period <= 0 ||
+        interval_index < 0 ||
+        interval_index >= static_cast<int>(source_positions.size()) - 1)
+        return out;
+
+    const int current_width = static_cast<int>(
+        source_positions[static_cast<std::size_t>(interval_index + 1)] -
+        source_positions[static_cast<std::size_t>(interval_index)]);
+    if (current_width <= 0) return out;
+
+    int left_width = current_width;
+    int left_position =
+        source_positions[static_cast<std::size_t>(interval_index)];
+    const bool bridge = state.word26 != 0;
+    if (bridge) {
+        const int dropped = static_cast<int>(state.word2a);
+        // 0x10108440 reads source[dropped+2]-source[dropped+1] and
+        // 0x101084cc selects source[dropped+1] as the first source pointer.
+        if (dropped < 0 ||
+            dropped + 2 >= static_cast<int>(source_positions.size()))
+            return out;
+        left_position =
+            source_positions[static_cast<std::size_t>(dropped + 1)];
+        left_width = static_cast<int>(
+            source_positions[static_cast<std::size_t>(dropped + 2)] -
+            source_positions[static_cast<std::size_t>(dropped + 1)]);
+        if (left_width <= 0) return out;
+    }
+
+    const int left_length = std::min(left_width, first_period);
+    const int right_length = std::min(current_width, first_period);
+    const int right_position = static_cast<int>(
+        source_positions[static_cast<std::size_t>(interval_index + 1)]) -
+        right_length;
+
+    out.valid = true;
+    out.bridged_drop = bridge;
+    out.current_interval_width = current_width;
+    out.left_interval_width = left_width;
+    out.left_window_length = left_length;
+    out.right_window_length = right_length;
+    out.left_source_position = left_position;
+    out.right_source_position = right_position;
     return out;
 }
 
