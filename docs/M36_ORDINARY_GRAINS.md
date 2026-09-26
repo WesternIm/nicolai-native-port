@@ -34,57 +34,57 @@ next_width = WORD(pos[i + 2]) - WORD(pos[i + 1])
 For the terminal interval (`i == node_count - 2`) the next width is not read
 past the array; the original reuses `current_width`.
 
-## Window lengths
+## Writer-oriented window lengths
 
-For every repeated grain:
+`left` and `right` here mean the actual arg2/arg3 inputs of `0x10109980`, not
+chronological sides of the source interval. The writer call proves:
 
 ```text
-left_window_length  = min(current_width, period)
-right_window_length = min(next_width, period)
+left_window_length  = min(next_width, period)     # writer arg7
+right_window_length = min(current_width, period)  # writer arg9
 ```
 
 These two lengths are independently passed through the recovered window lookup
-path before the Q15 writer. This differs from the old M34 adapter, which used a
-single `support = min(current_width, period)` for both sides.
+path. This differs from the old M34 adapter, which used one
+`support = min(current_width, period)` for both inputs.
 
-## Repeated-grain source coordinates
+## Repeated-grain writer source coordinates
 
-The writer call at `0x1010862f..0x10108652` proves that repeated grains are
-centred on the source boundary at `pos[i + 1]`:
-
-```text
-left_source_start  = pos[i + 1] - left_window_length
-right_source_start = pos[i + 1]
-```
-
-The assembly obtains the left coordinate as:
+The writer call at `0x10108616..0x10108652` proves:
 
 ```text
-pos[i] - left_window_length + current_width
+boundary = pos[i + 1]
+
+left_source_start  = boundary
+right_source_start = boundary - right_window_length
 ```
 
-which is exactly `pos[i+1] - left_window_length` in the positive source domain.
-This is intentionally different from the *first* grain of the interval, whose
-bridge/front-tail selection is handled by `legacy_runtime_normal_source_selection_m36()`.
+So writer arg2 begins at the following/future side of the boundary, while
+writer arg3 is the tail of the current/past interval. The right input is then
+placed at the end of the output period by `legacy_tds_write_m34()` and its
+window is consumed in reverse, matching the original Q15 writer contract.
 
-That difference matters acoustically: the old experimental stateful adapter
-reselected `[interval_start ...]` and `[..., interval_end]` for every grain,
-whereas the original moves repeated grains to the shared interval boundary.
+This distinction is easy to mislabel because the chronological past source is
+physically left of the boundary but is the writer's **right** input. The M36
+portable fields intentionally follow writer argument order.
+
+That source ownership differs from the old experimental stateful adapter,
+which reselected interval-front and interval-tail slices for every grain.
 
 ## Portable contract
 
-`legacy_runtime_ordinary_grain_m36()` now reproduces:
+`legacy_runtime_ordinary_grain_m36()` reproduces:
 
 - Q11 period progression;
 - WORD-wrap period semantics;
 - current/next interval widths;
 - terminal next-width reuse;
-- independent left/right window lengths;
-- repeated-grain left/right source starts.
+- exact writer-left / writer-right window lengths;
+- exact writer arg2 / arg3 source starts.
 
 `legacy_runtime_grain_m36_test` locks positive and negative Q11 cases, terminal
-behavior, WORD source-position subtraction, period wrap and explicit source
-coordinates.
+behavior, WORD source-position subtraction, period wrap and explicit writer
+source coordinates.
 
 The helper is linked into `nicolai_port` but is not yet used by
 `StatefulTdsM34` or production synthesis.
