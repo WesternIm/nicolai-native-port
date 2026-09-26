@@ -56,6 +56,10 @@ struct SegRunSpan {
     std::vector<int> signed_periods;
     std::vector<int> periods;
     bool signed_period_reset = false;
+    // Experimental M33 adapter supplies exact PC node offsets instead of
+    // M15's symmetric-margin estimate. Empty is meaningful when explicitly set.
+    bool use_explicit_marks = false;
+    std::vector<std::size_t> source_marks;
 };
 
 struct SegSpanLayout {
@@ -75,5 +79,30 @@ struct SegSpanLayout {
 SegSpanLayout layout_seg_runs_m15(
     const SegScheduleM15& schedule,
     std::size_t pcm_sample_count);
+
+struct SegSourceNodeM33 {
+    std::size_t sample = 0;
+    bool voiced = false;
+};
+
+struct SegSourceTimelineM33 {
+    bool valid = false;
+    std::string error;
+    std::vector<SegSourceNodeM33> nodes; // 0, N slot ends, PCM last sample
+    std::size_t split_node = 0;         // SEG split + 1
+    std::size_t unvoiced_slot_samples = 0;
+};
+
+// Proven PCM/A-law branch of mtsyc32.dll:0x101a30b0. Negative period signs
+// set the corresponding node's voicing flag to zero; they are not discarded.
+SegSourceTimelineM33 source_timeline_seg_m33(
+    const SegScheduleM15& schedule, std::size_t pcm_sample_count,
+    bool terminal_voiced, int sample_rate = 16000);
+
+// Adapter to the portable run renderer, NOT the complete Windows TDS join.
+// Exact node offsets are retained, but run slicing/OLA remain approximations.
+SegSpanLayout layout_seg_runs_m33(
+    const SegScheduleM15& schedule, std::size_t pcm_sample_count,
+    bool terminal_voiced, int sample_rate = 16000);
 
 } // namespace nicolai

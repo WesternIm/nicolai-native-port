@@ -25,5 +25,10 @@ int main() {
     assert(!c.samples.empty());
     assert(c.samples.size() < a.samples.size() + b.samples.size());
     assert(d.normalized_correlation > 0.8);
+    OlaJoinDiagnostics fixed;
+    auto fixed_pcm = hann_ola_join(a,b,160,160,&fixed,false);
+    assert(fixed.valid && fixed.left_trim==0 && fixed.right_trim==0);
+    assert(fixed_pcm.samples.size()==a.samples.size()+b.samples.size()-fixed.overlap_samples);
+    assert(hann_ola_join(a,b,160,160,nullptr,true).samples==c.samples);
     std::cout << "psola_join_test: PASSED corr=" << d.normalized_correlation << "\n";
 }

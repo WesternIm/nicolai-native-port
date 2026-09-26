@@ -54,6 +54,9 @@ struct TdPsolaConfig {
     double pitch_scale_start = 1.0;
     double pitch_scale_mid = 1.0;
     double pitch_scale_end = 1.0;
+    // M33 ablation: disable M13's sample-correlation phase trims, without
+    // claiming to reproduce the PC's synthesis-mark-aligned join.
+    bool search_join_phase = true;
 };
 
 // Evaluate the M24 three-point contour at normalized source position [0,1].

@@ -84,5 +84,12 @@ int main() {
     auto right_only_unity = nicolai::resynthesize_seg_m32_phone_sides(
         p, s, right_only_layout, contour, 1.0, 1.0, 1.0, 1.0);
     assert(right_only.samples == right_only_unity.samples);
+    const auto pc_layout = nicolai::layout_seg_runs_m33(s,p.samples.size(),true);
+    assert(pc_layout.valid);
+    auto pc_contour = nicolai::resynthesize_seg_m32_phone_sides(
+        p,s,pc_layout,contour,0.85,1.20,0.5,1.0);
+    auto pc_flat = nicolai::resynthesize_seg_m32_phone_sides(
+        p,s,pc_layout,flat,0.85,1.20,0.5,1.0);
+    assert(!pc_contour.samples.empty() && pc_contour.samples!=pc_flat.samples);
     std::cout << "hybrid_psola_test: PASSED output=" << q.samples.size() << "\n";
 }

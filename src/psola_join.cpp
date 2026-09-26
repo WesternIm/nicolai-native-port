@@ -91,7 +91,7 @@ Pcm16Mono hann_ola_join(const Pcm16Mono& left,
                         const Pcm16Mono& right,
                         int left_period_hint,
                         int right_period_hint,
-                        OlaJoinDiagnostics* diagnostics) {
+                        OlaJoinDiagnostics* diagnostics, bool search_phase) {
     Pcm16Mono out;
     out.sample_rate = left.sample_rate;
     OlaJoinDiagnostics d;
@@ -126,8 +126,10 @@ Pcm16Mono hann_ola_join(const Pcm16Mono& left,
     // Diphones meet at the midpoint of their shared phone. Search only within
     // half a pitch period on either side so we can phase-align voiced joins
     // without throwing away arbitrary amounts of the unit.
-    const std::size_t max_lt = std::min<std::size_t>(std::max(0, lp / 2), left.samples.size() - overlap);
-    const std::size_t max_rt = std::min<std::size_t>(std::max(0, rp / 2), right.samples.size() - overlap);
+    const std::size_t max_lt = search_phase ?
+        std::min<std::size_t>(std::max(0, lp / 2), left.samples.size() - overlap) : 0;
+    const std::size_t max_rt = search_phase ?
+        std::min<std::size_t>(std::max(0, rp / 2), right.samples.size() - overlap) : 0;
 
     double best = -3.0;
     std::size_t best_lt = 0, best_rt = 0;

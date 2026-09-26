@@ -860,7 +860,9 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         u.raw=decode_g711_alaw_pcm(enc,sample_rate);
         if(u.raw.samples.empty()){out.error="decode_failed";return out;}
         u.sched=parse_seg_schedule_m15(*unit);
-        u.layout=layout_seg_runs_m15(u.sched,u.raw.samples.size());
+        u.layout=policy.use_pc_seg_timeline
+            ? layout_seg_runs_m33(u.sched,u.raw.samples.size(),unit->signed_end>=0,sample_rate)
+            : layout_seg_runs_m15(u.sched,u.raw.samples.size());
         if(!u.sched.valid||!u.layout.valid){out.error="seg_failed";return out;}
         u.label=phones[i]+"->"+phones[i+1];
         u.source_ms=1000.0*u.raw.samples.size()/sample_rate;
@@ -1076,6 +1078,7 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         TdPsolaConfig cfg; cfg.pitch_scale=psm; cfg.duration_scale=effective_scale;
         cfg.use_three_point_pitch=anchor_strength>0.0 || physical_strength>0.0 || physical_terminal_strength>0.0 || empty_strength>0.0 || single_strength>0.0 || policy.pitch_declination_strength>0.0 || std::abs(stress_boost-1.0)>1e-12;
         cfg.pitch_scale_start=ps0; cfg.pitch_scale_mid=psm; cfg.pitch_scale_end=ps1;
+        cfg.search_join_phase=policy.search_join_phase;
         const bool side_duration=std::abs(left_scale-right_scale)>=1e-10;
         const bool side_energy=std::abs(left_energy_gain-1.0)>=1e-12 ||
                                std::abs(right_energy_gain-1.0)>=1e-12;
@@ -1102,7 +1105,7 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         const double rps=(i<unit_pitch_left.size()?unit_pitch_left[i]:pitch_scale);
         const int lp=rh[i-1]>0?int(std::lround(rh[i-1]/lps)):0;
         const int rp=lh[i]>0?int(std::lround(lh[i]/rps)):0;
-        out.pcm=hann_ola_join(out.pcm,rendered[i],lp,rp,&jd);
+        out.pcm=hann_ola_join(out.pcm,rendered[i],lp,rp,&jd,policy.search_join_phase);
         if(!jd.valid){out.error="join_failed";return out;}
     }
     out.valid=true;

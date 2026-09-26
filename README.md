@@ -1,3 +1,26 @@
+# Nicolai Native Port — M33
+
+M33 recovers the original PC source-node timeline and Q11 synthesis-step
+arithmetic, checked directly against the local original 32-bit DLL:
+**2665/2665 diphone timelines** and **683/683 step records** match. The source
+timeline has N+2 nodes, 10-ms unvoiced slots, signed-period node voicing flags,
+and a split+1 phone boundary; M15's source-coordinate estimates were different.
+
+An opt-in timeline adapter preserves M32's phone-local duration/energy and
+three-point F0. Seven execution/physical-prosody settings were evaluated on
+the same 22 PC golden WAVs. The adapter improves MFCC-DTW on all 22 phrases,
+but worsens aggregate F0 parity, so it is **not enabled in production**.
+Phase-search removal also fails the multi-metric gate. Stable audio remains
+byte-identical to M32, 22/22 SHA256 checks; all 20 host tests pass.
+
+See [findings](docs/M33_FINDINGS.md), [parity report](docs/M33_PC_PARITY_REPORT.md),
+and [reproduction / M34 continuation](docs/M33_CONTINUATION.md). Exact primitives
+are distinguished from the still-incomplete stateful Windows half-phone join.
+Source, tests, tools, and metric JSON/CSV are tracked; DLLs, voice data, and WAVs
+remain local.
+
+---
+
 # Nicolai Native Port — M32
 
 M32 fixes the execution-side granularity that kept M31's recovered
