@@ -1,0 +1,593 @@
+{
+  "python": "3.12.14",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "dependencies": {
+    "numpy": "2.5.3",
+    "librosa": "1.0.0",
+    "scipy": "1.18.1",
+    "numba": "0.67.0"
+  },
+  "voice_inputs": {
+    "nicolai16.dat": {
+      "bytes": 10961460,
+      "sha256": "471bf1266c913784187dae25a2e5784a6ec309162e7dee2167ca9887c253e74d"
+    },
+    "exc_rus.txt": {
+      "bytes": 2960349,
+      "sha256": "6c9ce14e4c0fd07889a1db2f3d8584e610f3a651e7f7a88a2d22137d28942260"
+    },
+    "abb_rus.txt": {
+      "bytes": 3636,
+      "sha256": "2d5ebb323427fa000ce57a9a0c1ea1a0da03c1eb7893023851dc09138ae2f558"
+    }
+  },
+  "reference_wavs": {
+    "001.wav": {
+      "bytes": 28306,
+      "sha256": "0457c376a0ac8b32d7998cd5d921ba2b4753d211ac6665f146d8ce0450df442a"
+    },
+    "002.wav": {
+      "bytes": 27970,
+      "sha256": "278126409da053e9242666f7d9d1644ea2a935fd817205d37583f17218081c99"
+    },
+    "003.wav": {
+      "bytes": 29360,
+      "sha256": "ac7c98a0476d29b423668c612edcdde7ec013972a596f525c96c75a28f3bcce5"
+    },
+    "004.wav": {
+      "bytes": 31224,
+      "sha256": "2b47c395b80448c3f0e123b1bc19ce086ed9c6d5ba5b18f3a216dc9b78c94ebc"
+    },
+    "005.wav": {
+      "bytes": 32720,
+      "sha256": "f01eac67deb72fd8c459bb3d5fb5e2129efa28d1fe2ff915c2ea89f192611ac4"
+    },
+    "006.wav": {
+      "bytes": 31060,
+      "sha256": "92b79e9d77893186d72cae0b53b1c6ea3121a1cd454b3b01a254a1120158cb59"
+    },
+    "007.wav": {
+      "bytes": 35028,
+      "sha256": "8df0d2a573c4839e4aab1a234b06d33692b7dca8792c837d240aa55ff60992b6"
+    },
+    "008.wav": {
+      "bytes": 27712,
+      "sha256": "cb4d1b17705d641d8619565259a6e0187de78babc7dde7f3555392d003546744"
+    },
+    "009.wav": {
+      "bytes": 30972,
+      "sha256": "925ae579afe76e398bb227a902e65058d7e2027b3f474eb62896e60774488dc0"
+    },
+    "010.wav": {
+      "bytes": 30734,
+      "sha256": "28381403073bfe022c6c78f549c2e20037a22b79b5433343acc200bd95014f8a"
+    },
+    "011.wav": {
+      "bytes": 31858,
+      "sha256": "0beca1625e6e3f6d0d0ac5588d7aa9a162a9ca5b92cbc5f5fc4b9bedf8aba28e"
+    },
+    "012.wav": {
+      "bytes": 56840,
+      "sha256": "4dae0bf755ee812f486737b6a31f4fe1bac07d7159e7e438457418483cd372ff"
+    },
+    "013.wav": {
+      "bytes": 46106,
+      "sha256": "569d54c72b6c8e5f26f7218a4d032c00b9d4bbbed58f20a6ecd0456ae9445326"
+    },
+    "014.wav": {
+      "bytes": 47956,
+      "sha256": "b54f76d081ba8a1bcf6b33bd51ca569d16c00f1434a57a2077860d2f0631dace"
+    },
+    "015.wav": {
+      "bytes": 55654,
+      "sha256": "e8d7badc084bb72ffbf0125404b4af14a989de57863bf54cfeeba110756c4c9f"
+    },
+    "016.wav": {
+      "bytes": 74178,
+      "sha256": "9ad0e54f09f08f796a8fdd48e499f6c0cffae110f610917e31212f166426e483"
+    },
+    "017.wav": {
+      "bytes": 66408,
+      "sha256": "6b92314d746aed2bf81cecc0f3626e799b6beeb24da8911f30687ee4953a5994"
+    },
+    "018.wav": {
+      "bytes": 62698,
+      "sha256": "e2266f87dfdb1d0009f44723599ab002545d4b745119db041a1d947b8e230924"
+    },
+    "019.wav": {
+      "bytes": 66470,
+      "sha256": "1e30bea8d93fb88773b824796ebd567bb8bcd196067c2802a09716d68b5ff491"
+    },
+    "020.wav": {
+      "bytes": 69458,
+      "sha256": "25a4a618bf2445a1952ef6ae4ae0d6477e6d4008e0cf6739188db4243d27aac1"
+    },
+    "021.wav": {
+      "bytes": 85828,
+      "sha256": "b8281b03d80ffddea8940a5fb48b0ab8043094d6a371cc356a2eb4cfa6a8f865"
+    },
+    "022.wav": {
+      "bytes": 39494,
+      "sha256": "18018f7c5a1b854c011e55f8f1dbc257ce93574d977a2780f0ee25de7531a100"
+    }
+  },
+  "source_line_endings": "LF normalized; input/audio fingerprints are raw bytes",
+  "source_files": {
+    "CMakeLists.txt": {
+      "lf_normalized_bytes": 2241,
+      "sha256": "2430c35efc5decee4d226a4effc6d310a16afa48b5de1c376b339039478a96b2"
+    },
+    "include/nicolai/address_space.hpp": {
+      "lf_normalized_bytes": 3096,
+      "sha256": "959f523badaf725ab214d24229f5cce5905e3289430fadf7182f716bc3a1463c"
+    },
+    "include/nicolai/ana_index.hpp": {
+      "lf_normalized_bytes": 1827,
+      "sha256": "bee6050af6407bab41f1fca1ab288982334d0ae6235d16fc47a9c75796c3f33e"
+    },
+    "include/nicolai/assets.hpp": {
+      "lf_normalized_bytes": 1127,
+      "sha256": "5dcaa15484b0fc182fe3ef298724f219fb3d5ef5a0296a70768fe697074b9cde"
+    },
+    "include/nicolai/cmp16.hpp": {
+      "lf_normalized_bytes": 2189,
+      "sha256": "b7962bbd30c95ddafaffbc8a11e69204e67bf18f6a24fb9835195cba39aa47e1"
+    },
+    "include/nicolai/cmp16_codebook.hpp": {
+      "lf_normalized_bytes": 3520,
+      "sha256": "a839854ae01cd1dc421192ca586f5d13282c0c6e45845c04c6691658b441a695"
+    },
+    "include/nicolai/cmp16_decode.hpp": {
+      "lf_normalized_bytes": 3339,
+      "sha256": "1fcea40d2cf62e83c6221bd42cecb26c5ece1c5b7c2289036116611a50b209ba"
+    },
+    "include/nicolai/diphone_catalog.hpp": {
+      "lf_normalized_bytes": 2555,
+      "sha256": "fc6cab20581ca42a77b833ef949b7f11586240cc1e105b2dc2a00eb9f1e34e9e"
+    },
+    "include/nicolai/edat.hpp": {
+      "lf_normalized_bytes": 2155,
+      "sha256": "347a76ae0a3ba900d9c2fb256c98dac92918541d7fa299a6b718425952ce0bb2"
+    },
+    "include/nicolai/engine.hpp": {
+      "lf_normalized_bytes": 1352,
+      "sha256": "1661984c1943c96ccbbc2c54c49f26b3623b8566f77664082b657c84bf8ca428"
+    },
+    "include/nicolai/g711.hpp": {
+      "lf_normalized_bytes": 792,
+      "sha256": "a8f1e73ecb660d7a69228417b6f043409e61167e7a0f423bec4936e6ebe53a12"
+    },
+    "include/nicolai/huffman.hpp": {
+      "lf_normalized_bytes": 1740,
+      "sha256": "2a7a481e7704367cdc7cfea92ff946771a959e49bd2d59631cb569b1aebfaa37"
+    },
+    "include/nicolai/hybrid_psola.hpp": {
+      "lf_normalized_bytes": 3795,
+      "sha256": "46dd1bbb57ebe91df606a06c0225f1563d909fe31be16466b4f154bd7ceedc96"
+    },
+    "include/nicolai/legacy_prosody.hpp": {
+      "lf_normalized_bytes": 17718,
+      "sha256": "aa07d436753ae13c605dffc3069f6eb02c052a04abc5fd319362428ae9251cfb"
+    },
+    "include/nicolai/legacy_tds.hpp": {
+      "lf_normalized_bytes": 622,
+      "sha256": "b0f6027c20f8299e04dde5ae23654da1cecb3111948e9eb203828f656b3ed57e"
+    },
+    "include/nicolai/pc_parity.hpp": {
+      "lf_normalized_bytes": 578,
+      "sha256": "2dba7b41d7771c2cc15981a2c1be67c20ce6d103ed75225f4d13e56cfa93f4b4"
+    },
+    "include/nicolai/psola_join.hpp": {
+      "lf_normalized_bytes": 2040,
+      "sha256": "230176d851c3e2629be5dd9505606058020d1756e0b939d4abfdd73872a5ffe6"
+    },
+    "include/nicolai/resource_registry.hpp": {
+      "lf_normalized_bytes": 1272,
+      "sha256": "655b3becb38a206f57a3c2c67c1c9a6637583f3f7009f737171afc888d063fb6"
+    },
+    "include/nicolai/russian_frontend.hpp": {
+      "lf_normalized_bytes": 1736,
+      "sha256": "0e0c51eb055b57a63b26b95984046b0a599c894812fd604094b18c6e1f6ed5a1"
+    },
+    "include/nicolai/russian_legacy.hpp": {
+      "lf_normalized_bytes": 2032,
+      "sha256": "6c79927c30613f2f4b11a758a2bd96ec759c91d8bfa3d5acd242ed110a726e36"
+    },
+    "include/nicolai/russian_stress.hpp": {
+      "lf_normalized_bytes": 950,
+      "sha256": "cd35da2936ddf2b4e9f291a1010d7010620b54bb385607cacf49f8cb420ef29e"
+    },
+    "include/nicolai/seg_schedule.hpp": {
+      "lf_normalized_bytes": 3597,
+      "sha256": "6664dc155ba4397bfcc9acca7199e8b47dd2accf97911ace7e9c589c839e3855"
+    },
+    "include/nicolai/static_files.hpp": {
+      "lf_normalized_bytes": 2014,
+      "sha256": "1cd7f6765e4ca194a789889dc59cd32b233a5413a7a3dac55f17eaad45dbe9af"
+    },
+    "include/nicolai/td_psola.hpp": {
+      "lf_normalized_bytes": 3939,
+      "sha256": "1a7a3a7b5a80d49cd622bf9edba001a89230eba1376badb5422bfdf1adb38741"
+    },
+    "include/nicolai/voice_catalog.hpp": {
+      "lf_normalized_bytes": 3515,
+      "sha256": "e5eb33c4d23f920cd8acca607d194011795092869efdc8b4195a7d430f8c68f3"
+    },
+    "include/nicolai/voice_db.hpp": {
+      "lf_normalized_bytes": 1049,
+      "sha256": "2f74b146239065114f6d2bd4ea60afd3106a15908166107ecd92763e175c624d"
+    },
+    "include/nicolai/wav_writer.hpp": {
+      "lf_normalized_bytes": 196,
+      "sha256": "6bcaa58fa794649974d354cf2b247485d2e5a1fd20d5279ed1c53ce7bf49cb13"
+    },
+    "src/address_space.cpp": {
+      "lf_normalized_bytes": 4879,
+      "sha256": "934a28f091286ff6e4260acf56dcb6e9ed25a79ee1d6610e18de40e7e4fc17fb"
+    },
+    "src/ana_index.cpp": {
+      "lf_normalized_bytes": 5007,
+      "sha256": "00fae965d248620764efba317cf1f594e9ecaf4f133c3e4e3514b3261b240bba"
+    },
+    "src/assets.cpp": {
+      "lf_normalized_bytes": 3851,
+      "sha256": "26685d05c48aa0b538fbda0c5502e9dde24ef1c1344a8413514287f34d621586"
+    },
+    "src/cmp16.cpp": {
+      "lf_normalized_bytes": 6339,
+      "sha256": "717b027eaf18eb9ff7c4de32d22dd3972f980fe98da6502e696c977353431455"
+    },
+    "src/cmp16_codebook.cpp": {
+      "lf_normalized_bytes": 7713,
+      "sha256": "be5b6aee6c8d6699ae2e308f50b504181f06818ee2567a0dd021386d80d44190"
+    },
+    "src/cmp16_decode.cpp": {
+      "lf_normalized_bytes": 2031,
+      "sha256": "cec6f1334243204d7b2ba69747aae188ffc5d8153732a843ee1038f82dd026e1"
+    },
+    "src/diphone_catalog.cpp": {
+      "lf_normalized_bytes": 14658,
+      "sha256": "cc4944495223ad7078abb5651f8bc19f49c4384f71332fc2e6b31d02f60ebe4f"
+    },
+    "src/edat.cpp": {
+      "lf_normalized_bytes": 7329,
+      "sha256": "9fcaf5352ade57f8781a345bbf1446c14babc8d74ad2b354ff306f4d78c1b1f0"
+    },
+    "src/engine.cpp": {
+      "lf_normalized_bytes": 3888,
+      "sha256": "65384802cb1a2d1c67dc91a57638ca605331b5d29ef040f523d7280133a9d4f9"
+    },
+    "src/g711.cpp": {
+      "lf_normalized_bytes": 1492,
+      "sha256": "aaca898b47d0b9e1dfd4b093d202cfd9f402b63ac2fe24aafdce2940e7f43a61"
+    },
+    "src/huffman.cpp": {
+      "lf_normalized_bytes": 3596,
+      "sha256": "b953ba99abafdd60e7ed8ac1d66572506c421394eed64e14e988a13e36025823"
+    },
+    "src/hybrid_psola.cpp": {
+      "lf_normalized_bytes": 28638,
+      "sha256": "14a29de5d29f4352b8469e69c1ba3a19264366cb842bd942bbfaab09fb7084fa"
+    },
+    "src/legacy_prosody.cpp": {
+      "lf_normalized_bytes": 58988,
+      "sha256": "0a5f52d9a5bb98b6a07b65f512e9043c3050f4eb551db3eb0685502096f16a41"
+    },
+    "src/legacy_tds.cpp": {
+      "lf_normalized_bytes": 2076,
+      "sha256": "38d4c46de733fc94e06d6d0f4b5aea068c29b3433268665cbc30c2deac65db5a"
+    },
+    "src/pc_parity.cpp": {
+      "lf_normalized_bytes": 456,
+      "sha256": "7ee77188fd46e63b145bd3bf5de6d32020dd13b1bae4ef6968f2d225b8c592dd"
+    },
+    "src/psola_join.cpp": {
+      "lf_normalized_bytes": 8511,
+      "sha256": "d696caac661515f49ba44edc5783e20ff4a1e5086ccd0fdf33aa1de638d6cd08"
+    },
+    "src/resource_registry.cpp": {
+      "lf_normalized_bytes": 4367,
+      "sha256": "a112359303969fd777f18e86593587b9a1ff063f5d2d16720c6a400787f64f5c"
+    },
+    "src/russian_frontend.cpp": {
+      "lf_normalized_bytes": 15567,
+      "sha256": "dca729a699285785fa3edc63d4b09762977b8994e85b414c205484ff00c66526"
+    },
+    "src/russian_legacy.cpp": {
+      "lf_normalized_bytes": 11672,
+      "sha256": "e5ad1adc9b65bd43a3ccc1d275d34c4a965b13ffd18e2c943b6057e6f7150e2a"
+    },
+    "src/russian_stress.cpp": {
+      "lf_normalized_bytes": 5237,
+      "sha256": "2fb9552a0fd8e63929244b650d7c51892647b41106ddb6a5771e82ddcf307487"
+    },
+    "src/seg_schedule.cpp": {
+      "lf_normalized_bytes": 11449,
+      "sha256": "a35cdf9338ea43994eb131e38c34dbee3a1f73e318af6c77beeb68df46c203d3"
+    },
+    "src/static_files.cpp": {
+      "lf_normalized_bytes": 6034,
+      "sha256": "308086420027bc1789c6ae8658e4a0e32c7a2202c43169b29ec8706e4a01e92f"
+    },
+    "src/td_psola.cpp": {
+      "lf_normalized_bytes": 12106,
+      "sha256": "4cd956ab7390a80ad8861df316539845d06864be5e58b19732765a0c1f347053"
+    },
+    "src/voice_catalog.cpp": {
+      "lf_normalized_bytes": 12190,
+      "sha256": "0120c7f80c1fe9a95edaa7478bcd50a133071671c8695e9c97a7c4aa083f27e3"
+    },
+    "src/voice_db.cpp": {
+      "lf_normalized_bytes": 4218,
+      "sha256": "52f201eba5aab3c76dbd8a6b7faac6e0ce433d1a705cf95614809313b8ea0a0c"
+    },
+    "src/wav_writer.cpp": {
+      "lf_normalized_bytes": 1350,
+      "sha256": "45190baa7bdb5f26ea42c497ff674a61adadf81a9eb7c7f14cd1fb79846f6e8e"
+    },
+    "tests/address_space_test.cpp": {
+      "lf_normalized_bytes": 2045,
+      "sha256": "f5c630635edc046a96b6ce4b078752c0712735f1c2e0717116686bb9082d3e1e"
+    },
+    "tests/ana_index_test.cpp": {
+      "lf_normalized_bytes": 1658,
+      "sha256": "7b9e59de6011d0cc6f9cf1d39528f8dc30ded3f8d2dd86d9d9424be8dccf5c1b"
+    },
+    "tests/cmp16_codebook_test.cpp": {
+      "lf_normalized_bytes": 1709,
+      "sha256": "c60e017d87f144b7492125329aecc53795f19d554715955daf81400f1fa42947"
+    },
+    "tests/cmp16_decode_test.cpp": {
+      "lf_normalized_bytes": 2899,
+      "sha256": "d9c6e9f53638da0ff7e1400bcb5f4236702a7180f2f4a950a3f2a37fcd7d8aee"
+    },
+    "tests/cmp16_test.cpp": {
+      "lf_normalized_bytes": 1460,
+      "sha256": "26840974c385902df54a88da42227edf6834093fd7ef2e6a5bfaae10fca897f7"
+    },
+    "tests/diphone_catalog_test.cpp": {
+      "lf_normalized_bytes": 3512,
+      "sha256": "2f8e149fd353ef634efc65076dc39fb810e489edc6c88bad694957101c2205c6"
+    },
+    "tests/embedded_resources_test.cpp": {
+      "lf_normalized_bytes": 1362,
+      "sha256": "731c10e1912eb5f411cf3a10bdc12b173d7a218527ad1068c60b182c5f70cfbb"
+    },
+    "tests/g711_test.cpp": {
+      "lf_normalized_bytes": 811,
+      "sha256": "33347ffcae22a449d9723e99da87b08c8a404ed2fddd4e7a4d6cf735bf366c96"
+    },
+    "tests/huffman_test.cpp": {
+      "lf_normalized_bytes": 838,
+      "sha256": "809122e8fe85ca83d8f42d7b3cdb2a1928145de4d109e87d4e8824216911f733"
+    },
+    "tests/hybrid_psola_test.cpp": {
+      "lf_normalized_bytes": 4405,
+      "sha256": "87cead13ef72b50339b4906ea6bde484d96fd6ac4721cda8f7696e688d65fba2"
+    },
+    "tests/legacy_prosody_test.cpp": {
+      "lf_normalized_bytes": 9008,
+      "sha256": "ca22c7c7745ca2eda250d0a70996f1448c80cacd0b7cb8dbaa78ca051621d121"
+    },
+    "tests/pc_parity_test.cpp": {
+      "lf_normalized_bytes": 496,
+      "sha256": "121b65b1d08fe6bb9ff87d3f72ab135cf7bf6731fa2da1f69c4e9aacb058775b"
+    },
+    "tests/psola_join_test.cpp": {
+      "lf_normalized_bytes": 1372,
+      "sha256": "d4d6294a8dd11e805a15e61d72a95d9e81eb51c217d8da95132855639137a3bd"
+    },
+    "tests/resource_registry_test.cpp": {
+      "lf_normalized_bytes": 2034,
+      "sha256": "975e411bcc51f561b9c5b508a81216169c92bc687b50075a2c8ee98e8235ecb3"
+    },
+    "tests/russian_frontend_test.cpp": {
+      "lf_normalized_bytes": 2247,
+      "sha256": "7cbba2854f9ad1324732dfb320ad3d49b76f67fc322bc0881dd1ce37bf0c57b6"
+    },
+    "tests/russian_legacy_test.cpp": {
+      "lf_normalized_bytes": 1735,
+      "sha256": "3bc4282f9f76889dd538a78984815c67deb5e2bc7723dfd778e7950764541b3a"
+    },
+    "tests/russian_stress_test.cpp": {
+      "lf_normalized_bytes": 1148,
+      "sha256": "3bdc8091aa07cdd01413cc2971ea62add360eeb9f056f5a728a38f8fd0cff6c1"
+    },
+    "tests/seg_schedule_test.cpp": {
+      "lf_normalized_bytes": 3224,
+      "sha256": "3fab583761c0a1f436fa8a00898b41de5841cd0f74ee173e5a20ca4f58e52152"
+    },
+    "tests/static_files_test.cpp": {
+      "lf_normalized_bytes": 2143,
+      "sha256": "e33769dcf11e3a49add31b1963b80d95d259ddcdc70b950cad44638fbbe92f60"
+    },
+    "tests/td_psola_test.cpp": {
+      "lf_normalized_bytes": 3242,
+      "sha256": "b18957eb9e86d3cc47615fff00155b6469dc228313ab90b64a54c70d7d65da5d"
+    },
+    "tests/voice_catalog_test.cpp": {
+      "lf_normalized_bytes": 2080,
+      "sha256": "a74c5a91d209199ea8af0fc18376cfcf7159d74a9064c8b2067e9146112e889e"
+    },
+    "tools/analyze_f0_contour.py": {
+      "lf_normalized_bytes": 1886,
+      "sha256": "d0371eeb0ed8a8299acd7b90b736486ab29f64f10c969cf8c973d53aff4bfb4b"
+    },
+    "tools/analyze_voice_db.py": {
+      "lf_normalized_bytes": 1403,
+      "sha256": "1ba43ed9859e2524a01f879be4d11128616d46b0b758f20cb5f5ddf7de9706a2"
+    },
+    "tools/assess_m33_candidates.py": {
+      "lf_normalized_bytes": 3057,
+      "sha256": "5b4baedc1a1063d389799aa260a7ac764a3d98d3587162ae4c148cfff1b8480f"
+    },
+    "tools/compare_parity.py": {
+      "lf_normalized_bytes": 3548,
+      "sha256": "bb5851df6735aa7f040b8ca654fa6672291d6b8a8e6099035de8ce77dd62a731"
+    },
+    "tools/compare_reference_pack.py": {
+      "lf_normalized_bytes": 4924,
+      "sha256": "917d2b85555250beebbd55ae38cffb0ec067ce26afd3b1d96f84ae011fe66aab"
+    },
+    "tools/compare_wav.py": {
+      "lf_normalized_bytes": 3566,
+      "sha256": "6636e0a04303fe49ed40296c7a03378ffd25744c0894a7f1eee2d571fa2b57a2"
+    },
+    "tools/disassemble_legacy.py": {
+      "lf_normalized_bytes": 1827,
+      "sha256": "adc401171a3442b2b0e995f6f5670fc1b4cd0252b813b783a9aedc1600ab6ea7"
+    },
+    "tools/extract_msi.py": {
+      "lf_normalized_bytes": 5749,
+      "sha256": "175a26eb1df75564442ffbc20517af99cb285f293e95362e521a8cd2e0123c34"
+    },
+    "tools/m2_assets.py": {
+      "lf_normalized_bytes": 6012,
+      "sha256": "cc90f017e0540854abe6754d176332b267c640bd592ff0f3c5e8ef0424e0f29b"
+    },
+    "tools/m3_units.py": {
+      "lf_normalized_bytes": 6615,
+      "sha256": "2f572f2fcd4cd80366151bb81be3b76783723f163ba2586f0eb18bf1708202d8"
+    },
+    "tools/map_edat.py": {
+      "lf_normalized_bytes": 5148,
+      "sha256": "c92951d49be3c1a31c41e744b1957b4aa840b94e5d8df72bc4436beb0cbb4776"
+    },
+    "tools/measure_parity.py": {
+      "lf_normalized_bytes": 8746,
+      "sha256": "f57d63babc8ce45a3d6064b574c24e7e1e05ab5a9694ba3d736c9c81202adb49"
+    },
+    "tools/nicolai_batch_render.cpp": {
+      "lf_normalized_bytes": 7600,
+      "sha256": "fc410ec330acf81fd67273533af212197768b5c3b7c2142fad85694386aeccfc"
+    },
+    "tools/nicolai_m10_probe.cpp": {
+      "lf_normalized_bytes": 2579,
+      "sha256": "d8420b14305e7d003778f469b79588ed403a41171f213bd44c5b20c4b04141b7"
+    },
+    "tools/nicolai_m11_probe.cpp": {
+      "lf_normalized_bytes": 4255,
+      "sha256": "80f28b99e42b1f9e7d92e624f231d3e8674693ea8c04795b9f58548424e67254"
+    },
+    "tools/nicolai_m12_probe.cpp": {
+      "lf_normalized_bytes": 4476,
+      "sha256": "81845aa357d3ca4b91697a21be1e0f5d5badcfc27fd5de19333b5cb63b62937f"
+    },
+    "tools/nicolai_m13_probe.cpp": {
+      "lf_normalized_bytes": 3026,
+      "sha256": "b941953a5649b1985f19cf38da6787ff835273db31bf638fd6510a1b3a3a4ec0"
+    },
+    "tools/nicolai_m14_probe.cpp": {
+      "lf_normalized_bytes": 3602,
+      "sha256": "ce91123285e3d8210406a3ddb3a5f29cf0661ebcd37f6d0333e679f67326c170"
+    },
+    "tools/nicolai_m15_probe.cpp": {
+      "lf_normalized_bytes": 6264,
+      "sha256": "91c709dd7b51fdcb9aad89163f67493d87b6d8125b833bd217de0eb2c8a3d19e"
+    },
+    "tools/nicolai_m16_probe.cpp": {
+      "lf_normalized_bytes": 2047,
+      "sha256": "a043de606c81e3fef737fe98b8eb3db13ffcf83377bb0c6e2bf847f20e8b05b9"
+    },
+    "tools/nicolai_m17_probe.cpp": {
+      "lf_normalized_bytes": 2889,
+      "sha256": "d085dde8bdcb485ed4cc61af108017e963d5e22f57d879c5de8142406bb4afa7"
+    },
+    "tools/nicolai_m18_probe.cpp": {
+      "lf_normalized_bytes": 2544,
+      "sha256": "faca1c2f7c0733ad747e306061ae23293e91c91319bb1b0ef0a476d2e2e1cbb4"
+    },
+    "tools/nicolai_m26_probe.cpp": {
+      "lf_normalized_bytes": 1332,
+      "sha256": "e24150980c2640196ee776abc46fd14c084f1028d7dc5b16c940b059e43f897c"
+    },
+    "tools/nicolai_m27_probe.cpp": {
+      "lf_normalized_bytes": 1743,
+      "sha256": "7bfc078772a30633abd30794189708a975182a0e57a0bfefee7ba74a87000acc"
+    },
+    "tools/nicolai_m2_probe.cpp": {
+      "lf_normalized_bytes": 2784,
+      "sha256": "43d4b0f06ff3d259f4bf5ba2bd2ddb7af6704c76e9443261f66d843cd21c1352"
+    },
+    "tools/nicolai_m33_probe.cpp": {
+      "lf_normalized_bytes": 5837,
+      "sha256": "dc6cfa6da7fee6960717f99bfebb522ac7bb1da4e315e5c0092b254d9e7690e2"
+    },
+    "tools/nicolai_m3_probe.cpp": {
+      "lf_normalized_bytes": 5494,
+      "sha256": "de394810b9298e9df0258158290d53e558b5bc7ec6c0374a7f4eae8d6e1cddb1"
+    },
+    "tools/nicolai_m4_probe.cpp": {
+      "lf_normalized_bytes": 2911,
+      "sha256": "27aa4c815fb14f77e698fe2387b8710707e01644ad363c935d3507bc6e981d31"
+    },
+    "tools/nicolai_m5_probe.cpp": {
+      "lf_normalized_bytes": 2306,
+      "sha256": "4a3ff643df335e68599d7978353f5a12342bc8329add68fc48d5063f430b9906"
+    },
+    "tools/nicolai_m7_probe.cpp": {
+      "lf_normalized_bytes": 4039,
+      "sha256": "d0f0bfdff7154959b0ec2d800dbda0f01b06e1664ebc79806869e8ba952f4829"
+    },
+    "tools/nicolai_m8_probe.cpp": {
+      "lf_normalized_bytes": 5619,
+      "sha256": "1b8e232a6044a30e092a72e665a6917d1e9044eff7e66eb1b596917adcddb1aa"
+    },
+    "tools/nicolai_m9_probe.cpp": {
+      "lf_normalized_bytes": 4962,
+      "sha256": "9bbf3b6dac42aa8398915ddef53730ad709a56c653a8c4e92ed5b8f8f2d791be"
+    },
+    "tools/nicolai_probe.cpp": {
+      "lf_normalized_bytes": 3435,
+      "sha256": "e3db79e37c870a1a090017010c8cd366c5a1396a84a9fea9fd5211c3af618ee5"
+    },
+    "tools/nicolai_render.cpp": {
+      "lf_normalized_bytes": 1860,
+      "sha256": "f588c2f25c40655f736e6c8763c5ec18c2673e9749921f5c4ede1c66c8dd9ee2"
+    },
+    "tools/parity_corpus.txt": {
+      "lf_normalized_bytes": 229,
+      "sha256": "af79aff3e8ceeb250c6cd41bbbad910d7b953b6e2f23a984a21433462baac3a4"
+    },
+    "tools/parity_corpus_22.tsv": {
+      "lf_normalized_bytes": 516,
+      "sha256": "8fe2870d8a2596106001f90eaf7e9643aad29a820e9b501c58a5b699548ce927"
+    },
+    "tools/requirements-parity.txt": {
+      "lf_normalized_bytes": 25,
+      "sha256": "0591e08ba3ff154f0e052d9d0627878dc876415e91eda193f1ccf87465c7cfdc"
+    },
+    "tools/requirements-reverse.txt": {
+      "lf_normalized_bytes": 106,
+      "sha256": "a05e7d5c90eec7ab29035cc5b885e4d8ab0d02f2455c65338cff5f74f38fbb5b"
+    },
+    "tools/run_m32_parity.ps1": {
+      "lf_normalized_bytes": 2081,
+      "sha256": "2d8dc492f49e85ea7429a445a6ae46567a5b6a29a8302e29c565c7b1a65dac31"
+    },
+    "tools/run_m33_parity.ps1": {
+      "lf_normalized_bytes": 1319,
+      "sha256": "315bb492aa0fcf3663cadc8e4afbb6e78f4bca048eff1cbcacf18f904af63bf0"
+    },
+    "tools/sweep_m32_physical.ps1": {
+      "lf_normalized_bytes": 2909,
+      "sha256": "9762d7e6e6837a23d0018d0a362ea75550e54e4970f0b842b6b62bf21e1151ed"
+    },
+    "tools/sweep_m33_execution.ps1": {
+      "lf_normalized_bytes": 2085,
+      "sha256": "2d3f3c4062d353bf20987608d203d9c0a9ffd80c6cef78a8ff31064d8b1a319f"
+    },
+    "tools/verify_corpus_identity.py": {
+      "lf_normalized_bytes": 1444,
+      "sha256": "02e5509fc2cc4f0db61e9f46d34caa8525adc00c3265b9acb300686bcc59d185"
+    },
+    "tools/windows_reference.ps1": {
+      "lf_normalized_bytes": 1522,
+      "sha256": "91b8a86fb78823e7d3840399890d6e1361f3a1e184bd23a406fe0d51a278a5e9"
+    },
+    "tools/write_parity_manifest.py": {
+      "lf_normalized_bytes": 2201,
+      "sha256": "24279a8ecea89fc00ae1d37a0b81f9881f90ef7bccfef49324917a9d904af514"
+    }
+  }
+}

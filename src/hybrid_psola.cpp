@@ -37,6 +37,15 @@ SegPitchSchedule make_run_pitch_schedule(const SegRunSpan& span, std::size_t sou
         s.error = "not_voiced";
         return s;
     }
+    if (span.use_explicit_marks) {
+        s.marks = span.source_marks;
+        if (s.marks.empty() || s.marks.back() >= source_samples ||
+            !std::is_sorted(s.marks.begin(), s.marks.end())) {
+            s.error = "invalid_explicit_marks"; return s;
+        }
+        s.valid = true;
+        return s;
+    }
 
     std::size_t period_sum = 0;
     for (const int p : span.periods) period_sum += static_cast<std::size_t>(p);
@@ -422,7 +431,7 @@ Pcm16Mono resynthesize_seg_m15(
             ? static_cast<int>(std::lround(right_hints[i - 1] / lps)) : 0;
         const int rp = left_hints[i] > 0
             ? static_cast<int>(std::lround(left_hints[i] / rps)) : 0;
-        out = hann_ola_join(out, rendered[i], lp, rp, &jd);
+        out = hann_ola_join(out, rendered[i], lp, rp, &jd, config.search_join_phase);
         if (!jd.valid) return {};
         if (diagnostics) diagnostics->internal_joins.push_back(jd);
     }
@@ -547,7 +556,7 @@ Pcm16Mono resynthesize_seg_m32_phone_sides(
             static_cast<int>(std::lround(right_hints[i - 1] / left_pitch)) : 0;
         const int rp = left_hints[i] > 0 ?
             static_cast<int>(std::lround(left_hints[i] / right_pitch)) : 0;
-        out = hann_ola_join(out, rendered[i], lp, rp, &jd);
+        out = hann_ola_join(out, rendered[i], lp, rp, &jd, pitch_config.search_join_phase);
         if (!jd.valid) return {};
         if (diagnostics) diagnostics->internal_joins.push_back(jd);
     }
@@ -613,7 +622,7 @@ DiphoneChainM15Result synthesize_diphone_chain_m15(
             ? static_cast<int>(std::lround(right_hints[i - 1] / lps)) : 0;
         const int rp = left_hints[i] > 0
             ? static_cast<int>(std::lround(left_hints[i] / rps)) : 0;
-        out.pcm = hann_ola_join(out.pcm, rendered[i], lp, rp, &jd);
+        out.pcm = hann_ola_join(out.pcm, rendered[i], lp, rp, &jd, config.search_join_phase);
         if (!jd.valid) { out.error = "boundary_join_failed"; return out; }
         out.joins.push_back(jd);
     }

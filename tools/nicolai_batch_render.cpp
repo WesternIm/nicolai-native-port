@@ -41,6 +41,8 @@ int main(int argc,char**argv){
             <<"\tUJU_L="<<rh.u_j_u_left_u<<"\tUJU_J="<<rh.u_j_u_center_j
             <<"\tUJU_R="<<rh.u_j_u_right_u<<"\n";
    nicolai::LegacyTimingPolicy policy;
+   if(const char* v=std::getenv("NICOLAI_PC_SEG_TIMELINE")) policy.use_pc_seg_timeline=std::atoi(v)!=0;
+   if(const char* v=std::getenv("NICOLAI_SEARCH_JOIN_PHASE")) policy.search_join_phase=std::atoi(v)!=0;
    if(const char* v=std::getenv("NICOLAI_PHONE_SCALE")) policy.phone_duration_scale=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_UTTERANCE_BOUNDARY_SCALE")) policy.utterance_boundary_scale=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_WORD_BOUNDARY_SCALE")) policy.word_boundary_scale=std::atof(v);

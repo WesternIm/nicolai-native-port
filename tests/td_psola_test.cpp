@@ -1,9 +1,26 @@
 #include "nicolai/td_psola.hpp"
+#include "nicolai/legacy_tds.hpp"
 #include <cassert>
 #include <cmath>
 #include <iostream>
 
 int main() {
+    const auto step = nicolai::legacy_tds_step_m33(100,2048,2048,100,2048,0);
+    assert(step.valid && step.count==1 && step.first_period==100 && step.carry==0);
+    const auto drop = nicolai::legacy_tds_step_m33(100,2048,1024,100,2048,0);
+    assert(drop.valid && drop.count==0 && drop.carry==50);
+    const auto carried = nicolai::legacy_tds_step_m33(100,2048,1024,100,2048,drop.carry);
+    assert(carried.valid && carried.count==1 && carried.carry==0);
+    const auto repeated = nicolai::legacy_tds_step_m33(100,2048,4096,100,2048,0);
+    assert(repeated.valid && repeated.count==2 && repeated.carry==0);
+    assert(!nicolai::legacy_tds_step_m33(100,0,2048,100,2048,0).valid);
+    assert(!nicolai::legacy_tds_step_m33(1,16384,1,100,2048,0).valid);
+    const auto rising = nicolai::legacy_tds_step_m33(160,2048,3072,180,2048,17);
+    assert(rising.valid && rising.count==2 && rising.delta_q11==20480 && rising.carry==-75);
+    const auto falling = nicolai::legacy_tds_step_m33(180,2048,3072,160,2048,-9);
+    assert(falling.valid && falling.count==1 && falling.delta_q11==-32768 && falling.carry==81);
+    const auto clamp = nicolai::legacy_tds_step_m33(100,2048,2048,1000,2048,0);
+    assert(clamp.valid && clamp.delta_q11==32767);
     nicolai::DiphoneUnit u;
     u.metadata = {2,4,2,4,100,100,100,100};
     auto s = nicolai::parse_clean_voiced_seg_schedule(u, 500);

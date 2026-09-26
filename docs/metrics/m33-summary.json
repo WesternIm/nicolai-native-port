@@ -1,0 +1,142 @@
+[
+  {
+    "candidate": "baseline",
+    "pc_timeline": false,
+    "phase_search": true,
+    "physical_length_strength": 0.0,
+    "physical_energy_strength": 0.0,
+    "metrics": {
+      "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+      "phrases": 22,
+      "rendered": 22,
+      "mean_active_waveform_correlation": 0.1965157232028779,
+      "mean_active_duration_ratio": 0.992549896959575,
+      "active_duration_mae_percent": 5.679022643845701,
+      "total_duration_mae_percent": 3.598674499004331,
+      "f0_contour_mae_percent": 13.479913521658911,
+      "mean_mfcc_dtw": 52.01387280984829,
+      "mean_rms_ratio": 0.9343976754294899,
+      "rms_ratio_mae_percent": 10.237700021058881
+    }
+  },
+  {
+    "candidate": "pc-timeline",
+    "pc_timeline": true,
+    "phase_search": true,
+    "physical_length_strength": 0.0,
+    "physical_energy_strength": 0.0,
+    "metrics": {
+      "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+      "phrases": 22,
+      "rendered": 22,
+      "mean_active_waveform_correlation": 0.19869590309286336,
+      "mean_active_duration_ratio": 0.9976809650385277,
+      "active_duration_mae_percent": 5.65208853334378,
+      "total_duration_mae_percent": 3.308355673712154,
+      "f0_contour_mae_percent": 15.387152815107278,
+      "mean_mfcc_dtw": 48.53360086786722,
+      "mean_rms_ratio": 0.933356504270579,
+      "rms_ratio_mae_percent": 9.551674166711816
+    }
+  },
+  {
+    "candidate": "no-phase-search",
+    "pc_timeline": false,
+    "phase_search": false,
+    "physical_length_strength": 0.0,
+    "physical_energy_strength": 0.0,
+    "metrics": {
+      "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+      "phrases": 22,
+      "rendered": 22,
+      "mean_active_waveform_correlation": 0.185112640795789,
+      "mean_active_duration_ratio": 1.0960755485721205,
+      "active_duration_mae_percent": 10.546050798613281,
+      "total_duration_mae_percent": 6.0661660206156816,
+      "f0_contour_mae_percent": 15.957158220978377,
+      "mean_mfcc_dtw": 53.62737982403571,
+      "mean_rms_ratio": 0.9526063531491807,
+      "rms_ratio_mae_percent": 10.09470011736712
+    }
+  },
+  {
+    "candidate": "timeline-no-phase",
+    "pc_timeline": true,
+    "phase_search": false,
+    "physical_length_strength": 0.0,
+    "physical_energy_strength": 0.0,
+    "metrics": {
+      "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+      "phrases": 22,
+      "rendered": 22,
+      "mean_active_waveform_correlation": 0.1963319777774448,
+      "mean_active_duration_ratio": 1.0971953349333454,
+      "active_duration_mae_percent": 10.517167004506703,
+      "total_duration_mae_percent": 6.075574850100118,
+      "f0_contour_mae_percent": 15.169346782439517,
+      "mean_mfcc_dtw": 49.207101355806934,
+      "mean_rms_ratio": 0.9473804604583809,
+      "rms_ratio_mae_percent": 9.428505439561228
+    }
+  },
+  {
+    "candidate": "timeline-length",
+    "pc_timeline": true,
+    "phase_search": true,
+    "physical_length_strength": 0.002,
+    "physical_energy_strength": 0.0,
+    "metrics": {
+      "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+      "phrases": 22,
+      "rendered": 22,
+      "mean_active_waveform_correlation": 0.20139221785078812,
+      "mean_active_duration_ratio": 0.9985482562131146,
+      "active_duration_mae_percent": 5.64979503902765,
+      "total_duration_mae_percent": 3.301474300115685,
+      "f0_contour_mae_percent": 15.461305113439147,
+      "mean_mfcc_dtw": 48.84565388649794,
+      "mean_rms_ratio": 0.9332113353289714,
+      "rms_ratio_mae_percent": 9.553289188229657
+    }
+  },
+  {
+    "candidate": "timeline-energy",
+    "pc_timeline": true,
+    "phase_search": true,
+    "physical_length_strength": 0.0,
+    "physical_energy_strength": 0.002,
+    "metrics": {
+      "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+      "phrases": 22,
+      "rendered": 22,
+      "mean_active_waveform_correlation": 0.19869370376433765,
+      "mean_active_duration_ratio": 0.9976809650385277,
+      "active_duration_mae_percent": 5.65208853334378,
+      "total_duration_mae_percent": 3.308355673712154,
+      "f0_contour_mae_percent": 15.387172363518928,
+      "mean_mfcc_dtw": 48.53316199676464,
+      "mean_rms_ratio": 0.9331862842560145,
+      "rms_ratio_mae_percent": 9.568696168168286
+    }
+  },
+  {
+    "candidate": "timeline-both",
+    "pc_timeline": true,
+    "phase_search": true,
+    "physical_length_strength": 0.002,
+    "physical_energy_strength": 0.002,
+    "metrics": {
+      "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+      "phrases": 22,
+      "rendered": 22,
+      "mean_active_waveform_correlation": 0.20139120371617353,
+      "mean_active_duration_ratio": 0.9985482562131146,
+      "active_duration_mae_percent": 5.64979503902765,
+      "total_duration_mae_percent": 3.301474300115685,
+      "f0_contour_mae_percent": 15.46131397762893,
+      "mean_mfcc_dtw": 48.84511770578601,
+      "mean_rms_ratio": 0.9330411099165347,
+      "rms_ratio_mae_percent": 9.570311729473323
+    }
+  }
+]

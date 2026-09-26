@@ -198,4 +198,77 @@ SegSpanLayout layout_seg_runs_m15(
     return out;
 }
 
+SegSourceTimelineM33 source_timeline_seg_m33(
+    const SegScheduleM15& s, std::size_t count, bool terminal_voiced, int rate) {
+    SegSourceTimelineM33 out;
+    if (!s.valid || count < 2 || rate < 100 || s.total_slots <= 0 ||
+        s.total_slots > 254 || s.split_index < 0 || s.split_index > s.total_slots) {
+        out.error = "invalid_pc_timeline_input"; return out;
+    }
+    out.unvoiced_slot_samples = static_cast<std::size_t>(rate / 100);
+    out.split_node = static_cast<std::size_t>(s.split_index + 1);
+    out.nodes.push_back({0, s.mode >= 0});
+    std::size_t position = 0;
+    for (const auto& run : s.runs) {
+        if (run.slots <= 0 || run.slots > s.total_slots || (run.voiced &&
+            run.signed_periods.size() != static_cast<std::size_t>(run.slots))) {
+            out.error = "invalid_pc_run"; return out;
+        }
+        for (int i = 0; i < run.slots; ++i) {
+            const int signed_period = run.voiced ? run.signed_periods[i] : 0;
+            const auto width = run.voiced ? static_cast<std::size_t>(std::abs(signed_period))
+                                          : out.unvoiced_slot_samples;
+            if (width == 0 || position >= count || width > count - 1 - position) {
+                out.error = "pc_node_exceeds_pcm"; return out;
+            }
+            position += width;
+            out.nodes.push_back({position, run.voiced && signed_period >= 0});
+        }
+    }
+    if (out.nodes.size() != static_cast<std::size_t>(s.total_slots + 1) ||
+        position >= count - 1) {
+        out.error = "pc_terminal_not_after_slots"; return out;
+    }
+    out.nodes.push_back({count - 1, terminal_voiced});
+    out.valid = true;
+    return out;
+}
+
+SegSpanLayout layout_seg_runs_m33(
+    const SegScheduleM15& s, std::size_t count, bool terminal_voiced, int rate) {
+    SegSpanLayout out;
+    const auto timeline = source_timeline_seg_m33(s, count, terminal_voiced, rate);
+    if (!timeline.valid) { out.error = timeline.error; return out; }
+    out.pcm_samples = count;
+    out.split_sample_estimate = timeline.nodes[timeline.split_node].sample;
+    std::size_t slot = 0;
+    for (std::size_t i = 0; i < s.runs.size(); ++i) {
+        const auto& run = s.runs[i];
+        SegRunSpan span;
+        span.voiced = run.voiced; span.slots = run.slots;
+        span.periods = run.periods; span.signed_periods = run.signed_periods;
+        span.signed_period_reset = run.signed_period_reset;
+        span.source_begin = timeline.nodes[slot].sample;
+        const auto end_slot = slot + static_cast<std::size_t>(run.slots);
+        span.source_end = i + 1 == s.runs.size() ? count : timeline.nodes[end_slot].sample;
+        span.use_explicit_marks = true;
+        // The exact node flags are consumed. Source support is still cropped
+        // at run boundaries, so this is only an experimental TDS adapter.
+        for (auto node = slot; node <= end_slot; ++node) {
+            const auto& n = timeline.nodes[node];
+            if (n.voiced && n.sample >= span.source_begin && n.sample < span.source_end)
+                span.source_marks.push_back(n.sample - span.source_begin);
+        }
+        if (i + 1 == s.runs.size() && timeline.nodes.back().voiced)
+            span.source_marks.push_back(count - 1 - span.source_begin);
+        if (span.voiced) {
+            for (const int p : span.periods) out.voiced_period_samples += p;
+        } else out.unvoiced_budget_samples += span.source_end - span.source_begin;
+        out.runs.push_back(std::move(span));
+        slot = end_slot;
+    }
+    out.valid = true;
+    return out;
+}
+
 } // namespace nicolai

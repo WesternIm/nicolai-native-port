@@ -14,6 +14,15 @@ int main() {
         assert(l.valid && l.runs.size() == 1);
         assert(l.runs[0].source_begin == 0 && l.runs[0].source_end == 500);
         assert(l.split_sample_estimate == 250);
+        const auto pc = nicolai::source_timeline_seg_m33(s, 500, true);
+        assert(pc.valid && pc.nodes.size() == 6);
+        assert(pc.nodes[0].sample == 0 && pc.nodes[0].voiced);
+        assert(pc.nodes[4].sample == 400 && pc.nodes[5].sample == 499);
+        assert(pc.split_node == 3 && pc.nodes[pc.split_node].sample == 300);
+        const auto adapter = nicolai::layout_seg_runs_m33(s, 500, true);
+        assert(adapter.valid && adapter.split_sample_estimate == 300);
+        assert(adapter.runs[0].source_marks.size() == 6);
+        assert(!nicolai::source_timeline_seg_m33(s, 400, true).valid);
     }
     {
         nicolai::DiphoneUnit u;
@@ -30,6 +39,16 @@ int main() {
         assert(l.runs.front().source_begin == 0);
         assert(l.runs.back().source_end == 2994);
         assert(l.unvoiced_budget_samples == 1675);
+        const auto pc = nicolai::source_timeline_seg_m33(s, 2994, false);
+        assert(pc.valid && pc.nodes.size() == 19);
+        assert(pc.unvoiced_slot_samples == 160);
+        assert(!pc.nodes[0].voiced && pc.nodes[9].sample == 1440);
+        assert(pc.nodes[10].sample == 1544 && !pc.nodes[10].voiced);
+        assert(pc.nodes[11].sample == 1649 && pc.nodes[11].voiced);
+        assert(pc.nodes.back().sample == 2993 && !pc.nodes.back().voiced);
+        const auto adapter = nicolai::layout_seg_runs_m33(s, 2994, false);
+        assert(adapter.valid && adapter.runs[0].source_end == 1440);
+        assert(adapter.runs[1].source_marks.front() == 209);
     }
     {
         nicolai::DiphoneUnit u;

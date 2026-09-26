@@ -40,7 +40,8 @@ Pcm16Mono hann_ola_join(const Pcm16Mono& left,
                         const Pcm16Mono& right,
                         int left_period_hint,
                         int right_period_hint,
-                        OlaJoinDiagnostics* diagnostics = nullptr);
+                        OlaJoinDiagnostics* diagnostics = nullptr,
+                        bool search_phase = true);
 
 struct DiphoneChainResult {
     bool valid = false;

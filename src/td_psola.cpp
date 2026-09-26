@@ -275,7 +275,7 @@ DiphoneChainM14Result synthesize_diphone_chain_m14(
         OlaJoinDiagnostics jd;
         const int lp = edge_hints[i - 1].valid ? edge_hints[i - 1].right_period : 0;
         const int rp = edge_hints[i].valid ? edge_hints[i].left_period : 0;
-        out.pcm = hann_ola_join(out.pcm, units_pcm[i], lp, rp, &jd);
+        out.pcm = hann_ola_join(out.pcm, units_pcm[i], lp, rp, &jd, config.search_join_phase);
         if (!jd.valid) { out.error = "boundary_join_failed"; return out; }
         out.joins.push_back(jd);
     }

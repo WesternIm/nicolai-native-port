@@ -149,6 +149,10 @@ LegacyAuthoringSplitDecisionM31 legacy_authoring_split_decision_m31(
 
 
 struct LegacyTimingPolicy {
+    // M33 exact SEG timeline / approximate portable TDS adapter. Corpus gate
+    // decides promotion; false preserves M32 sample-for-sample.
+    bool use_pc_seg_timeline = false;
+    bool search_join_phase = true;
     // M20 PC-reference conformance pass. These are intentionally separate from
     // duration.par: the old Russian prosody layer applies additional word- and
     // boundary-level timing coefficients after the phone-duration lookup.
