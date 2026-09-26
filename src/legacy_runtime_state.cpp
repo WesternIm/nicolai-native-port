@@ -153,4 +153,52 @@ LegacyRuntimeSourceSelectionM36 legacy_runtime_normal_source_selection_m36(
     return out;
 }
 
+LegacyRuntimeSourceSelectionM36 legacy_runtime_initial_source_selection_m36(
+    const std::vector<std::int32_t>& source_positions,
+    const LegacyRuntimeStateM36& state,
+    int buffered_interval_index,
+    int buffered_first_period) {
+    LegacyRuntimeSourceSelectionM36 out;
+    if (!monotonic_positions(source_positions) || buffered_first_period <= 0 ||
+        buffered_interval_index < 0 ||
+        buffered_interval_index >= static_cast<int>(source_positions.size()) - 1)
+        return out;
+
+    const int saved = static_cast<int>(state.word2e);
+    const int intervals = static_cast<int>(source_positions.size()) - 1;
+    if (saved < 0 || saved >= intervals) return out;
+
+    const int current_width = static_cast<int>(
+        source_positions[static_cast<std::size_t>(buffered_interval_index + 1)] -
+        source_positions[static_cast<std::size_t>(buffered_interval_index)]);
+    if (current_width <= 0) return out;
+
+    int left_width = 0;
+    if (saved < intervals - 1) {
+        left_width = static_cast<int>(
+            source_positions[static_cast<std::size_t>(saved + 2)] -
+            source_positions[static_cast<std::size_t>(saved + 1)]);
+    } else {
+        left_width = static_cast<int>(
+            source_positions[static_cast<std::size_t>(saved + 1)] -
+            source_positions[static_cast<std::size_t>(saved)]);
+    }
+    if (left_width <= 0) return out;
+
+    const int left_length = std::min(left_width, buffered_first_period);
+    const int right_length = std::min(current_width, buffered_first_period);
+
+    out.valid = true;
+    out.current_interval_width = current_width;
+    out.left_interval_width = left_width;
+    out.left_window_length = left_length;
+    out.right_window_length = right_length;
+    out.left_source_position =
+        static_cast<int>(source_positions[static_cast<std::size_t>(saved + 1)]);
+    out.right_source_position = static_cast<int>(
+        source_positions[static_cast<std::size_t>(buffered_interval_index + 1)]) -
+        right_length;
+    return out;
+}
+
 } // namespace nicolai
