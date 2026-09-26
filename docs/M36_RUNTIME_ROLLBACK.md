@@ -2,9 +2,10 @@
 
 This note records exact state and source-selection behavior recovered statically
 from the known original `mtsyc32.dll` around `0x10107c20`, `0x10107f65`, the
-ordinary `0x101083b0` path and the initial `0x101086c0` transition. It remains
-deliberately separate from renderer integration: production and
-`StatefulTdsM34` do not call these primitives yet.
+ordinary `0x101083b0` path, initial `0x101086c0` transition and the first
+recoverable layers of `0x10108cf0`. It remains deliberately separate from
+renderer integration: production and `StatefulTdsM34` do not call these
+primitives yet.
 
 ## Per-interval write routing
 
@@ -27,7 +28,7 @@ else:
 `legacy_runtime_route_m36()` models this dispatch without assigning speculative
 higher-level names to the caller gates.
 
-## Checkpoint state
+## Checkpoint and rollback
 
 Before the ordinary grain path (`0x10107e9f..0x10107ebb`), the original saves:
 
@@ -37,26 +38,13 @@ state +0x4c -> +0x58   selection A
 state +0x50 -> +0x5c   selection B
 ```
 
-`legacy_runtime_checkpoint_m36()` reproduces exactly those copies.
-
-## Dropped-step gate
-
-The branch at `0x10107f65` is entered only after the step record reports
-`count == 0`. A rewind occurs only when all of the following are true:
+A rewind occurs after `step.count == 0` only when:
 
 ```text
 caller gate A == 0
 interval_index == node_count - 2
 caller/source gate B == 0
 ```
-
-The two gate WORDs are intentionally not given semantic names yet; static code
-proves the tests but not their complete upstream meaning.
-
-If any rewind condition fails, the common dropped-step tail still stores
-`1` to state `+0x26`.
-
-## Exact rewind transform
 
 When the gate passes:
 
@@ -72,19 +60,8 @@ delta      = new_cursor - old_cursor
 +0x50 = +0x5c
 ```
 
-Both clocks use 32-bit x86 arithmetic and are clamped to zero if negative after
-the rewind.
-
-If the restored cursor is below the existing `+0x80` marker, the original calls
-`0x1010a860`. That helper returns state `+0x48`, and the caller stores the return
-at `+0x80`; therefore the observable state transform is exactly:
-
-```text
-if saved_cursor < end_cursor:
-    end_cursor = saved_cursor
-```
-
-The rollback then copies:
+Both clocks clamp to zero if negative. If saved cursor is below `+0x80`, then
+`+0x80` becomes saved cursor. The branch also performs:
 
 ```text
 WORD +0x28 -> +0x2e
@@ -93,49 +70,36 @@ DWORD +0x30 = 0
 WORD +0x26  = 1
 ```
 
-## Exact ordinary-path source bridge
+If rewind conditions fail, the common dropped tail still writes `+0x26 = 1`.
 
-The first write inside `0x101083b0` proves why the dropped marker matters for
-audio rather than only bookkeeping.
+## Ordinary-path dropped-source bridge
 
-For a normal interval `i` with no preceding drop:
+For an ordinary interval `i`, no preceding drop uses:
 
 ```text
-left_source_position  = source_position[i]
-left_interval_width   = source_position[i+1] - source_position[i]
-right_interval_width  = source_position[i+1] - source_position[i]
+left_source_position = source_position[i]
+left_interval_width  = source_position[i+1] - source_position[i]
 ```
 
-When state `+0x26 != 0`, the original instead uses the previously stored
-`+0x2a` interval index `k` for the left source:
+When `state +0x26 != 0`, saved dropped index `k = +0x2a` changes the left side:
 
 ```text
 left_source_position = source_position[k+1]
 left_interval_width  = source_position[k+2] - source_position[k+1]
 ```
 
-The right source still belongs to the current interval. With the step record's
-first period `P`, both source widths are clamped independently:
+The right source still belongs to the current interval. With first period `P`:
 
 ```text
-left_window_length  = min(left_interval_width, P)
-right_window_length = min(current_interval_width, P)
-
+left_window_length   = min(left_interval_width, P)
+right_window_length  = min(current_interval_width, P)
 right_source_position = source_position[i+1] - right_window_length
 ```
 
-So a dropped interval causes the next ordinary first grain to bridge from the
-right edge of the stored dropped interval to the tail of the current interval.
-This is a concrete source-selection change, not merely a clock rewind.
+So a dropped interval changes the actual source PCM of the next grain; it is not
+only a clock bookkeeping event.
 
-`legacy_runtime_normal_source_selection_m36()` reproduces these source
-coordinates and lengths. It intentionally stops before `0x10109be0`; exact
-window table lookup/construction is still a separate recovery boundary.
-
-## Exact initial-transition first grain
-
-The first write in `0x101086c0` uses the buffered prior step record at state
-`+0x74` and the saved source index at state WORD `+0x2e`.
+## Initial transition (`0x101086c0`) first grain
 
 Let:
 
@@ -145,7 +109,7 @@ b = buffered_step.interval_index
 P = buffered_step.first_period
 ```
 
-The right side belongs to buffered interval `b`:
+Right side:
 
 ```text
 right_interval_width  = source_position[b+1] - source_position[b]
@@ -153,65 +117,110 @@ right_window_length   = min(right_interval_width, P)
 right_source_position = source_position[b+1] - right_window_length
 ```
 
-The left source always starts at the right boundary of saved interval `k`:
+Left source always starts at:
 
 ```text
-left_source_position = source_position[k+1]
+source_position[k+1]
 ```
 
-For a non-terminal saved index, its support is the following interval:
+For non-terminal `k`, left support is the following interval:
 
 ```text
-left_interval_width = source_position[k+2] - source_position[k+1]
+source_position[k+2] - source_position[k+1]
 ```
 
-At the terminal saved index (`k == node_count - 2`), the original instead uses
-that interval's own width:
+For terminal `k`, it falls back to its own interval width:
 
 ```text
-left_interval_width = source_position[k+1] - source_position[k]
+source_position[k+1] - source_position[k]
+```
+
+`legacy_runtime_initial_source_selection_m36()` contracts this ownership.
+
+## Cross transition (`0x10108cf0`): zero-flag branch
+
+When the descriptor-side byte tested by `0x10108cf0` is zero, the original:
+
+1. saves the current output cursor;
+2. renders through ordinary `0x101083b0`;
+3. looks up a window of `first_period` samples;
+4. multiplies the first newly written period by that window **in reverse order**.
+
+For newly written sample `i`:
+
+```text
+pcm[i] = arithmetic_shift_right(
+    pcm[i] * window[first_period - 1 - i], 15)
+```
+
+This is a descriptor-boundary fade-in. It is implemented by
+`legacy_runtime_cross_zero_fade_m36()` using the recovered M36 window lookup.
+
+## Cross transition: nonzero-flag support geometry
+
+The other `0x10108cf0` branch constructs a temporary transition buffer. The
+actual PCM mixing loops are still being recovered, but source/support ownership
+before those loops is now exact.
+
+Previous descriptor interval selection:
+
+```text
+if state.word2c != 0:
+    previous_index = state.word2e + 1
+else:
+    previous_index = buffered_step.interval_index
 ```
 
 Then:
 
 ```text
-left_window_length = min(left_interval_width, P)
+previous_width = prev[k+1] - prev[k]
+previous_left_width = (k > 0) ? prev[k] - prev[k-1] : previous_width
+previous_window = min(previous_left_width, previous_width)
 ```
 
-`legacy_runtime_initial_source_selection_m36()` reproduces this first-grain
-ownership. This closes the first source-selection layer of `0x101086c0`; its
-subsequent repeated-grain loop and higher-level descriptor gate still remain.
+For current descriptor interval `i`:
+
+```text
+current_width = cur[i+1] - cur[i]
+current_window = min(current_width, previous_width)
+current_next_width =
+    (i < last_interval) ? cur[i+2] - cur[i+1] : current_width
+```
+
+The source starts used for the temporary blend geometry are:
+
+```text
+previous_source_start = max(0, prev[k]   - previous_window)
+current_source_start  = max(0, cur[i+1] - current_window)
+```
+
+`legacy_runtime_cross_geometry_m36()` contracts these values and whether the
+saved-state override selected `word2e+1` instead of the buffered interval.
 
 ## Portable contracts
 
-`include/nicolai/legacy_runtime_state.hpp` and
-`src/legacy_runtime_state.cpp` expose the recovered transforms without
-connecting them to synthesis. `tests/legacy_runtime_state_test.cpp` covers:
+`tests/legacy_runtime_state_test.cpp` now covers:
 
-- dispatch priority: drop / cross / initial / deferred terminal / ordinary;
-- checkpointing;
-- non-dropped records and non-terminal drops;
-- both rollback gate blockers;
-- clock clamping and selection restore;
-- `+0x80` rewind;
-- the common `+0x26` dropped marker;
-- ordinary source ownership;
-- exact dropped-interval source bridging;
-- independent left/right period clamping;
-- initial-transition buffered/saved source ownership;
-- terminal saved-index width fallback.
+- exact dispatcher priority;
+- checkpoint/rollback and clock clamps;
+- ordinary dropped-source bridging;
+- initial-transition source ownership;
+- zero-flag cross-transition reverse-window fade;
+- nonzero cross-transition support geometry with both buffered and saved-state
+  previous-interval selection;
+- invalid saved-index rejection.
 
-## Remaining source-transition boundary
+## Remaining transition work
 
-Ordinary first-grain bridging and initial-transition first-grain ownership are
-no longer unknown. The remaining high-value work is concentrated in:
+The large unknown area is now narrower:
 
-- repeated-grain source movement inside `0x101083b0`;
-- the remaining `0x101086c0` repeated-grain loop/state update;
-- `0x10108cf0`: cross-descriptor transition and descriptor/base selection;
-- the post-loop terminal path around `0x10108210`;
-- exact `0x10109be0` / `0x1010a020` window lookup/construction.
+- exact temporary PCM blend loops inside nonzero `0x10108cf0`;
+- its final `0x10109980` call and post-write state rotation;
+- repeated-grain movement after first writes in `0x101083b0` / `0x101086c0`;
+- post-loop terminal path around `0x10108210`;
+- live Gate A/B capture validation and x87 last-bit window validation.
 
-These must be recovered before wiring rollback/source selection into
-`StatefulTdsM34`, because a correct rewind combined with the wrong transition
-source would still produce incorrect audio.
+Exact window cache topology and the guarded `1..400` lookup are documented in
+`M36_WINDOWS.md`. No recovered runtime component is promoted into production
+synthesis yet.
