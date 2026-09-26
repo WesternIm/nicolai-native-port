@@ -29,6 +29,21 @@ void legacy_runtime_checkpoint_m36(LegacyRuntimeStateM36& state) {
     state.saved_selection_b = state.selection_b;
 }
 
+LegacyRuntimePostWriteM36 legacy_runtime_post_write_m36(
+    LegacyRuntimeStateM36& state,
+    int period) {
+    LegacyRuntimePostWriteM36 out;
+    if (period <= 0 || period > 32767) return out;
+
+    out.old_cursor = state.cursor;
+    state.selection_b = state.selection_a;
+    state.selection_a = state.cursor;
+    state.cursor = wrap32(static_cast<std::int64_t>(state.cursor) + period);
+    out.new_cursor = state.cursor;
+    out.valid = true;
+    return out;
+}
+
 LegacyRuntimeRouteM36 legacy_runtime_route_m36(
     int step_count,
     int interval_index,

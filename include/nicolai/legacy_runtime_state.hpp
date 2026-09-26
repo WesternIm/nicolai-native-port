@@ -31,6 +31,12 @@ struct LegacyRuntimeRollbackM36 {
     std::int32_t cursor_delta = 0;
 };
 
+struct LegacyRuntimePostWriteM36 {
+    bool valid = false;
+    std::int32_t old_cursor = 0;
+    std::int32_t new_cursor = 0;
+};
+
 enum class LegacyRuntimeWritePathM36 {
     Invalid = 0,
     Dropped,
@@ -75,6 +81,13 @@ struct LegacyRuntimeCrossGeometryM36 {
 };
 
 void legacy_runtime_checkpoint_m36(LegacyRuntimeStateM36& state);
+
+// Exact state rotation repeated after every successful 0x10109980 call in
+// ordinary, initial and cross paths. Positive runtime periods are accepted;
+// cursor addition preserves the original 32-bit wrap semantics.
+LegacyRuntimePostWriteM36 legacy_runtime_post_write_m36(
+    LegacyRuntimeStateM36& state,
+    int period);
 
 LegacyRuntimeRouteM36 legacy_runtime_route_m36(
     int step_count,

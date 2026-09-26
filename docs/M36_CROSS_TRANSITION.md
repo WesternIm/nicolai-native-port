@@ -190,16 +190,32 @@ Portable: `legacy_runtime_cross_current_repeat_plan_m36()`.
 The fourth phase converges on the same writer orientation recovered for ordinary
 repeated grains.
 
+## Post-write state and transactional executor
+
+After every one of the four writer phases, the original performs the same
+rotation:
+
+```text
+selection_b <- selection_a
+selection_a <- old_cursor
+cursor      <- old_cursor + period
+```
+
+This is exposed by `legacy_runtime_post_write_m36()`. The complete positive
+nonzero path is composed by `legacy_runtime_execute_cross_m36()`, which resolves
+all plan sources/windows, executes the buffered entry/repeats and current
+entry/repeats, and stages both PCM and runtime state until every phase succeeds.
+Details and static addresses are in `M36_CROSS_EXECUTOR.md`.
+
 ## Current integration boundary
 
 The nonzero cross path no longer has unknown temporary-buffer samples, writer
-source ownership or region lengths in the statically traced positive domain.
-Remaining executor work is to compose the two materialized buffers with the
-four writer plans and apply the existing output/runtime state transitions
-around those calls.
+source ownership, region lengths, PCM writes or cursor/selection rotation in
+the statically traced positive domain.
 
-The helper near `0x1010a930` appears to service a side metadata/event object,
-not the PCM mixer itself; it is intentionally kept outside the audio executor
-until that ownership is independently proven.
+The helper `0x10109fc0` following each write only releases non-cached temporary
+window storage; portable vector ownership replaces that resource operation.
+The earlier helper near `0x1010a930` appears to service a side metadata/event
+object and remains outside the audio executor until that ownership is proven.
 
-No recovered cross primitive is wired into production or `StatefulTdsM34` yet.
+No recovered M36 executor is wired into production or `StatefulTdsM34` yet.

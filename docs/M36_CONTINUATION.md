@@ -63,6 +63,8 @@ The branch now has portable contracts for:
   arithmetic;
 - exact nonzero cross-transition primary/secondary temporary PCM buffers,
   including reverse/forward window orientation and both shoulder cases;
+- exact per-write cursor/selection rotation and a transactional nonzero cross
+  executor composing both buffers with all four writer phases;
 - zero-branch cross fade;
 - original packed window-cache topology and guarded lookup for lengths 1..400.
 
@@ -88,11 +90,13 @@ an exact fallback for comparison.
 
 ## Next implementation checkpoint
 
-1. Build an opt-in M36 executor beside `StatefulTdsM34`; do not replace it.
-2. Compose the proven route, rollback, exact windows, temporary cross buffers
-   and four writer phases while keeping state mutation transactional.
-3. Re-run the 22 PC golden phrases and M35 timing/shape/energy diagnostics.
-4. Require improvement without a global duration scale or phrase rules before
+1. Build a route-level opt-in M36 experiment beside `StatefulTdsM34`; do not
+   replace it. Reuse the completed transactional executor for nonzero cross.
+2. Compose dropped rollback, initial, ordinary and zero-cross paths around the
+   same post-write rotation, with explicit fallback for deferred terminal work.
+3. Recover the post-loop terminal path around `0x10108210`.
+4. Re-run the 22 PC golden phrases and M35 timing/shape/energy diagnostics.
+5. Require improvement without a global duration scale or phrase rules before
    considering any production promotion.
 
 The practical first gate for that executor is to stop the experimental path

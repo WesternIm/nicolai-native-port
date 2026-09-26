@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstdint>
 #include <iostream>
+#include <limits>
 #include <vector>
 
 int main() {
@@ -31,6 +32,29 @@ int main() {
         nicolai::legacy_runtime_checkpoint_m36(s);
         assert(s.saved_cursor == 120 && s.saved_selection_a == 7 &&
             s.saved_selection_b == 9);
+    }
+
+    // Every successful writer call rotates the two cursor selections before
+    // advancing +0x48 by the emitted period.
+    {
+        LegacyRuntimeStateM36 s;
+        s.cursor = 120; s.selection_a = 70; s.selection_b = 30;
+        const auto r = nicolai::legacy_runtime_post_write_m36(s, 45);
+        assert(r.valid && r.old_cursor == 120 && r.new_cursor == 165);
+        assert(s.cursor == 165 && s.selection_a == 120 && s.selection_b == 70);
+        const auto before = s;
+        assert(!nicolai::legacy_runtime_post_write_m36(s, 0).valid);
+        assert(s.cursor == before.cursor && s.selection_a == before.selection_a &&
+            s.selection_b == before.selection_b);
+
+        s.cursor = std::numeric_limits<std::int32_t>::max() - 2;
+        s.selection_a = 11;
+        s.selection_b = 9;
+        const auto wrapped = nicolai::legacy_runtime_post_write_m36(s, 5);
+        assert(wrapped.valid &&
+            s.cursor == std::numeric_limits<std::int32_t>::min() + 2);
+        assert(s.selection_a == std::numeric_limits<std::int32_t>::max() - 2);
+        assert(s.selection_b == 11);
     }
 
     {

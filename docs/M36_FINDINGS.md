@@ -80,9 +80,10 @@ Static recovery of `0x10107c20` now covers:
 Portable contracts are in `legacy_runtime_state.*` and
 `legacy_runtime_state_test.cpp`. Details are in `M36_RUNTIME_ROLLBACK.md`.
 
-The nonzero cross-transition **PCM mix itself is not yet claimed**. Its source
-regions/window lengths are known, but the temporary-buffer mixing loops and
-post-write state rotation still need exact translation/contracts.
+The nonzero cross-transition PCM path is now composed as a portable opt-in
+executor: exact temporary buffers, four writer phases, recovered windows and
+the repeated cursor/selection state rotation. Output and state commit only when
+the complete phase sequence validates. It remains disconnected from production.
 
 ## Exact window cache topology
 
@@ -123,18 +124,16 @@ replay audit form Gate B: nonzero records with zero invalid/mismatched records.
 
 ## Still outside M36 proof / promotion
 
-- local Gate A 259/259 result has not been recorded in this environment because
-  the active container cannot execute the Win32 x86 DLL;
 - live installed-engine Gate B capture still requires the Windows host;
 - upstream producer parity for feature records / voicing;
-- nonzero cross-transition post-write state and executor composition;
+- route-level executor composition across drop / initial / ordinary / cross;
 - repeated-grain movement after first writes;
 - post-loop terminal path around `0x10108210`;
 - proof of any real window request above 400;
 - exact x87/Q15 last-bit window oracle;
 - any production or Android promotion.
 
-The next implementation target is a guarded opt-in executor that composes the
-recovered nonzero `0x10108cf0` buffers with its four writer phases and runtime
-state transitions, then a stateful A/B using recovered routing/windows rather
-than the current analytic approximations.
+The next implementation target is a guarded route-level opt-in experiment that
+uses the completed nonzero `0x10108cf0` executor alongside the recovered drop,
+initial and ordinary contracts, then a stateful A/B against the current analytic
+approximation.

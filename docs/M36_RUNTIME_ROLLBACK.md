@@ -220,14 +220,15 @@ saved-state override selected `word2e+1` instead of the buffered interval.
   previous-interval selection;
 - exact primary/secondary temporary PCM materialization, including both
   shoulder owners, zero regions and window directions;
+- exact post-write cursor/selection rotation and transactional execution of all
+  four nonzero cross writer phases;
 - invalid saved-index rejection.
 
 ## Remaining transition work
 
 The large unknown area is now narrower:
 
-- executor composition of the recovered temporary buffers, four
-  `0x10109980` writer phases and post-write state rotation;
+- route-level executor composition around the completed nonzero cross path;
 - repeated-grain movement after first writes in `0x101083b0` / `0x101086c0`;
 - post-loop terminal path around `0x10108210`;
 - live Gate A/B capture validation and x87 last-bit window validation.
