@@ -5,7 +5,37 @@
 #include <iostream>
 
 int main() {
+    using nicolai::LegacyRuntimeCrossShoulderM36;
     using nicolai::legacy_runtime_cross_overlap_sample_m36;
+    using nicolai::legacy_runtime_cross_primary_layout_m36;
+
+    {
+        const auto q = legacy_runtime_cross_primary_layout_m36(120, 90, 110);
+        assert(q.valid && q.total_length == 120);
+        assert(q.zero_prefix_length == 10);
+        assert(q.shoulder_length == 20);
+        assert(q.overlap_length == 90);
+        assert(q.shoulder == LegacyRuntimeCrossShoulderM36::Current);
+        assert(q.zero_prefix_length + q.shoulder_length + q.overlap_length ==
+            q.total_length);
+    }
+
+    {
+        const auto q = legacy_runtime_cross_primary_layout_m36(120, 110, 90);
+        assert(q.valid && q.zero_prefix_length == 10);
+        assert(q.shoulder_length == 20 && q.overlap_length == 90);
+        assert(q.shoulder == LegacyRuntimeCrossShoulderM36::Previous);
+    }
+
+    {
+        const auto q = legacy_runtime_cross_primary_layout_m36(120, 100, 100);
+        assert(q.valid && q.zero_prefix_length == 20);
+        assert(q.shoulder_length == 0 && q.overlap_length == 100);
+        assert(q.shoulder == LegacyRuntimeCrossShoulderM36::None);
+    }
+
+    assert(!legacy_runtime_cross_primary_layout_m36(100, 101, 80).valid);
+    assert(!legacy_runtime_cross_primary_layout_m36(0, 0, 0).valid);
 
     // Two nearly-unity Q15 products are summed and shifted by 16, so the
     // result is approximately one input amplitude, not two as a Q15 writer
