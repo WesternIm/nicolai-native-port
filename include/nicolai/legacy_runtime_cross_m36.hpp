@@ -22,10 +22,30 @@ struct LegacyRuntimeCrossPrimaryLayoutM36 {
     LegacyRuntimeCrossShoulderM36 shoulder = LegacyRuntimeCrossShoulderM36::None;
 };
 
+// Region ownership of the second temporary PCM buffer. Here the order is the
+// mirror image: two-source overlap first, optional one-source shoulder, then a
+// zero suffix. previous_extent=min(previous_width,current_width) and
+// current_extent=min(current_width,current_next_width).
+struct LegacyRuntimeCrossSecondaryLayoutM36 {
+    bool valid = false;
+    int total_length = 0;
+    int previous_extent = 0;
+    int current_extent = 0;
+    int overlap_length = 0;
+    int shoulder_length = 0;
+    int zero_suffix_length = 0;
+    LegacyRuntimeCrossShoulderM36 shoulder = LegacyRuntimeCrossShoulderM36::None;
+};
+
 LegacyRuntimeCrossPrimaryLayoutM36 legacy_runtime_cross_primary_layout_m36(
     int previous_interval_width,
     int previous_window_length,
     int current_window_length);
+
+LegacyRuntimeCrossSecondaryLayoutM36 legacy_runtime_cross_secondary_layout_m36(
+    int previous_interval_width,
+    int current_interval_width,
+    int current_next_width);
 
 // Central two-source overlap kernel from the nonzero branch of 0x10108cf0,
 // specifically 0x10109098..0x101090e0. Unlike the ordinary Q15 writer, the
