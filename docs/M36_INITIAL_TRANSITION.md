@@ -3,6 +3,9 @@
 This note records the statically proven source geometry inside original
 `mtsyc32.dll` function `0x101086c0`. Production synthesis remains unchanged.
 
+`left` and `right` below follow the actual arg2/arg3 source order of
+`0x10109980`, not chronological position on the source waveform.
+
 ## First grain
 
 The first initial-transition grain uses the buffered step record at runtime
@@ -22,11 +25,11 @@ saved_right_width =
 
 current_width = p[buffered + 1] - p[buffered]
 
-left_len  = min(saved_right_width, period)
-right_len = min(current_width, period)
+left_len  = min(saved_right_width, period) # writer arg7
+right_len = min(current_width, period)     # writer arg9
 
-left_source_start  = p[saved + 1]
-right_source_start = p[buffered + 1] - right_len
+left_source_start  = p[saved + 1]                      # writer arg2
+right_source_start = p[buffered + 1] - right_len      # writer arg3
 ```
 
 This is exposed by `legacy_runtime_initial_source_selection_m36()`.
@@ -40,8 +43,8 @@ progression recovered for the ordinary path:
 period_WORD = first_period_WORD + sar11(delta_q11 * ordinal + 1024)
 ```
 
-Its current interval is the buffered interval. The right side depends on
-runtime `state + 0x30`.
+Its past/current interval is the buffered interval. Runtime `state + 0x30`
+decides where the writer-left/future input comes from.
 
 ### Staying inside the buffered descriptor
 
@@ -49,38 +52,38 @@ runtime `state + 0x30`.
 current_width = prev[buffered + 1] - prev[buffered]
 next_width    = prev[buffered + 2] - prev[buffered + 1]
 
-left_len  = min(current_width, period)
-right_len = min(next_width, period)
+left_len  = min(next_width, period)
+right_len = min(current_width, period)
 
-left_source_start  = prev[buffered + 1] - left_len
-right_source_start = prev[buffered + 1]
+left_source_start  = prev[buffered + 1]
+right_source_start = prev[buffered + 1] - right_len
 ```
 
 ### Crossing into the next descriptor
 
-When `state + 0x30` is nonzero, the original switches the right source to the
-first interval of the next descriptor while retaining the old buffered boundary
-on the left:
+When `state + 0x30` is nonzero, writer arg2 switches to the next descriptor's
+first PCM position while writer arg3 remains the buffered previous tail:
 
 ```text
 current_width = prev[buffered + 1] - prev[buffered]
 next_width    = next[1] - next[0]
 
-left_len  = min(current_width, period)
-right_len = min(next_width, period)
+left_len  = min(next_width, period)
+right_len = min(current_width, period)
 
-left_source_start  = prev[buffered + 1] - left_len
-right_source_start = next[0]
+left_source_start  = next[0]
+right_source_start = prev[buffered + 1] - right_len
 ```
 
-The two source pointers therefore come from different PCM bases in the writer
-call. This is a real cross-diphone bridge, not a waveform-correlation join.
+The two writer source pointers therefore come from different PCM bases in the
+cross-descriptor case. This is a real diphone bridge, not a
+waveform-correlation join.
 
 `legacy_runtime_initial_repeated_grain_m36()` exposes this proven geometry.
 
 ## Remaining initial-path work
 
-The source coordinates, widths, period arithmetic and window ownership are now
-separate portable contracts. The remaining work before renderer integration is
-to preserve the exact descriptor/PCM-base state around this geometry and to
-combine it with the nonzero `0x10108cf0` cross-transition mixer.
+The source coordinates, widths, period arithmetic and writer-window ownership
+are now separate portable contracts. Renderer integration still needs to carry
+the exact descriptor/PCM-base identity alongside these integer coordinates and
+combine the result with the nonzero `0x10108cf0` cross-transition mixer.
