@@ -11,6 +11,11 @@ def fingerprint(path):
     return dict(bytes=path.stat().st_size, sha256=hashlib.sha256(path.read_bytes()).hexdigest())
 
 
+def source_fingerprint(path):
+    data = path.read_bytes().replace(b"\r\n", b"\n")
+    return dict(lf_normalized_bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("voice_data", type=Path)
@@ -30,7 +35,8 @@ def main():
         dependencies={name: importlib.metadata.version(name) for name in ("numpy", "librosa", "scipy", "numba")},
         voice_inputs={name: fingerprint(args.voice_data / name) for name in ("nicolai16.dat", "exc_rus.txt", "abb_rus.txt")},
         reference_wavs={str(p.relative_to(args.reference_pack)).replace("\\", "/"): fingerprint(p) for p in reference_wavs},
-        source_files={str(p.relative_to(repo)).replace("\\", "/"): fingerprint(p) for p in sorted(source_paths)},
+        source_line_endings="LF normalized; input/audio fingerprints are raw bytes",
+        source_files={str(p.relative_to(repo)).replace("\\", "/"): source_fingerprint(p) for p in sorted(source_paths)},
     )
     args.json.parent.mkdir(parents=True, exist_ok=True)
     args.json.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
