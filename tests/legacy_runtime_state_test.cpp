@@ -10,6 +10,16 @@ int main() {
     using nicolai::LegacyRuntimeStateM36;
     using nicolai::LegacyRuntimeWritePathM36;
 
+    auto step = [](int count) {
+        nicolai::LegacyTdsStepM33 out;
+        out.valid = true;
+        out.count = static_cast<std::int16_t>(count);
+        out.first_period = 100;
+        out.delta_q11 = 3;
+        out.carry = 7;
+        return out;
+    };
+
     {
         auto r = nicolai::legacy_runtime_route_m36(0, 1, 5, true, true);
         assert(r.valid && r.path == LegacyRuntimeWritePathM36::Dropped);
@@ -24,6 +34,121 @@ int main() {
         assert(r.checkpoint_before_write);
         r = nicolai::legacy_runtime_route_m36(-1, 1, 5, false, true);
         assert(!r.valid && r.path == LegacyRuntimeWritePathM36::Invalid);
+    }
+
+    // 0x10107c20 synchronizes both caller step slots and rotates the
+    // non-terminal marker quartet after a positive ordinary write.
+    {
+        LegacyRuntimeStateM36 s;
+        s.word24 = 8; s.word26 = 3; s.word28 = 11; s.word2a = 4;
+        nicolai::LegacyRuntimeStepBuffersM36 buffers;
+        buffers.valid = true;
+        buffers.at_74.interval_index = 9;
+        buffers.at_78.interval_index = 9;
+        const auto r = nicolai::legacy_runtime_bookkeep_m36(
+            s, buffers, 1, 5, step(2), false, true);
+        assert(r.valid && r.path == LegacyRuntimeWritePathM36::Ordinary);
+        assert(r.step_buffers_written && r.interval_markers_rotated);
+        assert(!r.terminal_markers_saved && !r.dropped);
+        assert(s.word24 == 3 && s.word28 == 4 && s.word2a == 1 && s.word26 == 0);
+        assert(buffers.valid && buffers.at_74.interval_index == 1 &&
+            buffers.at_78.interval_index == 1);
+        assert(buffers.at_74.step.count == 2 &&
+            buffers.at_78.step.first_period == 100);
+    }
+
+    // Initial and cross positive paths use the same marker rotation, even
+    // though their PCM executors own different source bases.
+    for (bool cross : {false, true}) {
+        LegacyRuntimeStateM36 s;
+        s.word26 = 5; s.word2a = 6;
+        nicolai::LegacyRuntimeStepBuffersM36 buffers;
+        const auto r = nicolai::legacy_runtime_bookkeep_m36(
+            s, buffers, 0, 5, step(1), cross, !cross);
+        assert(r.valid && r.step_buffers_written && r.interval_markers_rotated);
+        assert(s.word24 == 5 && s.word28 == 6 && s.word2a == 0 && s.word26 == 0);
+        assert(buffers.at_74.interval_index == 0 && buffers.at_78.interval_index == 0);
+    }
+
+    // The positive terminal path writes both slots but saves the previous
+    // marker pair in +0x2c/+0x2e instead of rotating the current quartet.
+    {
+        LegacyRuntimeStateM36 s;
+        s.word24 = 2; s.word26 = 7; s.word28 = 3; s.word2a = 4;
+        nicolai::LegacyRuntimeStepBuffersM36 buffers;
+        const auto r = nicolai::legacy_runtime_bookkeep_m36(
+            s, buffers, 3, 5, step(2), false, true);
+        assert(r.valid && r.path == LegacyRuntimeWritePathM36::DeferredTerminal);
+        assert(r.step_buffers_written && r.terminal_markers_saved);
+        assert(!r.interval_markers_rotated);
+        assert(s.word24 == 2 && s.word26 == 7 && s.word28 == 3 && s.word2a == 4);
+        assert(s.word2c == 7 && s.word2e == 4);
+    }
+
+    // A dropped step before the first positive write, and a dropped step
+    // while a descriptor crossing is pending, only set the bridge flag.
+    {
+        LegacyRuntimeStateM36 s;
+        s.word26 = 4; s.word2a = 2;
+        nicolai::LegacyRuntimeStepBuffersM36 buffers;
+        buffers.at_74.interval_index = 9;
+        const auto before = buffers;
+        auto r = nicolai::legacy_runtime_bookkeep_m36(
+            s, buffers, 1, 5, step(0), false, false);
+        assert(r.valid && r.dropped && !r.step_buffers_written);
+        assert(s.word26 == 1 && buffers.at_74.interval_index == before.at_74.interval_index);
+
+        s.word26 = 4;
+        r = nicolai::legacy_runtime_bookkeep_m36(
+            s, buffers, 1, 5, step(0), true, true);
+        assert(r.valid && r.dropped && !r.step_buffers_written);
+        assert(s.word26 == 1 && buffers.at_74.interval_index == before.at_74.interval_index);
+    }
+
+    // Once positive writing has started, a dropped non-terminal interval
+    // still synchronizes the step slots and advances the marker quartet.
+    {
+        LegacyRuntimeStateM36 s;
+        s.word26 = 1; s.word2a = 0;
+        nicolai::LegacyRuntimeStepBuffersM36 buffers;
+        const auto r = nicolai::legacy_runtime_bookkeep_m36(
+            s, buffers, 1, 5, step(0), false, true);
+        assert(r.valid && r.dropped && r.step_buffers_written);
+        assert(r.interval_markers_rotated && !r.terminal_markers_saved);
+        assert(s.word24 == 1 && s.word28 == 0 && s.word2a == 1 && s.word26 == 0);
+        assert(buffers.at_74.interval_index == 1 && buffers.at_74.step.count == 0);
+    }
+
+    // A started dropped terminal interval follows the same saved-marker tail
+    // as the positive deferred-terminal path.
+    {
+        LegacyRuntimeStateM36 s;
+        s.word26 = 9; s.word2a = 2;
+        nicolai::LegacyRuntimeStepBuffersM36 buffers;
+        const auto r = nicolai::legacy_runtime_bookkeep_m36(
+            s, buffers, 3, 5, step(0), false, true);
+        assert(r.valid && r.dropped && r.step_buffers_written &&
+            r.terminal_markers_saved);
+        assert(s.word2c == 9 && s.word2e == 2 && s.word26 == 9 && s.word2a == 2);
+    }
+
+    // Invalid step/route inputs are transactional and leave both state and
+    // the caller-owned step slots untouched.
+    {
+        LegacyRuntimeStateM36 s;
+        s.word26 = 6; s.word2a = 2;
+        nicolai::LegacyRuntimeStepBuffersM36 buffers;
+        buffers.at_74.interval_index = 7;
+        const auto before_state = s;
+        const auto before_buffers = buffers;
+        auto invalid = step(1);
+        invalid.valid = false;
+        assert(!nicolai::legacy_runtime_bookkeep_m36(
+            s, buffers, 1, 5, invalid, false, true).valid);
+        assert(s.word26 == before_state.word26 && s.word2a == before_state.word2a);
+        assert(buffers.at_74.interval_index == before_buffers.at_74.interval_index);
+        assert(!nicolai::legacy_runtime_bookkeep_m36(
+            s, buffers, 4, 5, step(1), false, true).valid);
     }
 
     {

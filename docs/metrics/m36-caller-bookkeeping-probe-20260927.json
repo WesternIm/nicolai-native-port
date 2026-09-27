@@ -1,0 +1,7 @@
+{
+  "schema": "nicolai-m36-caller-bookkeeping-oracle-v1",
+  "dll_sha256": "f6b7e926c46a0259a866260cafb9d24d6ebed3dd7198829d16179348a186abc7",
+  "portable_cases": 259,
+  "original_matches": 259,
+  "status": "pass"
+}

@@ -1,4 +1,6 @@
 #pragma once
+#include "nicolai/legacy_tds.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -52,6 +54,30 @@ struct LegacyRuntimeRouteM36 {
     bool checkpoint_before_write = false;
 };
 
+// The caller-side records at state +0x74/+0x78. The original keeps both
+// records synchronized with the most recently produced interval step; the
+// interval index is the record's first WORD at the caller stack boundary.
+struct LegacyRuntimeStepRecordM36 {
+    std::int16_t interval_index = 0;
+    LegacyTdsStepM33 step;
+};
+
+struct LegacyRuntimeStepBuffersM36 {
+    bool valid = false;
+    LegacyRuntimeStepRecordM36 at_74;
+    LegacyRuntimeStepRecordM36 at_78;
+};
+
+struct LegacyRuntimeBookkeepingM36 {
+    bool valid = false;
+    LegacyRuntimeWritePathM36 path = LegacyRuntimeWritePathM36::Invalid;
+    bool dropped = false;
+    bool step_buffers_written = false;
+    bool interval_markers_rotated = false;
+    bool terminal_markers_saved = false;
+    int interval_index = -1;
+};
+
 struct LegacyRuntimeSourceSelectionM36 {
     bool valid = false;
     bool bridged_drop = false;
@@ -93,6 +119,23 @@ LegacyRuntimeRouteM36 legacy_runtime_route_m36(
     int step_count,
     int interval_index,
     int node_count,
+    bool cross_descriptor_pending,
+    bool already_started);
+
+// Caller-owned bookkeeping surrounding original 0x10107c20. This is kept
+// separate from the PCM executors: the original synchronizes both buffered
+// step slots after successful positive/started-dropped paths, rotates the
+// interval marker WORDs on non-terminal steps, and saves terminal markers in
+// WORD +0x2c/+0x2e. A dropped step before the first positive write (or while a
+// descriptor crossing is pending) only sets WORD +0x26 and leaves both step
+// slots untouched. All mutations are staged and committed only for a valid
+// route/step record.
+LegacyRuntimeBookkeepingM36 legacy_runtime_bookkeep_m36(
+    LegacyRuntimeStateM36& state,
+    LegacyRuntimeStepBuffersM36& buffers,
+    int interval_index,
+    int node_count,
+    const LegacyTdsStepM33& step,
     bool cross_descriptor_pending,
     bool already_started);
 

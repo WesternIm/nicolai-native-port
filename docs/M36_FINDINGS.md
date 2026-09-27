@@ -280,8 +280,8 @@ Still not proven/promoted:
 - upstream producer parity for feature records / voicing;
 - caller step-buffer ownership and extended source context needed to compose
   nonzero cross transitions in the portable chain;
-- caller-owned interval-marker and buffered/current step rotation around
-  `0x10107c20`;
+- binding the now-proven caller-owned interval-marker and buffered/current step
+  rotation to extended previous/current PCM source context around `0x10107c20`;
 - route-level executor composition across drop / initial / ordinary / cross;
 - post-terminal descriptor metadata/event finalization;
 - exact x87 last-bit window oracle;

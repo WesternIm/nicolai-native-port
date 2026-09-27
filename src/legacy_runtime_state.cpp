@@ -83,6 +83,70 @@ LegacyRuntimeRouteM36 legacy_runtime_route_m36(
     return out;
 }
 
+LegacyRuntimeBookkeepingM36 legacy_runtime_bookkeep_m36(
+    LegacyRuntimeStateM36& state,
+    LegacyRuntimeStepBuffersM36& buffers,
+    int interval_index,
+    int node_count,
+    const LegacyTdsStepM33& step,
+    bool cross_descriptor_pending,
+    bool already_started) {
+    LegacyRuntimeBookkeepingM36 out;
+    if (!step.valid || interval_index < 0 || interval_index > 32767) return out;
+
+    const auto route = legacy_runtime_route_m36(
+        step.count, interval_index, node_count,
+        cross_descriptor_pending, already_started);
+    if (!route.valid) return out;
+
+    out.valid = true;
+    out.path = route.path;
+    out.dropped = step.count == 0;
+    out.interval_index = interval_index;
+
+    // The original dropped tail has a deliberately narrow pre-write branch:
+    // a pending descriptor crossing, or no positive write having started yet,
+    // does not rotate either caller step slot or the interval markers.
+    if (step.count == 0 &&
+        (cross_descriptor_pending || !already_started)) {
+        state.word26 = 1;
+        return out;
+    }
+
+    auto staged_state = state;
+    auto staged_buffers = buffers;
+    const LegacyRuntimeStepRecordM36 record{
+        static_cast<std::int16_t>(interval_index), step};
+    staged_buffers.at_74 = record;
+    staged_buffers.at_78 = record;
+    staged_buffers.valid = true;
+
+    const bool terminal_save =
+        route.path == LegacyRuntimeWritePathM36::DeferredTerminal ||
+        (step.count == 0 && interval_index == node_count - 2);
+    if (terminal_save) {
+        // 0x10107f38..0x10107f60 preserves the dropped marker (or zero) in
+        // +0x2c and the previous marker index in +0x2e.
+        staged_state.word2c = staged_state.word26;
+        staged_state.word2e = staged_state.word2a;
+        out.terminal_markers_saved = true;
+    } else {
+        // 0x10107f19..0x10107f33 and the positive cross/initial branches
+        // carry the previous marker pair forward and make this interval the
+        // new current marker.
+        staged_state.word24 = staged_state.word26;
+        staged_state.word28 = staged_state.word2a;
+        staged_state.word2a = static_cast<std::int16_t>(interval_index);
+        staged_state.word26 = 0;
+        out.interval_markers_rotated = true;
+    }
+
+    state = staged_state;
+    buffers = staged_buffers;
+    out.step_buffers_written = true;
+    return out;
+}
+
 LegacyRuntimeRollbackM36 legacy_runtime_drop_rollback_m36(
     LegacyRuntimeStateM36& state,
     int step_count,

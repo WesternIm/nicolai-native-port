@@ -28,6 +28,21 @@ else:
 `legacy_runtime_route_m36()` models this dispatch without assigning speculative
 higher-level names to the caller gates.
 
+## Caller-owned step and marker bookkeeping
+
+The same `0x10107c20` loop owns the two five-WORD step slots at state `+0x74`
+and `+0x78` and the interval-marker WORDs at `+0x24..+0x2e`. After a successful
+positive path it synchronizes both slots with the local record, whose first WORD
+is the current interval index. A started dropped interval follows that slot
+update as well; a pre-start or pending-cross drop does not.
+
+Non-terminal success rotates `24 <- 26`, `28 <- 2a`, `2a <- interval_index`,
+`26 <- 0`. Positive deferred-terminal and started dropped-terminal paths instead
+save `2c <- 26` and `2e <- 2a` while leaving the current quartet intact. The
+portable `legacy_runtime_bookkeep_m36()` contract and its path matrix live in
+`M36_CALLER_BOOKKEEPING.md`; it remains separate from PCM execution and
+production integration.
+
 ## Checkpoint and rollback
 
 Before the ordinary grain path (`0x10107e9f..0x10107ebb`), the original saves:
@@ -240,7 +255,8 @@ saved-state override selected `word2e+1` instead of the buffered interval.
 The large unknown area is now narrower:
 
 - route-level executor composition around the completed nonzero cross path;
-- caller-owned interval-marker and buffered/current step rotation around
+- route-level binding of the now-proven interval-marker and buffered/current
+  step rotation to extended previous/current PCM descriptor ownership around
   `0x10107c20`;
 - post-terminal descriptor metadata/event finalization;
 - live Gate A/B capture validation and x87 last-bit window validation.

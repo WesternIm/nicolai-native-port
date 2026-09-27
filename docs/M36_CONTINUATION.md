@@ -131,6 +131,8 @@ The branch has portable contracts for:
   executor composing both buffers with all four writer phases;
 - exact deferred-terminal single-grain PCM write, checkpoint and descending
   fade-out around `0x10108210`;
+- exact caller-owned step-slot synchronization and interval-marker rotation
+  around `0x10107c20`, including pre-start/pending-cross dropped branches;
 - zero-branch cross fade;
 - original packed window-cache topology and guarded lookup for lengths 1..400.
 
@@ -144,9 +146,10 @@ Relevant notes:
 
 ## Next checkpoint
 
-1. Recover/capture caller step-buffer and extended PCM-source ownership around
-   descriptor crossings at `0x10107c20`.
-2. Integrate the already transactional nonzero cross executor only after that
+1. Recover/capture the extended previous/current PCM-source ownership still
+   missing from the caller boundary at `0x10107c20`.
+2. Bind the now-proven step/marker bookkeeping and integrate the already
+   transactional nonzero cross executor only after that
    ownership is proven; keep the stable renderer and M34 fallback intact.
 3. Restore live Gate B if the legacy Acapela server can be made to start without
    changing the proprietary installation.
