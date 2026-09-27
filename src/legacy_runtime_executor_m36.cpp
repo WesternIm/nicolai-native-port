@@ -330,7 +330,10 @@ LegacyRuntimeCrossExecutionM36 legacy_runtime_execute_cross_m36(
     const LegacyRuntimeCrossSourceContextM36& context,
     const LegacyTdsStepM33& buffered_step,
     const LegacyTdsStepM33& current_step) {
-    if (!context.valid) return {};
+    if (!context.valid || context.previous_pcm_samples !=
+            static_cast<int>(previous_pcm.size()) ||
+        context.current_pcm_samples != static_cast<int>(current_pcm.size()))
+        return {};
     return legacy_runtime_execute_cross_m36(
         output, state, previous_pcm, current_pcm, context.geometry,
         context.previous_boundary, context.current_boundary,
@@ -352,6 +355,7 @@ LegacyRuntimeCrossRouteExecutionM36 legacy_runtime_execute_cross_route_m36(
     const LegacyTdsStepM33& buffered_step,
     const LegacyTdsStepM33& current_step) {
     LegacyRuntimeCrossRouteExecutionM36 result;
+    if (node_count != static_cast<int>(current_positions.size())) return result;
     auto staged_output = output;
     auto staged_state = state;
     auto staged_buffers = buffers;

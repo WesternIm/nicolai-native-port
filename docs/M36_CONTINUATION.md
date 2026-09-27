@@ -1,5 +1,14 @@
 # M36 continuation — original phone-feature and runtime state recovery
 
+**Superseding checkpoint (2026-09-27):** branch `m36-acoustic-chain`.
+The old step-slot/drop assertions and previous cross end-boundary were wrong.
+See `M36_CALLER_BOOKKEEPING.md` for corrected dataflow and
+`M36_CHAIN_ACOUSTICS.md` for current measured evidence/remaining gates.
+Corrected local MFCC is 71.2582; chain is 71.5357. Neither is promoted.
+The historical sections below describe the earlier checkpoint, not the current
+chain scope. Next work is original route/flush-gate capture plus rollback,
+not another wrapper around the already-composed cross executor.
+
 Branch: `m36-original-phone-features`.
 Base: merged M35 on `main` at `a9d24018a8b84a9982b2ab8ab4dddb381dbe5002`.
 

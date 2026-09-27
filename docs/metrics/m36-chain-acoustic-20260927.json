@@ -1,0 +1,86 @@
+{
+  "schema": "nicolai-m36-chain-acoustic-v1",
+  "date": "2026-09-27",
+  "phrases": 22,
+  "sample_rate_hz": 16000,
+  "source_base_commit": "c708351",
+  "original_mtsyc32_sha256": "f6b7e926c46a0259a866260cafb9d24d6ebed3dd7198829d16179348a186abc7",
+  "original_voice_sha256": "471bf1266c913784187dae25a2e5784a6ec309162e7dee2167ca9887c253e74d",
+  "stable_sha256_matches_to_prior": 22,
+  "profiles": {
+    "stable": {
+      "rendered": 22,
+      "mean_active_waveform_correlation": 0.1965157232028779,
+      "active_duration_mae_percent": 5.679022643845701,
+      "total_duration_mae_percent": 3.598674499004331,
+      "mean_mfcc_dtw": 52.01387280984829,
+      "normalized_shape_mfcc_dtw": 37.19277641693229,
+      "rms_ratio_mae_percent": 10.237700021058881
+    },
+    "prior_m36_local": {
+      "evidence": "m36-acoustic-ab-20260927.json",
+      "rendered": 22,
+      "mean_active_waveform_correlation": 0.20559533603195482,
+      "active_duration_mae_percent": 16.13159195538433,
+      "total_duration_mae_percent": 10.586105526780312,
+      "mean_mfcc_dtw": 75.31090223424798,
+      "normalized_shape_mfcc_dtw": 54.6811,
+      "rms_ratio_mae_percent": 8.569331259125148
+    },
+    "corrected_m36_local": {
+      "candidate_profile": "m36",
+      "rendered": 22,
+      "mean_active_waveform_correlation": 0.2073237243449291,
+      "active_duration_mae_percent": 16.302796386575682,
+      "total_duration_mae_percent": 10.586105526780312,
+      "mean_mfcc_dtw": 71.25824350206406,
+      "normalized_shape_mfcc_dtw": 51.88466312464998,
+      "aligned_energy_db_mae": 2.499718004481625,
+      "rms_ratio_mae_percent": 9.326454339730644,
+      "pooled_pyin_coverage_2048": 0.29812734082397,
+      "pooled_pyin_coverage_1024": 0.22339181286549709,
+      "mfcc_improved_vs_prior": 19,
+      "mfcc_regressed_vs_prior": 3,
+      "mfcc_regressed_vs_stable": 22,
+      "total_duration_tied_vs_prior": 22,
+      "starts": 287,
+      "exact_cross_paths": 0,
+      "terminal_flushes": 167,
+      "fallback_requests": 1
+    },
+    "m36_chain": {
+      "candidate_profile": "m36-chain",
+      "rendered": 22,
+      "mean_active_waveform_correlation": 0.20305358980563584,
+      "active_duration_mae_percent": 16.93113462258111,
+      "total_duration_mae_percent": 10.586105526780312,
+      "mean_mfcc_dtw": 71.53568076437712,
+      "normalized_shape_mfcc_dtw": 52.64149012059945,
+      "aligned_energy_db_mae": 2.6261173157537154,
+      "rms_ratio_mae_percent": 10.108768882189647,
+      "pooled_pyin_coverage_2048": 0.2786516853932584,
+      "pooled_pyin_coverage_1024": 0.18947368421052632,
+      "mfcc_regressed_vs_stable": 22,
+      "starts": 207,
+      "exact_cross_paths": 80,
+      "terminal_flushes": 88,
+      "fallback_requests": 60
+    }
+  },
+  "verification": {
+    "x64_full_ctest": {"passed": 28, "total": 28},
+    "x86_targeted_ctest": {"passed": 4, "total": 4},
+    "metric_contracts": {"passed": 6, "total": 6},
+    "phone_feature_contracts": "passed",
+    "original_phone_feature_oracle": {"matches": 259, "cases": 259},
+    "original_pcm_route_oracle": "not available"
+  },
+  "decision": "No production promotion. Corrected local improves spectral error vs prior local, but chain is not better than corrected local and neither beats stable timing/shape.",
+  "caveats": [
+    "The 259-case phone-feature oracle does not validate caller bookkeeping or PCM route ownership.",
+    "Chain route/flush gates are inferred from portable voicing, not captured original gates.",
+    "Whole-chain dropped rollback, complete initial route and metadata/event finalization remain incomplete.",
+    "F0 is diagnostic-only because voiced-frame coverage is sparse.",
+    "The first mojibake-input chain bundle is invalid and excluded."
+  ]
+}

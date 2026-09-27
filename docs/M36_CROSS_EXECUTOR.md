@@ -75,4 +75,8 @@ route with the completed deferred-terminal PCM path. Live descriptor capture,
 post-terminal metadata/event finalization and acoustic promotion remain
 explicit boundaries.
 
+The `m36-chain` profile now provides a bounded experimental caller with explicit
+previous/current PCM and deferred-step ownership. Its route/flush policy is not
+the full original caller: see `M36_CHAIN_ACOUSTICS.md` for the measured limits.
+
 No proprietary DLL or voice-data bytes are stored in the repository.

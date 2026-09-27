@@ -254,8 +254,8 @@ LegacyRuntimeCrossSourceContextM36 legacy_runtime_cross_source_context_m36(
         return out;
 
     // The temporary buffers read the two descriptor-owned PCM bases at these
-    // four exact spans. The raw writer boundaries are intentionally derived
-    // from the selected interval ends, not from the temporary-buffer starts.
+    // four exact spans. Raw writer coordinates are separate from the special
+    // terminal forward support used to materialize the secondary buffer.
     const int previous_extent = std::min(
         geometry.previous_interval_width, geometry.current_interval_width);
     const int current_extent = std::min(
@@ -278,16 +278,12 @@ LegacyRuntimeCrossSourceContextM36 legacy_runtime_cross_source_context_m36(
             static_cast<int>(current_positions.size()))
         return out;
 
-    // 0x10108cf0 phase 1 reads the previous descriptor at the end of the
-    // selected previous interval. Phase 3/4 use the end of the current
-    // interval, except at the terminal current node where the original uses
-    // the current start because no following interval exists.
+    // 0x101093cc selects previous[k] for phase 1, NOT previous[k+1].
+    // Phases 3/4 keep current[i+1], even for a terminal current interval.
+    // Only the temporary secondary buffer has a terminal-start exception.
     const int previous_boundary =
-        previous_positions[static_cast<std::size_t>(previous_index + 1)];
-    const bool current_terminal = current_index + 1 ==
-        static_cast<int>(current_positions.size()) - 1;
-    const int current_boundary = current_terminal ?
-        current_positions[static_cast<std::size_t>(current_index)] :
+        previous_positions[static_cast<std::size_t>(previous_index)];
+    const int current_boundary =
         current_positions[static_cast<std::size_t>(current_index + 1)];
     if (previous_boundary < 0 || current_boundary < 0)
         return out;

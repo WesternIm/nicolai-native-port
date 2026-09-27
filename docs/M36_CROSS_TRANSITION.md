@@ -213,7 +213,10 @@ The caller boundary is now represented by
 `legacy_runtime_cross_source_context_m36()`. In the original call frame,
 `0x10108cf0` receives the previous and current descriptor objects, reads each
 descriptor's source-position table at `+0x30` and PCM base at `+0x4c`, then
-uses the selected interval ends as the raw writer boundaries. The portable
+uses `prev[k]` (selected previous START, loaded at `0x101093cc`) and
+`cur[i+1]` (current END) as the raw writer boundaries. The terminal-current
+exception `cur[i]` applies ONLY to the secondary temporary buffer, not to raw
+writer phases 3/4. The earlier end/end binding was incorrect. The portable
 binding takes value-level PCM/position vectors, preserves the selected and
 saved interval index, validates every temporary-buffer source span, and
 derives the previous/current writer boundaries without exposing proprietary
@@ -221,8 +224,9 @@ object pointers.
 
 `legacy_runtime_execute_cross_m36()` has an overload that accepts this bound
 context. It still performs the complete transactional phase validation; the
-binding only prevents a caller from pairing a previous/current source slice
-with a geometry or boundary from another descriptor.
+binding validates source spans and PCM sizes, but is a value contract, not an
+object-identity guarantee. The vector/index-taking route wrapper derives it
+directly; a same-sized vector replacement cannot be detected by the context.
 
 ## Current integration boundary
 
@@ -235,9 +239,9 @@ window storage; portable vector ownership replaces that resource operation.
 The earlier helper near `0x1010a930` appears to service a side metadata/event
 object and remains outside the audio executor until that ownership is proven.
 
-No recovered M36 executor is wired into production or `StatefulTdsM34` yet;
-the new binding is a portable contract and does not claim live descriptor
-capture or acoustic parity.
+No recovered M36 executor is wired into production. The opt-in chain A/B now
+uses this binding (see `M36_CHAIN_ACOUSTICS.md`); it does not claim captured
+original route gates or complete acoustic parity.
 
 The zero-byte branch is also composed transactionally by
 `legacy_runtime_execute_zero_cross_m36()`: it executes the recovered ordinary

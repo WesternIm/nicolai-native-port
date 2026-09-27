@@ -49,12 +49,13 @@ jobs:
       - name: Configure Win32 x86
         run: cmake -S . -B build-win32 -A Win32 -DBUILD_TESTING=ON
       - name: Build M36 Win32 contracts and capture debugger
-        run: cmake --build build-win32 --config Debug --target nicolai_m36_phone_probe legacy_phone_features_test nicolai_m36_runtime_capture --parallel
+        run: cmake --build build-win32 --config Debug --target nicolai_m36_phone_probe legacy_phone_features_test nicolai_m36_runtime_capture legacy_runtime_state_test legacy_runtime_executor_m36_test stateful_tds_m36_test --parallel
       - name: Run portable Win32 phone-feature corpus
         shell: pwsh
         run: |
           .\build-win32\Debug\legacy_phone_features_test.exe
           .\build-win32\Debug\nicolai_m36_phone_probe.exe
+          ctest --test-dir build-win32 -C Debug --output-on-failure -R "(legacy_runtime_state|legacy_runtime_executor_m36|stateful_tds_m36)_test"
 
   metric-contracts:
     runs-on: ubuntu-latest

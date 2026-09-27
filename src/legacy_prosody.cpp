@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <unordered_set>
 
@@ -941,6 +942,9 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
     const auto physical_lattice=m27_physical_phone_pitch_lattice(phones,boundaries,physical,wordstr,policy,frontend);
     const auto& physical_pitch=physical_lattice.pitch;
     StatefulTdsM34 tds_state; // one carry owner per utterance, not per run/unit
+    const char* chain_flag=std::getenv("NICOLAI_M36_CHAIN_EXECUTOR");
+    const bool m36_chain=policy.use_stateful_tds_m34 && chain_flag && std::atoi(chain_flag)!=0;
+    std::vector<StatefulTdsUnitM36> chain_units;
 
     for(std::size_t i=0;i<units.size();++i){
         auto&u=units[i];
@@ -1094,7 +1098,16 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         const bool side_duration=std::abs(left_scale-right_scale)>=1e-10;
         const bool side_energy=std::abs(left_energy_gain-1.0)>=1e-12 ||
                                std::abs(right_energy_gain-1.0)>=1e-12;
-        if(policy.use_stateful_tds_m34){
+        if(m36_chain){
+            StatefulTdsUnitM36 input;
+            input.source=u.raw; input.timeline=u.timeline; input.pitch=cfg;
+            input.left_duration=left_scale; input.right_duration=right_scale;
+            input.left_energy=left_energy_gain; input.right_energy=right_energy_gain;
+            // Experimental voicing-to-route policy, not captured original
+            // caller gates. False boundaries flush/fade instead of mixing.
+            input.cross_from_previous=i>0 && units[i-1].timeline.nodes.back().voiced;
+            chain_units.push_back(std::move(input));
+        } else if(policy.use_stateful_tds_m34){
             pcm=resynthesize_stateful_m34(u.raw,u.timeline,cfg,left_scale,right_scale,
                 left_energy_gain,right_energy_gain,tds_state);
         } else if(!side_duration && !side_energy){
@@ -1104,8 +1117,10 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
                 u.raw,u.sched,u.layout,cfg,left_scale,right_scale,
                 left_energy_gain,right_energy_gain,&ud);
         }
-        if(pcm.samples.empty()){out.error="render_failed";return out;}
-        rendered.push_back(std::move(pcm));
+        if(!m36_chain){
+            if(pcm.samples.empty()){out.error="render_failed";return out;}
+            rendered.push_back(std::move(pcm));
+        }
         lh.push_back(ud.left_period_hint); rh.push_back(ud.right_period_hint);
         unit_pitch_left.push_back(ps0);
         unit_pitch_right.push_back(ps1);
@@ -1113,6 +1128,10 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
                                left_scale,right_scale,left_energy_gain,right_energy_gain});
     }
 
+    if(m36_chain){
+        out.pcm=resynthesize_stateful_m36_chain_experimental(chain_units,tds_state);
+        if(out.pcm.samples.empty()){out.error="m36_chain_render_failed";return out;}
+    }
     out.tds_intervals_m34=tds_state.intervals;
     out.tds_grains_m34=tds_state.grains;
     out.tds_dropped_m34=tds_state.dropped;
@@ -1121,7 +1140,11 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
     out.tds_budget_samples_m35=tds_state.budget_consumed_samples;
     out.tds_emitted_samples_m35=tds_state.emitted_samples;
     out.tds_clamped_records_m35=tds_state.clamped_delta_records;
-    out.pcm=rendered.front();
+    out.m36_initial_paths=tds_state.m36_initial_paths;
+    out.m36_cross_paths=tds_state.m36_cross_paths;
+    out.m36_terminal_flushes=tds_state.m36_terminal_flushes;
+    out.m36_fallbacks=tds_state.m36_fallbacks;
+    if(!m36_chain) out.pcm=rendered.front();
     for(std::size_t i=1;i<rendered.size();++i){
         OlaJoinDiagnostics jd;
         const double lps=(i-1<unit_pitch_right.size()?unit_pitch_right[i-1]:pitch_scale);

@@ -272,7 +272,21 @@ Cache bounds are 20..400. Anchor lengths are:
 115, 141, 173, 212, 260, 319, 392, 400
 ```
 
-## Current boundary / next evidence
+## Updated acoustic checkpoint (2026-09-27)
+
+The earlier bookkeeping and cross source-binding contracts were corrected.
+Ordinary/deferred positive paths swap/write once; no drop overwrites a step
+slot. Cross/initial take both early and common marker tails. Cross raw entry
+uses prev[k], not the previous interval end. The phone-feature oracle did not
+test these caller paths and did not establish their correctness.
+
+Corrected local M36 improves MFCC-DTW 75.3109 -> 71.2582 (19/22 phrases) and
+normalized shape 54.6811 -> 51.8847. A separate whole-chain experiment gives
+71.5357 / 52.6415, not a further win. Timing remains 10.5861% versus stable
+3.5987%, and production is unchanged (22/22 stable WAV SHA256 matches).
+See `M36_CHAIN_ACOUSTICS.md` and `metrics/m36-chain-acoustic-20260927.json`.
+
+## Earlier boundary / next evidence (superseded by the checkpoint above)
 
 Still not proven/promoted:
 
