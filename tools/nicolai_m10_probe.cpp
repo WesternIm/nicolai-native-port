@@ -8,9 +8,14 @@
 static std::vector<std::uint8_t> rd(const char*p){std::ifstream f(p,std::ios::binary);return {std::istreambuf_iterator<char>(f),{}};}
 static void hx(std::uint64_t v){std::cout<<"0x"<<std::hex<<v<<std::dec;}
 int main(int argc,char**argv){
- if(argc!=2){std::cerr<<"usage: nicolai_m10_probe nicolai16.dat\n";return 2;}
+ if(argc!=2 && argc!=4){std::cerr<<"usage: nicolai_m10_probe nicolai16.dat [left-phone right-phone]\n";return 2;}
  const auto b=rd(argv[1]);const auto l=nicolai::parse_edat_layout(b);if(!l.valid){std::cerr<<"invalid EDAT\n";return 1;}
  const auto c=nicolai::parse_nicolai_diphone_catalog(b,l);if(!c.valid){std::cerr<<"catalog failed: "<<c.error<<"\n";return 1;}
+ if(argc==4){
+   const auto*unit=nicolai::find_diphone(c,argv[2],argv[3]);
+   std::cout<<argv[2]<<" -> "<<argv[3]<<" present="<<(unit?"yes":"no")<<"\n";
+   return unit?0:1;
+ }
  std::cout<<"Nicolai native-port M10 deterministic diphone graph\n\n";
  std::cout<<"phones: "<<c.phone_inventory.phones.size()<<"\n";
  std::cout<<"AXM: matrix="<<c.matrix_side<<"x"<<c.matrix_side<<" entries="<<c.matrix_entries<<" occupied="<<c.occupied_entries<<" unique_records="<<c.unique_axm_records<<" size="<<c.axm_serialized_size<<"\n";
