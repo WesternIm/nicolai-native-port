@@ -30,6 +30,10 @@ or through `NICOLAI_REFERENCE_PACK` / `NICOLAI_VOICE_DIR`. Without explicit
 paths the runner checks a few local reference-pack locations and searches the
 Program Files roots for the installed Nicolai voice assets.
 
+Use `-Python C:\path\to\python.exe` when parity dependencies are installed in a
+virtual environment. `-SkipBuild` reuses an already configured build tree,
+including NMake trees created from a Visual Studio developer prompt.
+
 ## Candidate profiles
 
 Current profiles:
@@ -104,3 +108,14 @@ question is whether local M36 grain/window behavior moves timing and normalized
 shape away from the old stateful ~10.59% / ~39.50 direction and toward the
 stable ~3.60% / ~37.19 reference without a global correction. If it regresses,
 inspect phrase-level wins/losses before recovering more caller state.
+
+## First measured result
+
+The 2026-09-27 run did regress overall. M36 local produced 10.5861% total-
+duration MAE and 75.3109 MFCC-DTW versus stable 3.5987% / 52.0139. Compared
+with M34 shared on the same upstream timing policy, M36 improved duration and F0
+slightly but worsened MFCC-DTW by 19.5784. The result therefore blocks
+production promotion and points to missing cross-descriptor source ownership.
+
+The compact committed report is
+`docs/metrics/m36-acoustic-ab-20260927.json`; proprietary WAVs remain local.

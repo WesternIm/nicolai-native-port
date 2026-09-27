@@ -73,10 +73,11 @@ int main() {
         buffers.primary.begin() + first_plan.right_offset +
             first_plan.right_window_length);
     std::vector<std::int16_t> expected_first{111, 222};
-    assert(nicolai::legacy_tds_write_m34(
+    const auto expected_first_written = nicolai::legacy_tds_write_m34(
         expected_first, 2, first_plan.period,
         first_left, first_right,
-        first_left_window.q15, first_right_window.q15));
+        first_left_window.q15, first_right_window.q15);
+    assert(expected_first_written);
 
     const auto result = nicolai::legacy_runtime_execute_cross_m36(
         output, state, previous_pcm, current_pcm, geometry,
@@ -122,10 +123,11 @@ int main() {
         dropped.count = 0;
         nicolai::LegacyRuntimeStateM36 untouched_state;
         std::vector<std::int16_t> untouched_output;
-        assert(!nicolai::legacy_runtime_execute_cross_m36(
+        const auto dropped_result = nicolai::legacy_runtime_execute_cross_m36(
             untouched_output, untouched_state,
             previous_pcm, current_pcm, geometry,
-            260, 190, dropped, current_step).valid);
+            260, 190, dropped, current_step);
+        assert(!dropped_result.valid);
         assert(untouched_output.empty() && untouched_state.cursor == 0);
     }
 
@@ -161,9 +163,10 @@ int main() {
             previous_pcm.begin() + selection.right_source_position +
                 selection.right_window_length);
         std::vector<std::int16_t> expected{111, 222};
-        assert(nicolai::legacy_tds_write_m34(
+        const auto expected_written = nicolai::legacy_tds_write_m34(
             expected, 2, terminal_step.first_period,
-            left, right, left_window.q15, right_window.q15));
+            left, right, left_window.q15, right_window.q15);
+        assert(expected_written);
         for (int i = 0; i < terminal_step.first_period; ++i) {
             expected[static_cast<std::size_t>(2 + i)] = faded(
                 expected[static_cast<std::size_t>(2 + i)],
@@ -211,16 +214,18 @@ int main() {
         std::vector<std::int16_t> failed_output{77};
         const auto before_state = failed_state;
         const auto before_output = failed_output;
-        assert(!nicolai::legacy_runtime_execute_terminal_m36(
+        const auto short_result = nicolai::legacy_runtime_execute_terminal_m36(
             failed_output, failed_state, short_pcm,
-            terminal_positions, 3, terminal_step).valid);
+            terminal_positions, 3, terminal_step);
+        assert(!short_result.valid);
         assert(failed_output == before_output);
         assert(failed_state.cursor == before_state.cursor &&
             failed_state.selection_a == before_state.selection_a &&
             failed_state.saved_cursor == before_state.saved_cursor);
-        assert(!nicolai::legacy_runtime_execute_terminal_m36(
+        const auto nonterminal_result = nicolai::legacy_runtime_execute_terminal_m36(
             failed_output, failed_state, previous_pcm,
-            terminal_positions, 2, terminal_step).valid);
+            terminal_positions, 2, terminal_step);
+        assert(!nonterminal_result.valid);
     }
 
     // Exact 0x101083b0 composition: first grain plus all Q11-progressed
@@ -252,11 +257,13 @@ int main() {
         expected_state.cursor = 2;
         expected_state.selection_a = 7;
         expected_state.selection_b = 5;
-        assert(nicolai::legacy_runtime_execute_ordinary_m36(
+        const auto expected_ordinary = nicolai::legacy_runtime_execute_ordinary_m36(
             expected_output, expected_state, previous_pcm,
-            positions, 2, ordinary_step).valid);
-        assert(nicolai::legacy_runtime_cross_zero_fade_m36(
-            expected_output, 2, ordinary_step.first_period));
+            positions, 2, ordinary_step);
+        assert(expected_ordinary.valid);
+        const auto expected_faded = nicolai::legacy_runtime_cross_zero_fade_m36(
+            expected_output, 2, ordinary_step.first_period);
+        assert(expected_faded);
 
         auto zero_output = std::vector<std::int16_t>{111, 222};
         nicolai::LegacyRuntimeStateM36 zero_state;
@@ -285,9 +292,127 @@ int main() {
         std::vector<std::int16_t> failed_output{111, 222};
         const auto before_state = failed_state;
         const auto before_output = failed_output;
-        assert(!nicolai::legacy_runtime_execute_ordinary_m36(
+        const auto failed = nicolai::legacy_runtime_execute_ordinary_m36(
             failed_output, failed_state, short_pcm,
-            positions, 2, step(3, 100, 0)).valid);
+            positions, 2, step(3, 100, 0));
+        assert(!failed.valid);
+        assert(failed_output == before_output);
+        assert(failed_state.cursor == before_state.cursor &&
+            failed_state.selection_a == before_state.selection_a);
+    }
+
+    // 0x101086c0 is two complete positive steps: buffered entry/repeats and
+    // current entry/repeats. field30 makes the buffered future source and the
+    // current entry's left source switch to the current descriptor PCM.
+    {
+        const std::vector<std::int32_t> previous_positions{0, 50, 140, 260, 400};
+        const std::vector<std::int32_t> current_positions{0, 80, 190, 320, 470};
+        nicolai::LegacyRuntimeStateM36 initial_state;
+        initial_state.cursor = 2;
+        initial_state.selection_a = 7;
+        initial_state.selection_b = 5;
+        initial_state.word2e = 0;
+        initial_state.field30 = 1;
+        std::vector<std::int16_t> initial_output{111, 222};
+
+        // Directly compose the first buffered grain as a byte-for-byte prefix
+        // oracle from the already-proven selector, windows and writer.
+        const auto initial_selection =
+            nicolai::legacy_runtime_initial_source_selection_m36(
+                previous_positions, initial_state, 2, 100);
+        assert(initial_selection.valid);
+        const auto initial_left_window = nicolai::legacy_window_m36_lookup(
+            initial_selection.left_window_length);
+        const auto initial_right_window = nicolai::legacy_window_m36_lookup(
+            initial_selection.right_window_length);
+        std::vector<std::int16_t> initial_left(
+            previous_pcm.begin() + initial_selection.left_source_position,
+            previous_pcm.begin() + initial_selection.left_source_position +
+                initial_selection.left_window_length);
+        std::vector<std::int16_t> initial_right(
+            previous_pcm.begin() + initial_selection.right_source_position,
+            previous_pcm.begin() + initial_selection.right_source_position +
+                initial_selection.right_window_length);
+        std::vector<std::int16_t> expected_first{111, 222};
+        const auto initial_expected_written = nicolai::legacy_tds_write_m34(
+            expected_first, 2, 100,
+            initial_left, initial_right,
+            initial_left_window.q15, initial_right_window.q15);
+        assert(initial_expected_written);
+
+        const auto initial = nicolai::legacy_runtime_execute_initial_m36(
+            initial_output,
+            initial_state,
+            previous_pcm,
+            previous_positions,
+            current_pcm,
+            current_positions,
+            2,
+            1,
+            step(3, 100, 0),
+            step(2, 90, 0));
+        assert(initial.valid && initial.crossed_descriptor);
+        assert(initial.buffered_grains_written == 3);
+        assert(initial.current_grains_written == 2);
+        assert(initial.total_grains_written == 5);
+        assert(initial.total_samples_written == 480);
+        assert(initial.start_cursor == 2 && initial.end_cursor == 482);
+        assert(initial_output.size() == 482);
+        for (std::size_t i = 0; i < expected_first.size(); ++i)
+            assert(initial_output[i] == expected_first[i]);
+        assert(initial_state.cursor == 482);
+        assert(initial_state.selection_a == 392 &&
+            initial_state.selection_b == 302);
+
+        // With field30 clear the buffered repeats remain on previous PCM and
+        // only the current-entry right/current repeated phases use current PCM.
+        nicolai::LegacyRuntimeStateM36 stayed_state;
+        stayed_state.word2e = 0;
+        std::vector<std::int16_t> stayed_output;
+        const auto stayed = nicolai::legacy_runtime_execute_initial_m36(
+            stayed_output,
+            stayed_state,
+            previous_pcm,
+            previous_positions,
+            current_pcm,
+            current_positions,
+            2,
+            1,
+            step(3, 100, 0),
+            step(2, 90, 0));
+        assert(stayed.valid && !stayed.crossed_descriptor);
+        assert(stayed.total_grains_written == 5 &&
+            stayed_state.cursor == 480);
+        assert(stayed_output != std::vector<std::int16_t>(
+            initial_output.begin() + 2, initial_output.end()));
+    }
+
+    // A failure first reached in the current-entry phase must not expose the
+    // already-staged buffered grains or rotations.
+    {
+        const std::vector<std::int32_t> previous_positions{0, 50, 140, 260, 400};
+        const std::vector<std::int32_t> current_positions{0, 80, 190, 320, 470};
+        const std::vector<std::int16_t> short_current(
+            current_pcm.begin(), current_pcm.begin() + 150);
+        nicolai::LegacyRuntimeStateM36 failed_state;
+        failed_state.cursor = 2;
+        failed_state.selection_a = 7;
+        failed_state.word2e = 0;
+        std::vector<std::int16_t> failed_output{111, 222};
+        const auto before_state = failed_state;
+        const auto before_output = failed_output;
+        const auto failed = nicolai::legacy_runtime_execute_initial_m36(
+            failed_output,
+            failed_state,
+            previous_pcm,
+            previous_positions,
+            short_current,
+            current_positions,
+            2,
+            1,
+            step(3, 100, 0),
+            step(2, 90, 0));
+        assert(!failed.valid);
         assert(failed_output == before_output);
         assert(failed_state.cursor == before_state.cursor &&
             failed_state.selection_a == before_state.selection_a);

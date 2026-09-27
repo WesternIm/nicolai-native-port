@@ -37,6 +37,8 @@ Expected direct-original result:
 {"portable_cases":259,"original_matches":259}
 ```
 
+This gate passed locally on 2026-09-27 with the documented original DLL.
+
 Gate B, on the installed original engine:
 
 ```powershell
@@ -46,6 +48,9 @@ Gate B, on the installed original engine:
 The resulting phone-record audit must contain nonzero records with zero invalid
 and zero mismatched records. CI cannot execute these two proprietary-runtime
 gates but does build the Win32 x86 tooling and run all portable contracts.
+The 2026-09-27 host exposed the Nicolai SAPI token, but the old Acapela runtime
+hung on its first warm-up `Speak` before `ettsengine.exe` appeared. The capture
+runner now times out and cleans up this failure instead of hanging indefinitely.
 
 ## One-click A/B measurement path
 
@@ -64,6 +69,19 @@ compact summary under a timestamped `metrics-work/ab-*` directory.
 `nicolai_batch_render` now honors `NICOLAI_M36_TRANSITION_EXECUTOR=1`. The
 switch enables the established stateful/shared-phone caller and the adapter
 dispatches into the runnable M36 local transition experiment rather than M34.
+
+## Measured acoustic result
+
+The 2026-09-27 22-phrase A/B rejected promotion:
+
+- stable: 3.5987% total-duration MAE, 52.0139 MFCC-DTW;
+- M34 shared: 10.5941%, 55.7325;
+- M36 local: 10.5861%, 75.3109.
+
+M36 slightly improves duration and F0 relative to the same M34 shared clock,
+but its MFCC-DTW is 19.5784 worse and it regresses versus stable on every phrase.
+The normalized 2048-frame shape metric moves from 37.1928 to 54.6811. See
+`docs/metrics/m36-acoustic-ab-20260927.json` for the source-of-truth scalars.
 
 ## Current runnable M36 scope
 
@@ -97,11 +115,23 @@ The branch has portable contracts for:
 - ordinary first-grain source selection including dropped-bridge ownership;
 - ordinary repeated-grain Q11 period, WORD arithmetic, left/right window lengths
   and exact boundary-centred source starts;
-- transactional ordinary writer composition and the zero-byte cross wrapper;
-- initial-transition first/repeated grain source geometry;
-- nonzero cross-transition geometry, buffers, four writer phases and SAR16
-  overlap arithmetic;
-- exact deferred-terminal single-grain write and descending fade-out;
+- transactional ordinary writer composition and the complete zero-byte cross
+  wrapper with its first-period fade-in;
+- initial-transition first-grain source selection;
+- initial-transition repeated grains both within one descriptor and while
+  crossing to the next descriptor PCM base;
+- transactional composition of the complete initial-transition PCM body:
+  buffered entry/repeats followed by current entry/repeats, with explicit
+  previous/current PCM-base ownership and no partial commit on failure;
+- nonzero cross-transition geometry and its distinct central SAR16 overlap
+  arithmetic;
+- exact nonzero cross-transition primary/secondary temporary PCM buffers,
+  including reverse/forward window orientation and both shoulder cases;
+- exact per-write cursor/selection rotation and a transactional nonzero cross
+  executor composing both buffers with all four writer phases;
+- exact deferred-terminal single-grain PCM write, checkpoint and descending
+  fade-out around `0x10108210`;
+- zero-branch cross fade;
 - original packed window-cache topology and guarded lookup for lengths 1..400.
 
 Relevant notes:
@@ -114,16 +144,14 @@ Relevant notes:
 
 ## Next checkpoint
 
-1. Run `run_ab_compare.bat -CandidateProfile m36` on the same 22 PC golden
-   phrases.
-2. Compare historical duration/waveform/MFCC/RMS metrics and M35 normalized
-   shape/energy diagnostics phrase by phrase.
-3. If local M36 moves in the right direction, recover/capture caller
-   step-buffer/source ownership needed by nonzero cross transitions.
-4. Integrate cross only after that ownership is proven; keep M34 fallback intact.
-5. Re-run the exact same A/B bundle before considering any production promotion.
+1. Recover/capture caller step-buffer and extended PCM-source ownership around
+   descriptor crossings at `0x10107c20`.
+2. Integrate the already transactional nonzero cross executor only after that
+   ownership is proven; keep the stable renderer and M34 fallback intact.
+3. Restore live Gate B if the legacy Acapela server can be made to start without
+   changing the proprietary installation.
+4. Re-run the exact same 22-phrase A/B bundle.
+5. Require both timing and spectral-shape improvement before any promotion.
 
-The useful first gate is directional improvement relative to old stateful
-(~10.59% total-duration MAE and ~39.50 normalized shape) toward the stable
-(~3.60% / ~37.19) reference. No global duration scale or phrase-specific rule
-is allowed as a substitute for missing runtime state.
+No global duration scale or phrase-specific rule is allowed as a substitute for
+missing runtime state.

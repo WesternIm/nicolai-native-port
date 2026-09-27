@@ -4,6 +4,7 @@
 
 # Proprietary/local reference inputs and rendered corpora
 /voice-data/
+/Elan/
 /reference_pack*/
 /portable_corpus*/
 *.wav

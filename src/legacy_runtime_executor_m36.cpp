@@ -24,6 +24,17 @@ struct OrdinaryWriteM36 {
     int right_length = 0;
 };
 
+struct InitialWriteM36 {
+    int period = 0;
+    bool left_from_current = false;
+    int left_offset = 0;
+    int left_length = 0;
+    bool right_from_current = false;
+    int right_offset = 0;
+    int right_length = 0;
+    bool buffered = false;
+};
+
 bool slice_fits(
     const std::vector<std::int16_t>& source,
     int offset,
@@ -65,6 +76,64 @@ bool execute_ordinary_write(
     if (state.cursor < 0) return false;
     const auto left_begin = pcm.begin() + write.left_offset;
     const auto right_begin = pcm.begin() + write.right_offset;
+    const std::vector<std::int16_t> left(
+        left_begin, left_begin + write.left_length);
+    const std::vector<std::int16_t> right(
+        right_begin, right_begin + write.right_length);
+    const auto left_window = legacy_window_m36_lookup(write.left_length);
+    const auto right_window = legacy_window_m36_lookup(write.right_length);
+    return legacy_tds_write_m34(
+               output,
+               static_cast<std::size_t>(state.cursor),
+               write.period,
+               left,
+               right,
+               left_window.q15,
+               right_window.q15) &&
+        legacy_runtime_post_write_m36(state, write.period).valid;
+}
+
+const std::vector<std::int16_t>& initial_source(
+    bool current,
+    const std::vector<std::int16_t>& previous_pcm,
+    const std::vector<std::int16_t>& current_pcm) {
+    return current ? current_pcm : previous_pcm;
+}
+
+bool validate_initial_write(
+    const InitialWriteM36& write,
+    const std::vector<std::int16_t>& previous_pcm,
+    const std::vector<std::int16_t>& current_pcm) {
+    const auto& left = initial_source(
+        write.left_from_current, previous_pcm, current_pcm);
+    const auto& right = initial_source(
+        write.right_from_current, previous_pcm, current_pcm);
+    if (write.period <= 0 || write.period > 3200 ||
+        write.left_length <= 0 || write.right_length <= 0 ||
+        write.left_length > write.period || write.right_length > write.period ||
+        !slice_fits(left, write.left_offset, write.left_length) ||
+        !slice_fits(right, write.right_offset, write.right_length))
+        return false;
+    const auto left_window = legacy_window_m36_lookup(write.left_length);
+    const auto right_window = legacy_window_m36_lookup(write.right_length);
+    return left_window.valid && right_window.valid &&
+        left_window.q15.size() == static_cast<std::size_t>(write.left_length) &&
+        right_window.q15.size() == static_cast<std::size_t>(write.right_length);
+}
+
+bool execute_initial_write(
+    std::vector<std::int16_t>& output,
+    LegacyRuntimeStateM36& state,
+    const std::vector<std::int16_t>& previous_pcm,
+    const std::vector<std::int16_t>& current_pcm,
+    const InitialWriteM36& write) {
+    if (state.cursor < 0) return false;
+    const auto& left_source = initial_source(
+        write.left_from_current, previous_pcm, current_pcm);
+    const auto& right_source = initial_source(
+        write.right_from_current, previous_pcm, current_pcm);
+    const auto left_begin = left_source.begin() + write.left_offset;
+    const auto right_begin = right_source.begin() + write.right_offset;
     const std::vector<std::int16_t> left(
         left_begin, left_begin + write.left_length);
     const std::vector<std::int16_t> right(
@@ -425,6 +494,141 @@ LegacyRuntimeOrdinaryExecutionM36 legacy_runtime_execute_zero_cross_m36(
 
     result = ordinary;
     result.cross_fade_in_applied = true;
+    output = std::move(staged_output);
+    state = staged_state;
+    return result;
+}
+
+LegacyRuntimeInitialExecutionM36 legacy_runtime_execute_initial_m36(
+    std::vector<std::int16_t>& output,
+    LegacyRuntimeStateM36& state,
+    const std::vector<std::int16_t>& previous_pcm,
+    const std::vector<std::int32_t>& previous_positions,
+    const std::vector<std::int16_t>& current_pcm,
+    const std::vector<std::int32_t>& current_positions,
+    int buffered_interval_index,
+    int current_interval_index,
+    const LegacyTdsStepM33& buffered_step,
+    const LegacyTdsStepM33& current_step) {
+    LegacyRuntimeInitialExecutionM36 result;
+    if (!buffered_step.valid || !current_step.valid ||
+        buffered_step.count <= 0 || current_step.count <= 0 ||
+        state.cursor < 0 ||
+        static_cast<std::size_t>(state.cursor) > output.size())
+        return result;
+
+    const bool cross_descriptor = state.field30 != 0;
+    const auto buffered_entry = legacy_runtime_initial_source_selection_m36(
+        previous_positions,
+        state,
+        buffered_interval_index,
+        buffered_step.first_period);
+    if (!buffered_entry.valid) return result;
+
+    std::vector<InitialWriteM36> writes;
+    writes.reserve(static_cast<std::size_t>(buffered_step.count) +
+        static_cast<std::size_t>(current_step.count));
+    writes.push_back({
+        buffered_step.first_period,
+        false,
+        buffered_entry.left_source_position,
+        buffered_entry.left_window_length,
+        false,
+        buffered_entry.right_source_position,
+        buffered_entry.right_window_length,
+        true});
+
+    for (int ordinal = 1; ordinal < buffered_step.count; ++ordinal) {
+        const auto grain = legacy_runtime_initial_repeated_grain_m36(
+            previous_positions,
+            current_positions,
+            buffered_interval_index,
+            cross_descriptor,
+            buffered_step.first_period,
+            buffered_step.delta_q11,
+            ordinal);
+        if (!grain.valid) return result;
+        writes.push_back({
+            grain.period,
+            grain.cross_descriptor,
+            grain.left_source_position,
+            grain.left_window_length,
+            false,
+            grain.right_source_position,
+            grain.right_window_length,
+            true});
+    }
+
+    const auto current_entry = legacy_runtime_initial_current_entry_m36(
+        previous_positions,
+        current_positions,
+        buffered_interval_index,
+        current_interval_index,
+        cross_descriptor,
+        current_step.first_period);
+    if (!current_entry.valid) return result;
+    writes.push_back({
+        current_entry.period,
+        current_entry.left_from_current,
+        current_entry.left_source_position,
+        current_entry.left_window_length,
+        true,
+        current_entry.right_source_position,
+        current_entry.right_window_length,
+        false});
+
+    for (int ordinal = 1; ordinal < current_step.count; ++ordinal) {
+        const auto grain = legacy_runtime_ordinary_grain_m36(
+            current_positions,
+            current_interval_index,
+            current_step.first_period,
+            current_step.delta_q11,
+            ordinal);
+        if (!grain.valid) return result;
+        writes.push_back({
+            grain.period,
+            true,
+            grain.left_source_position,
+            grain.left_window_length,
+            true,
+            grain.right_source_position,
+            grain.right_window_length,
+            false});
+    }
+
+    std::int64_t final_cursor = state.cursor;
+    for (const auto& write : writes) {
+        if (!validate_initial_write(write, previous_pcm, current_pcm))
+            return result;
+        final_cursor += write.period;
+        if (final_cursor > std::numeric_limits<std::int32_t>::max())
+            return result;
+    }
+
+    auto staged_output = output;
+    auto staged_state = state;
+    int buffered_written = 0;
+    int current_written = 0;
+    for (const auto& write : writes) {
+        if (!execute_initial_write(
+                staged_output,
+                staged_state,
+                previous_pcm,
+                current_pcm,
+                write))
+            return result;
+        if (write.buffered) ++buffered_written;
+        else ++current_written;
+    }
+
+    result.valid = true;
+    result.crossed_descriptor = cross_descriptor;
+    result.buffered_grains_written = buffered_written;
+    result.current_grains_written = current_written;
+    result.total_grains_written = buffered_written + current_written;
+    result.total_samples_written = staged_state.cursor - state.cursor;
+    result.start_cursor = state.cursor;
+    result.end_cursor = staged_state.cursor;
     output = std::move(staged_output);
     state = staged_state;
     return result;

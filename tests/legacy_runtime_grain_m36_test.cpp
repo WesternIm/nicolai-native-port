@@ -104,5 +104,39 @@ int main() {
         assert(!legacy_runtime_ordinary_grain_m36(p, 0, 80, 0, 0).valid);
     }
 
+    // After the buffered step, 0x101086c0 emits a current-step entry grain.
+    // field30 decides whether writer-left starts at current[0] or remains on
+    // the previous descriptor boundary; writer-right is always current.
+    {
+        const std::vector<std::int32_t> previous{0, 50, 140, 260, 400};
+        const std::vector<std::int32_t> current{0, 80, 190, 320, 470};
+        const auto crossed =
+            nicolai::legacy_runtime_initial_current_entry_m36(
+                previous, current, 2, 1, true, 90);
+        assert(crossed.valid && crossed.left_from_current);
+        assert(crossed.left_interval_width == 80 &&
+            crossed.current_interval_width == 110);
+        assert(crossed.left_window_length == 80 &&
+            crossed.right_window_length == 90);
+        assert(crossed.left_source_position == 0 &&
+            crossed.right_source_position == 100);
+
+        const auto stayed =
+            nicolai::legacy_runtime_initial_current_entry_m36(
+                previous, current, 2, 1, false, 90);
+        assert(stayed.valid && !stayed.left_from_current);
+        assert(stayed.left_interval_width == 140 &&
+            stayed.current_interval_width == 110);
+        assert(stayed.left_window_length == 90 &&
+            stayed.right_window_length == 90);
+        assert(stayed.left_source_position == 260 &&
+            stayed.right_source_position == 100);
+
+        assert(!nicolai::legacy_runtime_initial_current_entry_m36(
+            previous, current, 3, 1, false, 90).valid);
+        assert(!nicolai::legacy_runtime_initial_current_entry_m36(
+            previous, current, 2, 1, true, 0).valid);
+    }
+
     std::cout << "legacy_runtime_grain_m36_test: PASSED\n";
 }

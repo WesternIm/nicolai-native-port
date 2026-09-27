@@ -19,20 +19,28 @@ jobs:
         run: cmake --build build --config Debug --parallel
       - name: Test
         run: ctest --test-dir build -C Debug --output-on-failure
-      - name: Parse A/B PowerShell launcher
+      - name: Parse M36 PowerShell launchers
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $tokens = $null
-          $errors = $null
-          [System.Management.Automation.Language.Parser]::ParseFile(
-            (Resolve-Path '.\tools\run_ab_compare.ps1'),
-            [ref]$tokens,
-            [ref]$errors) | Out-Null
-          if ($errors.Count -ne 0) {
-            $errors | ForEach-Object { Write-Error $_.Message }
-            exit 1
+          $failed = $false
+          foreach ($file in @(
+            '.\tools\run_ab_compare.ps1',
+            '.\tools\run_m36_original_probe.ps1',
+            '.\tools\run_m36_runtime_capture.ps1'
+          )) {
+            $tokens = $null
+            $errors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $file),
+              [ref]$tokens,
+              [ref]$errors) | Out-Null
+            if ($errors.Count -ne 0) {
+              $errors | ForEach-Object { Write-Error "$file`: $($_.Message)" }
+              $failed = $true
+            }
           }
+          if ($failed) { exit 1 }
 
   win32-phone-probe:
     runs-on: windows-latest

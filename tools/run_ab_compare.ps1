@@ -5,6 +5,7 @@ param(
     [string]$CandidateProfile = "m34-shared",
     [string]$BuildDir = "build-ab",
     [string]$OutputRoot = "",
+    [string]$Python = "python",
     [switch]$SkipBuild,
     [switch]$NoOpen
 )
@@ -215,22 +216,22 @@ $compareJson = Join-Path $OutputRoot "comparison.json"
 $compareCsv = Join-Path $OutputRoot "comparison.csv"
 
 Invoke-Checked "Historical parity metrics: baseline" {
-    & python tools/measure_parity.py $ReferencePack $baselineDir --json $baselineJson --csv $baselineCsv *> (Join-Path $logsDir "baseline-metrics.txt")
+    & $Python tools/measure_parity.py $ReferencePack $baselineDir --json $baselineJson --csv $baselineCsv *> (Join-Path $logsDir "baseline-metrics.txt")
 }
 Invoke-Checked "Historical parity metrics: candidate" {
-    & python tools/measure_parity.py $ReferencePack $candidateDir --json $candidateJson --csv $candidateCsv *> (Join-Path $logsDir "candidate-metrics.txt")
+    & $Python tools/measure_parity.py $ReferencePack $candidateDir --json $candidateJson --csv $candidateCsv *> (Join-Path $logsDir "candidate-metrics.txt")
 }
 Invoke-Checked "Phrase-by-phrase A/B comparison" {
-    & python tools/compare_parity.py $baselineJson $candidateJson --json $compareJson --csv $compareCsv *> (Join-Path $logsDir "comparison.txt")
+    & $Python tools/compare_parity.py $baselineJson $candidateJson --json $compareJson --csv $compareCsv *> (Join-Path $logsDir "comparison.txt")
 }
 
 $v2_2048 = Join-Path $OutputRoot "diagnostics-v2-2048.json"
 $v2_1024 = Join-Path $OutputRoot "diagnostics-v2-1024.json"
 Invoke-Checked "M35 diagnostics (2048 pitch frame)" {
-    & python tools/measure_parity_v2.py $ReferencePack $OutputRoot --candidates baseline candidate --json $v2_2048 --cache $cacheDir --pitch-frame 2048 *> (Join-Path $logsDir "diagnostics-v2-2048.txt")
+    & $Python tools/measure_parity_v2.py $ReferencePack $OutputRoot --candidates baseline candidate --json $v2_2048 --cache $cacheDir --pitch-frame 2048 *> (Join-Path $logsDir "diagnostics-v2-2048.txt")
 }
 Invoke-Checked "M35 diagnostics (1024 pitch frame)" {
-    & python tools/measure_parity_v2.py $ReferencePack $OutputRoot --candidates baseline candidate --json $v2_1024 --cache $cacheDir --pitch-frame 1024 *> (Join-Path $logsDir "diagnostics-v2-1024.txt")
+    & $Python tools/measure_parity_v2.py $ReferencePack $OutputRoot --candidates baseline candidate --json $v2_1024 --cache $cacheDir --pitch-frame 1024 *> (Join-Path $logsDir "diagnostics-v2-1024.txt")
 }
 
 $base = Get-Content -LiteralPath $baselineJson -Raw | ConvertFrom-Json

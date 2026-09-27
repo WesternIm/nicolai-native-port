@@ -159,6 +159,36 @@ M34 analytic/front-tail adapter, hits recovered initial/terminal logic on a
 synthetic descriptor, and rejects unsupported phone-local energy instead of
 silently changing the experiment.
 
+## 22-phrase acoustic result
+
+The first real A/B was run on 2026-09-27 against all 22 original Nicolai WAVs.
+The committed scalar report is
+`docs/metrics/m36-acoustic-ab-20260927.json`; WAVs and feature caches remain
+local.
+
+| profile | waveform corr. | active dur. MAE | total dur. MAE | F0 MAE | MFCC-DTW | RMS MAE |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| stable | 0.196516 | 5.6790% | 3.5987% | 13.4799% | 52.0139 | 10.2377% |
+| M34 unit | 0.199750 | 26.9387% | 16.8345% | 13.8641% | 53.1790 | 9.3399% |
+| M34 shared | 0.207715 | 16.5177% | 10.5941% | 15.8847% | 55.7325 | 7.4986% |
+| M36 local | 0.205595 | 16.1316% | 10.5861% | 15.1260% | 75.3109 | 8.5693% |
+
+This rejects promotion. Relative to the same M34 shared-duration clock, local
+M36 slightly improves active-duration and F0 error, but waveform correlation
+drops by 0.00212 and MFCC-DTW regresses by 19.5784. MFCC-DTW regresses versus
+stable on all 22 phrases. The 2048-frame normalized shape metric likewise moves
+from 37.1928 (stable) to 54.6811 (M36).
+
+The result separates two defects instead of hiding them in one score:
+
+- the upstream shared-phone duration/feature clock causes most of the timing
+  regression before M36 local grain selection is considered;
+- the current local-only M36 source contract is spectrally incomplete without
+  the caller-owned cross-descriptor source context.
+
+No global duration multiplier or phrase-specific acoustic rule is justified by
+this result.
+
 ## Synthetic original oracle
 
 `nicolai_m36_phone_probe` builds a deterministic 259-case corpus. On Win32 x86,
@@ -177,6 +207,9 @@ Promotion gate:
 {"portable_cases":259,"original_matches":259}
 ```
 
+This gate passed locally on 2026-09-27 against the exact DLL hash documented
+above.
+
 CI intentionally has no proprietary DLL. It configures a real Win32 x86 build,
 compiles the same probe and runs all portable cases.
 
@@ -193,20 +226,68 @@ Expected use:
 .\tools\run_m36_runtime_capture.ps1
 ```
 
+The runner now has bounded SAPI warm-up/trigger timeouts, cleans up the debugger
+on failure, supports `-SkipBuild`, and accepts a preconfigured NMake x86 build.
+On the 2026-09-27 host the installed SAPI token was present, but the legacy
+Acapela runtime hung on its first `Speak` before `ettsengine.exe` appeared.
+Consequently Gate B remains unavailable on that host; this is not recorded as a
+phone-feature mismatch.
+
+## Completed transactional PCM executors
+
+The nonzero cross-transition PCM path is now composed as a portable opt-in
+executor: exact temporary buffers, four writer phases, recovered windows and
+the repeated cursor/selection state rotation. Output and state commit only when
+the complete phase sequence validates. It remains disconnected from production.
+
+The deferred terminal PCM path around `0x10108210` is also recovered: one
+terminal first-grain write, even for a larger positive step count, followed by
+the caller-side descending-window fade-out. The portable executor checkpoints
+and commits PCM/runtime state transactionally. Descriptor metadata/event
+finalization after the fade is not yet claimed.
+
+The complete positive-count `0x101083b0` ordinary PCM sequence and the
+zero-byte `0x10108cf0` wrapper are now separate transactional executors. They
+compose the already-proven first/repeated grain plans, exact windows, writer,
+state rotations and first-period cross fade without assuming caller-owned
+interval or step-buffer bookkeeping.
+
+The complete `0x101086c0` initial-transition PCM sequence is now a third
+transactional executor. It composes buffered entry/repeats and current
+entry/repeats, preserves the `state +0x30` descriptor crossing rule, carries
+the two PCM bases explicitly, and commits no PCM or runtime state when any late
+phase is invalid. Caller-owned interval markers and step-buffer rotation remain
+deliberately outside this contract.
+
+## Exact window cache topology
+
+The old stateful adapter still uses an analytic M14 half-Hann approximation.
+M36 statically recovers the actual cache built by `0x1010a020` and consumed by
+`0x10109be0`.
+
+Cache bounds are 20..400. Anchor lengths are:
+
+```text
+20, 24, 29, 35, 43, 52, 63, 77, 94,
+115, 141, 173, 212, 260, 319, 392, 400
+```
+
 ## Current boundary / next evidence
 
 Still not proven/promoted:
 
-- the required local 259/259 direct-original result on the user's Windows host;
 - successful real 22-phrase Gate B capture with zero audit mismatches;
 - upstream producer parity for feature records / voicing;
 - caller step-buffer ownership and extended source context needed to compose
   nonzero cross transitions in the portable chain;
+- caller-owned interval-marker and buffered/current step rotation around
+  `0x10107c20`;
+- route-level executor composition across drop / initial / ordinary / cross;
 - post-terminal descriptor metadata/event finalization;
 - exact x87 last-bit window oracle;
 - any production or Android promotion.
 
-The next practical action is to run the same 22-phrase A/B bundle with the now
-executable local M36 profile. Use the result to decide whether recovered local
-grain/window behavior moves timing and normalized shape in the right direction
-before adding cross-descriptor caller state.
+The next implementation target is caller-owned step-buffer/source ownership at
+descriptor boundaries. Integrate the recovered nonzero cross executor only
+after that state is captured or statically proven, then repeat the exact A/B
+bundle. The stable renderer remains the production default.

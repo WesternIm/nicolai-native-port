@@ -83,9 +83,60 @@ waveform-correlation join.
 
 `legacy_runtime_initial_repeated_grain_m36()` exposes this proven geometry.
 
-## Remaining initial-path work
+## Current-step entry
 
-The source coordinates, widths, period arithmetic and writer-window ownership
-are now separate portable contracts. Renderer integration still needs to carry
-the exact descriptor/PCM-base identity alongside these integer coordinates and
-combine the result with the nonzero `0x10108cf0` cross-transition mixer.
+After the complete buffered step, the original block at
+`0x10108a22..0x10108ba0` emits the first grain of the current step. Let `i` be
+the current interval, `b` the buffered interval and `P` the current first
+period. The interval differences remain signed WORD subtractions.
+
+```text
+cross = state.field30 != 0
+current_width = cur[i + 1] - cur[i]
+
+if cross:
+    left_width  = cur[1] - cur[0]
+    left_source = cur[0]
+else:
+    left_width  = prev[b + 2] - prev[b + 1]
+    left_source = prev[b + 1]
+
+left_len  = min(left_width, P)
+right_len = min(current_width, P)
+
+right_source = cur[i + 1] - right_len
+```
+
+The right source always belongs to the current descriptor. Only writer-left
+changes PCM ownership with `state + 0x30`. The portable contract is
+`legacy_runtime_initial_current_entry_m36()`.
+
+## Current-step repeats
+
+The loop at `0x10108bb8..0x10108ccf` uses the ordinary repeated-grain geometry
+on the current descriptor, including the same WORD/Q11 period progression and
+boundary-centred source starts. Both writer sources therefore belong to the
+current descriptor after the entry grain.
+
+## Transactional executor
+
+`legacy_runtime_execute_initial_m36()` composes the complete proven
+`0x101086c0` PCM sequence:
+
+1. buffered entry;
+2. buffered repeats;
+3. current entry;
+4. current repeats.
+
+It carries previous/current PCM-base identity explicitly, applies the recovered
+windows and writer for every grain, and performs the original post-write
+cursor/selection rotation. All geometry and source ranges are validated before
+commit; a failure in a later current phase exposes neither earlier buffered PCM
+nor partial runtime-state changes.
+
+## Remaining caller work
+
+The initial-transition PCM body is complete as a portable contract. The
+remaining boundary is caller-owned interval markers and buffered/current step
+rotation around `0x10107c20`; production integration stays deferred until that
+route-level bookkeeping is equally proven.

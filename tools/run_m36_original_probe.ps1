@@ -2,7 +2,8 @@ param(
     [string]$Dll = "",
 
     [string]$BuildDir = "build_m36_win32",
-    [string]$Output = "metrics-work/m36/m36-original-phone-probe.json"
+    [string]$Output = "metrics-work/m36/m36-original-phone-probe.json",
+    [switch]$SkipBuild
 )
 
 $ErrorActionPreference = "Stop"
@@ -56,14 +57,25 @@ Write-Host "SHA256 $actualSha256"
 # Do not hardcode a Visual Studio generator version. GitHub and local systems
 # may have VS 2022, VS 2026 or newer; CMake selects the installed default while
 # -A Win32 requests the required x86 target architecture.
-& cmake -S . -B $BuildDir -A Win32 -DBUILD_TESTING=ON
-if ($LASTEXITCODE -ne 0) { throw "CMake Win32 configure failed" }
+if (-not $SkipBuild) {
+    & cmake -S . -B $BuildDir -A Win32 -DBUILD_TESTING=ON
+    if ($LASTEXITCODE -ne 0) { throw "CMake Win32 configure failed" }
 
-& cmake --build $BuildDir --config Debug --target nicolai_m36_phone_probe legacy_phone_features_test --parallel
-if ($LASTEXITCODE -ne 0) { throw "Win32 M36 build failed" }
+    & cmake --build $BuildDir --config Debug --target nicolai_m36_phone_probe legacy_phone_features_test --parallel
+    if ($LASTEXITCODE -ne 0) { throw "Win32 M36 build failed" }
+}
 
-$unit = Join-Path $BuildDir "Debug/legacy_phone_features_test.exe"
-$probe = Join-Path $BuildDir "Debug/nicolai_m36_phone_probe.exe"
+$unit = @(
+    (Join-Path $BuildDir "Debug/legacy_phone_features_test.exe"),
+    (Join-Path $BuildDir "legacy_phone_features_test.exe")
+) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+$probe = @(
+    (Join-Path $BuildDir "Debug/nicolai_m36_phone_probe.exe"),
+    (Join-Path $BuildDir "nicolai_m36_phone_probe.exe")
+) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+if (-not $unit -or -not $probe) {
+    throw "M36 probe executables were not found under $BuildDir"
+}
 
 & $unit
 if ($LASTEXITCODE -ne 0) { throw "legacy_phone_features_test failed" }

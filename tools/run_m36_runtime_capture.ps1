@@ -2,11 +2,16 @@ param(
     [string]$BuildDir = "build_m36_win32",
     [string]$OutputRoot = "metrics-work/m36/runtime-capture",
     [string]$Python = "python",
-    [int]$ReadyTimeoutSeconds = 20
+    [int]$ReadyTimeoutSeconds = 20,
+    [int]$WarmupTimeoutSeconds = 30,
+    [int]$TriggerTimeoutSeconds = 180,
+    [switch]$SkipBuild
 )
 
 $ErrorActionPreference = "Stop"
 $repoRoot = Split-Path -Parent $PSScriptRoot
+$capture = $null
+$stopFile = $null
 Push-Location $repoRoot
 try {
     $x86PowerShell = Join-Path $env:WINDIR "SysWOW64\WindowsPowerShell\v1.0\powershell.exe"
@@ -24,12 +29,41 @@ try {
     Remove-Item -Force -ErrorAction SilentlyContinue `
         $records,$auditReport,$captureStdout,$captureStderr,$stopFile
 
+    function Invoke-SapiTrigger(
+        [string]$Label,
+        [string]$TriggerOutputDir,
+        [int]$TimeoutSeconds,
+        [switch]$WarmupOnly
+    ) {
+        $triggerScript = Join-Path $PSScriptRoot "m36_sapi_trigger.ps1"
+        $stdout = Join-Path $outputDir ($Label + ".stdout.log")
+        $stderr = Join-Path $outputDir ($Label + ".stderr.log")
+        $arguments = @(
+            "-NoProfile", "-ExecutionPolicy", "Bypass", "-File",
+            ('"' + $triggerScript + '"'),
+            "-OutputDir", ('"' + $TriggerOutputDir + '"')
+        )
+        if ($WarmupOnly) { $arguments += "-WarmupOnly" }
+
+        $process = Start-Process -FilePath $x86PowerShell -ArgumentList $arguments `
+            -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdout `
+            -RedirectStandardError $stderr
+        if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
+            try { $process.Kill() } catch { }
+            throw "$Label timed out after $TimeoutSeconds seconds; see $stdout and $stderr"
+        }
+        if ($process.ExitCode -ne 0) {
+            $detail = if (Test-Path $stderr) { Get-Content $stderr -Raw } else { "" }
+            throw "$Label failed with exit code $($process.ExitCode): $detail"
+        }
+        if (Test-Path $stdout) { Get-Content $stdout }
+    }
+
     # Warm up the original voice first. This starts/activates the out-of-process
     # Acapela engine so the debugger can attach to the process that owns mtsyc32.
-    & $x86PowerShell -NoProfile -ExecutionPolicy Bypass -File `
-        (Join-Path $PSScriptRoot "m36_sapi_trigger.ps1") -WarmupOnly `
-        -OutputDir (Join-Path $OutputRoot "warmup")
-    if ($LASTEXITCODE -ne 0) { throw "Nicolai warm-up failed" }
+    Invoke-SapiTrigger -Label "Nicolai warm-up" `
+        -TriggerOutputDir (Join-Path $OutputRoot "warmup") `
+        -TimeoutSeconds $WarmupTimeoutSeconds -WarmupOnly
 
     $engines = @(Get-Process -Name ettsengine -ErrorAction SilentlyContinue)
     if ($engines.Count -eq 0) {
@@ -42,21 +76,26 @@ try {
     $engine = $engines[0]
     Write-Host "Using ettsengine PID $($engine.Id)"
 
-    & cmake -S . -B $BuildDir -A Win32 -DBUILD_TESTING=ON
-    if ($LASTEXITCODE -ne 0) { throw "CMake Win32 configure failed" }
-    & cmake --build $BuildDir --config Debug --target nicolai_m36_runtime_capture --parallel
-    if ($LASTEXITCODE -ne 0) { throw "M36 runtime capture build failed" }
+    if (-not $SkipBuild) {
+        & cmake -S . -B $BuildDir -A Win32 -DBUILD_TESTING=ON
+        if ($LASTEXITCODE -ne 0) { throw "CMake Win32 configure failed" }
+        & cmake --build $BuildDir --config Debug --target nicolai_m36_runtime_capture --parallel
+        if ($LASTEXITCODE -ne 0) { throw "M36 runtime capture build failed" }
+    }
 
-    $captureExe = Join-Path $BuildDir "Debug/nicolai_m36_runtime_capture.exe"
-    if (-not (Test-Path -LiteralPath $captureExe)) {
-        throw "Capture executable was not built: $captureExe"
+    $captureExe = @(
+        (Join-Path $BuildDir "Debug/nicolai_m36_runtime_capture.exe"),
+        (Join-Path $BuildDir "nicolai_m36_runtime_capture.exe")
+    ) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    if (-not $captureExe) {
+        throw "Capture executable was not found under $BuildDir"
     }
 
     $capture = Start-Process -FilePath $captureExe -ArgumentList @(
         [string]$engine.Id,
         ('"' + $records + '"'),
         ('"' + $stopFile + '"')
-    ) -PassThru -NoNewWindow -RedirectStandardOutput $captureStdout `
+    ) -PassThru -WindowStyle Hidden -RedirectStandardOutput $captureStdout `
       -RedirectStandardError $captureStderr
 
     $deadline = (Get-Date).AddSeconds($ReadyTimeoutSeconds)
@@ -78,10 +117,9 @@ try {
     }
 
     Write-Host "Capture ready; synthesizing canonical 22-phrase corpus"
-    & $x86PowerShell -NoProfile -ExecutionPolicy Bypass -File `
-        (Join-Path $PSScriptRoot "m36_sapi_trigger.ps1") `
-        -OutputDir (Join-Path $OutputRoot "trigger-wavs")
-    $triggerExit = $LASTEXITCODE
+    Invoke-SapiTrigger -Label "Canonical SAPI trigger" `
+        -TriggerOutputDir (Join-Path $OutputRoot "trigger-wavs") `
+        -TimeoutSeconds $TriggerTimeoutSeconds
 
     New-Item -ItemType File -Force -Path $stopFile | Out-Null
     if (-not $capture.WaitForExit(15000)) {
@@ -92,7 +130,6 @@ try {
         $err = if (Test-Path $captureStderr) { Get-Content $captureStderr -Raw } else { "" }
         throw "Runtime capture failed (code $($capture.ExitCode)): $err"
     }
-    if ($triggerExit -ne 0) { throw "Canonical SAPI trigger failed" }
 
     $lastLine = (Get-Content $captureStdout | Select-Object -Last 1)
     Write-Host $lastLine
@@ -111,5 +148,13 @@ try {
     Write-Host "Records: $records"
     Write-Host "Audit:   $auditReport"
 } finally {
+    if ($capture -and -not $capture.HasExited) {
+        if ($stopFile) {
+            try { New-Item -ItemType File -Force -Path $stopFile | Out-Null } catch { }
+        }
+        if (-not $capture.WaitForExit(5000)) {
+            try { $capture.Kill() } catch { }
+        }
+    }
     Pop-Location
 }

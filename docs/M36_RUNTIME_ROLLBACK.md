@@ -230,6 +230,9 @@ saved-state override selected `word2e+1` instead of the buffered interval.
   four nonzero cross writer phases;
 - exact deferred-terminal checkpoint, single-grain write and descending
   fade-out around `0x10108210`;
+- exact current-step entry ownership after the buffered initial phase;
+- transactional execution of all four `0x101086c0` phases, carrying both PCM
+  bases and rejecting late failures without partial PCM/state commit;
 - invalid saved-index rejection.
 
 ## Remaining transition work
@@ -237,7 +240,8 @@ saved-state override selected `word2e+1` instead of the buffered interval.
 The large unknown area is now narrower:
 
 - route-level executor composition around the completed nonzero cross path;
-- repeated-grain movement after first writes in `0x101083b0` / `0x101086c0`;
+- caller-owned interval-marker and buffered/current step rotation around
+  `0x10107c20`;
 - post-terminal descriptor metadata/event finalization;
 - live Gate A/B capture validation and x87 last-bit window validation.
 

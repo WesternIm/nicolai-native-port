@@ -150,4 +150,66 @@ LegacyRuntimeInitialRepeatedGrainM36 legacy_runtime_initial_repeated_grain_m36(
     return out;
 }
 
+LegacyRuntimeInitialCurrentEntryM36
+legacy_runtime_initial_current_entry_m36(
+    const std::vector<std::int32_t>& previous_positions,
+    const std::vector<std::int32_t>& current_positions,
+    int buffered_interval_index,
+    int current_interval_index,
+    bool cross_descriptor,
+    int first_period) {
+    LegacyRuntimeInitialCurrentEntryM36 out;
+    if (previous_positions.size() < 2 || current_positions.size() < 2 ||
+        buffered_interval_index < 0 || current_interval_index < 0 ||
+        buffered_interval_index >=
+            static_cast<int>(previous_positions.size()) - 1 ||
+        current_interval_index >=
+            static_cast<int>(current_positions.size()) - 1 ||
+        first_period <= 0 || first_period > 32767)
+        return out;
+
+    const int current_width = word_delta(
+        current_positions[static_cast<std::size_t>(current_interval_index + 1)],
+        current_positions[static_cast<std::size_t>(current_interval_index)]);
+    if (current_width <= 0) return out;
+
+    int left_width = 0;
+    std::int32_t left_source = 0;
+    if (cross_descriptor) {
+        left_width = word_delta(current_positions[1], current_positions[0]);
+        left_source = current_positions[0];
+    } else {
+        if (buffered_interval_index + 2 >=
+            static_cast<int>(previous_positions.size()))
+            return out;
+        left_width = word_delta(
+            previous_positions[
+                static_cast<std::size_t>(buffered_interval_index + 2)],
+            previous_positions[
+                static_cast<std::size_t>(buffered_interval_index + 1)]);
+        left_source = previous_positions[
+            static_cast<std::size_t>(buffered_interval_index + 1)];
+    }
+    if (left_width <= 0) return out;
+
+    const int left_length = std::min(left_width, first_period);
+    const int right_length = std::min(current_width, first_period);
+    const std::int64_t right_source =
+        current_positions[static_cast<std::size_t>(current_interval_index + 1)] -
+        right_length;
+    if (!int32_coordinate(left_source) || !int32_coordinate(right_source))
+        return out;
+
+    out.valid = true;
+    out.left_from_current = cross_descriptor;
+    out.period = first_period;
+    out.left_interval_width = left_width;
+    out.current_interval_width = current_width;
+    out.left_window_length = left_length;
+    out.right_window_length = right_length;
+    out.left_source_position = static_cast<int>(left_source);
+    out.right_source_position = static_cast<int>(right_source);
+    return out;
+}
+
 } // namespace nicolai

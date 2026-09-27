@@ -1,0 +1,66 @@
+{
+  "schema": "nicolai-m36-acoustic-ab-summary-v1",
+  "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+  "phrases": 22,
+  "sample_rate_hz": 16000,
+  "original_mtsyc32_sha256": "f6b7e926c46a0259a866260cafb9d24d6ebed3dd7198829d16179348a186abc7",
+  "profiles": {
+    "stable": {
+      "mean_active_waveform_correlation": 0.1965157232028779,
+      "active_duration_mae_percent": 5.679022643845701,
+      "total_duration_mae_percent": 3.598674499004331,
+      "f0_contour_mae_percent": 13.479913521658911,
+      "mean_mfcc_dtw": 52.01387280984829,
+      "rms_ratio_mae_percent": 10.237700021058881,
+      "normalized_shape_mfcc_dtw_2048": 37.19277641693229
+    },
+    "m34_unit": {
+      "mean_active_waveform_correlation": 0.19975008032340488,
+      "active_duration_mae_percent": 26.938671072834776,
+      "total_duration_mae_percent": 16.83453668675238,
+      "f0_contour_mae_percent": 13.864139692885875,
+      "mean_mfcc_dtw": 53.17903470965296,
+      "rms_ratio_mae_percent": 9.339892870507859
+    },
+    "m34_shared": {
+      "mean_active_waveform_correlation": 0.207714805936358,
+      "active_duration_mae_percent": 16.517702977647005,
+      "total_duration_mae_percent": 10.59405686684276,
+      "f0_contour_mae_percent": 15.884717729389461,
+      "mean_mfcc_dtw": 55.73245687385781,
+      "rms_ratio_mae_percent": 7.498577088600983
+    },
+    "m36_local": {
+      "mean_active_waveform_correlation": 0.20559533603195482,
+      "active_duration_mae_percent": 16.13159195538433,
+      "total_duration_mae_percent": 10.586105526780312,
+      "f0_contour_mae_percent": 15.126037953308371,
+      "mean_mfcc_dtw": 75.31090223424798,
+      "rms_ratio_mae_percent": 8.569331259125148,
+      "normalized_shape_mfcc_dtw_2048": 54.68107709662787
+    }
+  },
+  "m36_vs_m34_shared": {
+    "mean_active_waveform_correlation_delta": -0.002119469904403176,
+    "active_duration_mae_percent_delta": -0.3861110222626749,
+    "total_duration_mae_percent_delta": -0.007951340062447798,
+    "f0_contour_mae_percent_delta": -0.7586797760810899,
+    "mean_mfcc_dtw_delta": 19.57844536039017,
+    "rms_ratio_mae_percent_delta": 1.0707541705241654
+  },
+  "direct_original_phone_feature_oracle": {
+    "portable_cases": 259,
+    "original_matches": 259,
+    "status": "pass"
+  },
+  "promotion_gate": {
+    "status": "fail",
+    "reasons": [
+      "m36 local total-duration MAE remains 10.5861 percent versus stable 3.5987 percent",
+      "m36 local MFCC-DTW regresses on all 22 phrases versus stable",
+      "m36 local MFCC-DTW is 19.5784 worse than the same m34-shared timing policy",
+      "caller-owned cross-descriptor source context is not yet integrated"
+    ]
+  },
+  "proprietary_artifacts_committed": false
+}

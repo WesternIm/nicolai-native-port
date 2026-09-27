@@ -39,6 +39,23 @@ struct LegacyRuntimeInitialRepeatedGrainM36 {
     int right_source_position = 0;// writer arg3
 };
 
+// Entry grain for the current step in 0x101086c0 after the complete buffered
+// step has been emitted. When cross_descriptor is true, writer-left comes from
+// current_positions[0]; otherwise it remains on the previous descriptor at the
+// boundary after buffered_interval_index. Writer-right always belongs to the
+// current descriptor/current interval.
+struct LegacyRuntimeInitialCurrentEntryM36 {
+    bool valid = false;
+    bool left_from_current = false;
+    int period = 0;
+    int left_interval_width = 0;
+    int current_interval_width = 0;
+    int left_window_length = 0;
+    int right_window_length = 0;
+    int left_source_position = 0;
+    int right_source_position = 0;
+};
+
 LegacyRuntimeOrdinaryGrainM36 legacy_runtime_ordinary_grain_m36(
     const std::vector<std::int32_t>& source_positions,
     int interval_index,
@@ -54,5 +71,14 @@ LegacyRuntimeInitialRepeatedGrainM36 legacy_runtime_initial_repeated_grain_m36(
     int first_period,
     int delta_q11,
     int ordinal);
+
+LegacyRuntimeInitialCurrentEntryM36
+legacy_runtime_initial_current_entry_m36(
+    const std::vector<std::int32_t>& previous_positions,
+    const std::vector<std::int32_t>& current_positions,
+    int buffered_interval_index,
+    int current_interval_index,
+    bool cross_descriptor,
+    int first_period);
 
 } // namespace nicolai
