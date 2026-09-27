@@ -1,5 +1,14 @@
 # M36 continuation — original phone-feature and runtime state recovery
 
+**Superseding checkpoint (2026-09-27):** branch `m36-acoustic-chain`.
+The old step-slot/drop assertions and previous cross end-boundary were wrong.
+See `M36_CALLER_BOOKKEEPING.md` for corrected dataflow and
+`M36_CHAIN_ACOUSTICS.md` for current measured evidence/remaining gates.
+Corrected local MFCC is 71.2582; chain is 71.5357. Neither is promoted.
+The historical sections below describe the earlier checkpoint, not the current
+chain scope. Next work is original route/flush-gate capture plus rollback,
+not another wrapper around the already-composed cross executor.
+
 Branch: `m36-original-phone-features`.
 Base: merged M35 on `main` at `a9d24018a8b84a9982b2ab8ab4dddb381dbe5002`.
 
@@ -146,11 +155,11 @@ Relevant notes:
 
 ## Next checkpoint
 
-1. Feed the recovered value-level previous/current PCM-source binding from
-   `0x10107c20` into the route-level executor while retaining the stable
-   renderer and M34 fallback.
-2. Compose binding, step/marker bookkeeping and the transactional nonzero
-   cross executor only at a route boundary whose live descriptor ownership is
+1. Feed the new transactional cross-route wrapper from `0x10107c20` into a
+   multi-descriptor experimental adapter while retaining the stable renderer
+   and M34 fallback.
+2. Compose dropped rollback, initial, ordinary, zero-cross, terminal and
+   nonzero-cross routes only at a boundary whose live descriptor ownership is
    captured; do not infer that ownership from a single diphone slice.
 3. Restore live Gate B if the legacy Acapela server can be made to start without
    changing the proprietary installation.

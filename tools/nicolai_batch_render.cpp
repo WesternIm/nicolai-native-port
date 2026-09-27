@@ -50,6 +50,10 @@ int main(int argc,char**argv){
        policy.use_stateful_tds_m34=true;
        policy.shared_phone_duration_m34=true;
    }
+   if(const char* v=std::getenv("NICOLAI_M36_CHAIN_EXECUTOR")) if(std::atoi(v)!=0){
+       policy.use_stateful_tds_m34=true;
+       policy.shared_phone_duration_m34=true;
+   }
    if(const char* v=std::getenv("NICOLAI_PC_SEG_TIMELINE")) policy.use_pc_seg_timeline=std::atoi(v)!=0;
    if(const char* v=std::getenv("NICOLAI_SEARCH_JOIN_PHASE")) policy.search_join_phase=std::atoi(v)!=0;
    if(const char* v=std::getenv("NICOLAI_PHONE_SCALE")) policy.phone_duration_scale=std::atof(v);
@@ -97,6 +101,9 @@ int main(int argc,char**argv){
        std::cout<<"CLOCK\t"<<id<<"\t"<<a.pcm.samples.size()<<"\t"<<a.tds_target_samples_m35
            <<"\t"<<a.tds_budget_samples_m35<<"\t"<<a.tds_emitted_samples_m35
            <<"\t"<<a.tds_clamped_records_m35<<"\n";
+   if(policy.use_stateful_tds_m34)
+       std::cout<<"M36\t"<<id<<"\t"<<a.m36_initial_paths<<"\t"<<a.m36_cross_paths
+           <<"\t"<<a.m36_terminal_flushes<<"\t"<<a.m36_fallbacks<<"\n";
    nicolai::apply_pc_reference_output_gain(a.pcm);
    nicolai::append_legacy_pc_terminal_silence(a.pcm,wordstr,16000);
    nicolai::write_wav_pcm16_mono(std::filesystem::path(argv[5])/(id+".wav"),a.pcm);

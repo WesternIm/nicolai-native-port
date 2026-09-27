@@ -13,10 +13,10 @@ struct StatefulTdsM34 {
     std::int64_t target_samples = 0, budget_consumed_samples = 0, emitted_samples = 0;
     std::size_t clamped_delta_records = 0;
 
-    // Reserved M36 route/cross diagnostics and future caller-owned context.
-    // The first runnable A/B adapter deliberately keeps cross-descriptor
-    // ownership disabled until the original step-buffer/source context is
-    // proven, so these remain zero/empty in the current local experiment.
+    // Reserved streaming context (the whole-chain API owns its own context).
+    // Both experimental APIs return with no retained pending PCM. Diagnostics
+    // count local initial entries / chain zero-cross starts, successful exact
+    // nonzero crossings, terminal flushes and compatibility fallback requests.
     bool m36_has_pending_terminal = false;
     int m36_pending_interval = -1;
     LegacyTdsStepM33 m36_pending_step;
@@ -44,4 +44,23 @@ Pcm16Mono resynthesize_stateful_m36_experimental(const Pcm16Mono& source,
     const SegSourceTimelineM33& timeline, const TdPsolaConfig& pitch,
     double left_duration, double right_duration,
     double left_energy, double right_energy, StatefulTdsM34& state);
+
+// Explicit multi-descriptor A/B input. No implicit environment dispatch in
+// this API. cross_from_previous selects the recovered nonzero transition;
+// false flushes the old tail and starts a zero-cross fade-in. Inferring the
+// original descriptor flags/flush gates from portable voicing is experimental.
+struct StatefulTdsUnitM36 {
+    Pcm16Mono source;
+    SegSourceTimelineM33 timeline;
+    TdPsolaConfig pitch;
+    double left_duration = 1.0, right_duration = 1.0;
+    double left_energy = 1.0, right_energy = 1.0;
+    bool cross_from_previous = true;
+};
+
+// Whole-chain transaction: a late invalid unit leaves caller diagnostics
+// unchanged. Unsupported exact-window requests use counted M34 compatibility
+// writes, never a partial exact write followed by duplicate fallback PCM.
+Pcm16Mono resynthesize_stateful_m36_chain_experimental(
+    const std::vector<StatefulTdsUnitM36>& units, StatefulTdsM34& state);
 }

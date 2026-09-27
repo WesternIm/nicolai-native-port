@@ -43,6 +43,9 @@ Current profiles:
 - `m36`: `NICOLAI_M36_TRANSITION_EXECUTOR=1`; batch rendering enables the
   established stateful/shared-phone caller and `resynthesize_stateful_m34()`
   dispatches into the opt-in local M36 transition experiment.
+- `m36-chain`: `NICOLAI_M36_CHAIN_EXECUTOR=1`, a separate whole-chain A/B
+  using deferred positive tails and nonzero cross transitions. The portable
+  voicing-to-route policy remains experimental; see `M36_CHAIN_ACOUSTICS.md`.
 
 ### Current M36 scope
 
@@ -66,6 +69,16 @@ remains disabled until that caller/source ownership is captured or proven.
 This means `m36` is useful now for directional A/B correction of local grain
 selection/windows/terminal behavior, but its corpus score is not a claim of a
 complete PC renderer.
+
+The earlier assertion that cross entry needs an extended previous PCM slice
+was incorrect: its raw entry starts at prev[k], not prev[k+1]. The corrected
+binding fits real descriptor PCM ending at lastPosition+1. `m36-chain` exercises
+it without promoting inferred route gates into production.
+
+The runner explicitly reads the manifest as UTF-8 on Windows PowerShell 5.1,
+accepts normal diagnostic stderr without mistaking it for a render failure,
+requires every expected WAV, rejects a byte-identical inactive experiment,
+and requires nonzero exact cross telemetry for `m36-chain`.
 
 ## Output bundle
 

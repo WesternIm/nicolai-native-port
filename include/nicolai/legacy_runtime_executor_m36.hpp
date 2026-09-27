@@ -58,6 +58,15 @@ struct LegacyRuntimeInitialExecutionM36 {
     std::int32_t end_cursor = 0;
 };
 
+// Route-level composition for the nonzero cross branch. PCM/state changes are
+// staged first; caller step/marker bookkeeping is applied only after every
+// cross writer phase succeeds.
+struct LegacyRuntimeCrossRouteExecutionM36 {
+    bool valid = false;
+    LegacyRuntimeCrossExecutionM36 pcm;
+    LegacyRuntimeBookkeepingM36 bookkeeping;
+};
+
 // Execute all four writer phases of the proven nonzero cross path:
 //   1) buffered entry; 2) buffered repeats;
 //   3) current entry;  4) current repeats.
@@ -74,6 +83,26 @@ LegacyRuntimeCrossExecutionM36 legacy_runtime_execute_cross_m36(
     const LegacyRuntimeCrossGeometryM36& geometry,
     int previous_boundary,
     int current_boundary,
+    const LegacyTdsStepM33& buffered_step,
+    const LegacyTdsStepM33& current_step);
+
+// Compose the recovered 0x10108cf0 nonzero cross PCM path with the caller
+// bookkeeping surrounding 0x10107c20. `current_interval_index` is the record
+// index written into both caller step slots; `node_count` belongs to the
+// current descriptor. The route is transactional across output, runtime
+// state, and step buffers.
+LegacyRuntimeCrossRouteExecutionM36 legacy_runtime_execute_cross_route_m36(
+    std::vector<std::int16_t>& output,
+    LegacyRuntimeStateM36& state,
+    LegacyRuntimeStepBuffersM36& buffers,
+    const std::vector<std::int16_t>& previous_pcm,
+    const std::vector<std::int32_t>& previous_positions,
+    const std::vector<std::int16_t>& current_pcm,
+    const std::vector<std::int32_t>& current_positions,
+    int buffered_interval_index,
+    int current_interval_index,
+    int node_count,
+    bool already_started,
     const LegacyTdsStepM33& buffered_step,
     const LegacyTdsStepM33& current_step);
 

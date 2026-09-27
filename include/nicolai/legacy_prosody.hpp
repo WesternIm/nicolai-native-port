@@ -351,6 +351,8 @@ struct DiphoneChainLegacyResult {
     int tds_final_carry_m34 = 0;
     std::int64_t tds_target_samples_m35 = 0, tds_budget_samples_m35 = 0, tds_emitted_samples_m35 = 0;
     std::size_t tds_clamped_records_m35 = 0;
+    std::size_t m36_initial_paths = 0, m36_cross_paths = 0;
+    std::size_t m36_terminal_flushes = 0, m36_fallbacks = 0;
 };
 
 // M20 duration/prosody conformance renderer. Nicolai's embedded rusvox

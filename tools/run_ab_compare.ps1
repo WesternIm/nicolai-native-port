@@ -1,7 +1,7 @@
 param(
     [string]$ReferencePack = $env:NICOLAI_REFERENCE_PACK,
     [string]$VoiceDir = $env:NICOLAI_VOICE_DIR,
-    [ValidateSet("m34-shared", "m34-unit", "m36")]
+    [ValidateSet("m34-shared", "m34-unit", "m36", "m36-chain")]
     [string]$CandidateProfile = "m34-shared",
     [string]$BuildDir = "build-ab",
     [string]$OutputRoot = "",
@@ -76,12 +76,28 @@ function Invoke-Checked([string]$label, [scriptblock]$command) {
     }
 }
 
+function Invoke-Renderer([string]$outDir, [string]$stdout, [string]$stderr) {
+    # Windows PowerShell 5.1 wraps native diagnostic stderr as ErrorRecords.
+    # WORDSTR/PHYSICAL are normal diagnostics, not a failed render. The native
+    # exit code and downstream 22-file metric check decide success instead.
+    $savedPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "Continue"
+        & $renderer $voiceDat $exc $abb $corpusPath $outDir 1> $stdout 2> $stderr
+        $renderExit = $LASTEXITCODE
+    } finally {
+        $ErrorActionPreference = $savedPreference
+    }
+    if ($renderExit -ne 0) { Fail "Render failed ($renderExit); see $stderr" }
+}
+
 $experimentVars = @(
     "NICOLAI_STATEFUL_TDS",
     "NICOLAI_SHARED_PHONE_DURATION",
     "NICOLAI_PC_SEG_TIMELINE",
     "NICOLAI_SEARCH_JOIN_PHASE",
-    "NICOLAI_M36_TRANSITION_EXECUTOR"
+    "NICOLAI_M36_TRANSITION_EXECUTOR",
+    "NICOLAI_M36_CHAIN_EXECUTOR"
 )
 
 function Clear-ExperimentEnvironment {
@@ -93,6 +109,9 @@ function Clear-ExperimentEnvironment {
 function Enable-CandidateProfile([string]$profile) {
     Clear-ExperimentEnvironment
     switch ($profile) {
+        "m36-chain" {
+            $env:NICOLAI_M36_CHAIN_EXECUTOR = "1"
+        }
         "m34-unit" {
             $env:NICOLAI_STATEFUL_TDS = "1"
             $env:NICOLAI_SHARED_PHONE_DURATION = "0"
@@ -155,8 +174,13 @@ $candidateDir = Join-Path $OutputRoot "candidate"
 $logsDir = Join-Path $OutputRoot "logs"
 $cacheDir = Join-Path $OutputRoot "feature-cache"
 New-Item -ItemType Directory -Force -Path $baselineDir, $candidateDir, $logsDir, $cacheDir | Out-Null
+foreach ($renderDir in @($baselineDir, $candidateDir)) {
+    if (@(Get-ChildItem -LiteralPath $renderDir -File -Filter "*.wav").Count -gt 0) {
+        Fail "OutputRoot already contains rendered WAVs; choose a fresh directory so stale files cannot count as successful renders."
+    }
+}
 
-$manifest = Get-Content -LiteralPath (Join-Path $ReferencePack "manifest.json") -Raw | ConvertFrom-Json
+$manifest = Get-Content -LiteralPath (Join-Path $ReferencePack "manifest.json") -Raw -Encoding UTF8 | ConvertFrom-Json
 if (-not $manifest.results -or $manifest.results.Count -ne 22) {
     Fail "Expected a 22-phrase reference manifest; got $($manifest.results.Count)."
 }
@@ -196,17 +220,38 @@ $baselineStdout = Join-Path $logsDir "baseline.stdout.txt"
 $baselineStderr = Join-Path $logsDir "baseline.stderr.txt"
 Write-Host ""
 Write-Host "== Render baseline stable =="
-& $renderer $voiceDat $exc $abb $corpusPath $baselineDir 1> $baselineStdout 2> $baselineStderr
-if ($LASTEXITCODE -ne 0) { Fail "Baseline render failed; see $baselineStderr" }
+Invoke-Renderer $baselineDir $baselineStdout $baselineStderr
 
 Enable-CandidateProfile $CandidateProfile
 $candidateStdout = Join-Path $logsDir "candidate.stdout.txt"
 $candidateStderr = Join-Path $logsDir "candidate.stderr.txt"
 Write-Host ""
 Write-Host "== Render candidate $CandidateProfile =="
-& $renderer $voiceDat $exc $abb $corpusPath $candidateDir 1> $candidateStdout 2> $candidateStderr
-if ($LASTEXITCODE -ne 0) { Fail "Candidate render failed; see $candidateStderr" }
+Invoke-Renderer $candidateDir $candidateStdout $candidateStderr
 Clear-ExperimentEnvironment
+
+$changedWavs = 0
+foreach ($row in $manifest.results) {
+    $baseWav = Join-Path $baselineDir "$($row.id).wav"
+    $candWav = Join-Path $candidateDir "$($row.id).wav"
+    if (-not (Test-Path -LiteralPath $baseWav) -or
+        -not (Test-Path -LiteralPath $candWav)) {
+        Fail "Missing baseline/candidate WAV for $($row.id); inspect renderer logs."
+    }
+    if ((Get-FileHash -LiteralPath $baseWav).Hash -ne
+        (Get-FileHash -LiteralPath $candWav).Hash) { $changedWavs++ }
+}
+if ($changedWavs -eq 0) { Fail "Candidate WAVs are all identical to baseline; experiment did not run." }
+$crossPaths = 0
+if ($CandidateProfile -eq "m36-chain") {
+    foreach ($line in (Get-Content -LiteralPath $candidateStdout)) {
+        if ($line -match '^M36\t') {
+            $parts = $line -split "`t"
+            $crossPaths += [int]$parts[3]
+        }
+    }
+    if ($crossPaths -eq 0) { Fail "No exact M36 cross paths observed; check renderer build and logs." }
+}
 
 $baselineJson = Join-Path $OutputRoot "baseline-parity.json"
 $baselineCsv = Join-Path $OutputRoot "baseline-parity.csv"
@@ -259,6 +304,8 @@ $summaryObject = [ordered]@{
     schema = "nicolai-ab-comparison-v1"
     created_at = (Get-Date).ToString("o")
     candidate_profile = $CandidateProfile
+    changed_wavs = $changedWavs
+    exact_cross_paths = $crossPaths
     reference_pack = $ReferencePack
     voice_dir = $VoiceDir
     baseline_summary = $base.summary

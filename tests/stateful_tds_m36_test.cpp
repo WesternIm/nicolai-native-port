@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstdint>
 #include <iostream>
+#include <limits>
 
 int main() {
     nicolai::Pcm16Mono source;
@@ -48,6 +49,66 @@ int main() {
     assert(unsupported.samples.empty());
     assert(m36_state.intervals == before.intervals);
     assert(m36_state.grains == before.grains);
+
+    nicolai::StatefulTdsUnitM36 unit;
+    unit.source=source; unit.timeline=timeline; unit.pitch=pitch;
+    nicolai::StatefulTdsM34 chain_state;
+    auto chain=nicolai::resynthesize_stateful_m36_chain_experimental(
+        {unit,unit,unit},chain_state);
+    assert(!chain.samples.empty());
+    assert(chain_state.intervals==12);
+    assert(chain_state.m36_cross_paths==2);
+    assert(chain_state.m36_initial_paths==1);
+    assert(chain_state.m36_terminal_flushes==1);
+    assert(chain_state.m36_fallbacks==0);
+    assert(chain_state.emitted_samples==static_cast<std::int64_t>(chain.samples.size()));
+    assert(!chain_state.m36_has_pending_terminal);
+
+    // Explicit zero-cross boundaries flush old tails rather than losing them.
+    auto disconnected=unit;
+    disconnected.cross_from_previous=false;
+    nicolai::StatefulTdsM34 zero_state;
+    auto zero=nicolai::resynthesize_stateful_m36_chain_experimental(
+        {unit,disconnected},zero_state);
+    assert(!zero.samples.empty());
+    assert(zero_state.m36_cross_paths==0);
+    assert(zero_state.m36_terminal_flushes==2);
+    assert(zero_state.m36_initial_paths==2);
+
+    // A late invalid descriptor or non-finite gain must not commit diagnostics.
+    auto bad=unit;
+    bad.source.samples.pop_back();
+    const auto before_chain=chain_state;
+    assert(nicolai::resynthesize_stateful_m36_chain_experimental(
+        {unit,unit,bad},chain_state).samples.empty());
+    assert(chain_state.intervals==before_chain.intervals);
+    assert(chain_state.emitted_samples==before_chain.emitted_samples);
+    assert(chain_state.m36_cross_paths==before_chain.m36_cross_paths);
+    bad=unit;
+    bad.left_energy=std::numeric_limits<double>::quiet_NaN();
+    assert(nicolai::resynthesize_stateful_m36_chain_experimental(
+        {unit,bad},chain_state).samples.empty());
+
+    // A dropped prefix does not overwrite the positive deferred step record.
+    auto dropped_prefix=unit;
+    dropped_prefix.left_duration=.125;
+    nicolai::StatefulTdsM34 drop_state;
+    auto dropped=nicolai::resynthesize_stateful_m36_chain_experimental(
+        {unit,dropped_prefix},drop_state);
+    assert(!dropped.samples.empty() && drop_state.dropped>0);
+    assert(drop_state.m36_cross_paths==1 && drop_state.m36_fallbacks==0);
+
+    // Out-of-cache windows take counted compatibility paths. A cross failure
+    // must not append any partial exact phase before fallback emits both steps.
+    auto wide=unit;
+    wide.source.samples.resize(2001,1234);
+    wide.timeline.nodes={{0,false},{500,false},{1000,false},{1500,false},{2000,false}};
+    nicolai::StatefulTdsM34 wide_state;
+    const auto fallback=nicolai::resynthesize_stateful_m36_chain_experimental(
+        {wide,wide},wide_state);
+    assert(fallback.samples.size()==4000);
+    assert(wide_state.grains==8 && wide_state.emitted_samples==4000);
+    assert(wide_state.m36_cross_paths==0 && wide_state.m36_fallbacks==7);
 
     std::cout << "stateful_tds_m36_test: PASSED\n";
 }

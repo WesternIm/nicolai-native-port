@@ -272,7 +272,21 @@ Cache bounds are 20..400. Anchor lengths are:
 115, 141, 173, 212, 260, 319, 392, 400
 ```
 
-## Current boundary / next evidence
+## Updated acoustic checkpoint (2026-09-27)
+
+The earlier bookkeeping and cross source-binding contracts were corrected.
+Ordinary/deferred positive paths swap/write once; no drop overwrites a step
+slot. Cross/initial take both early and common marker tails. Cross raw entry
+uses prev[k], not the previous interval end. The phone-feature oracle did not
+test these caller paths and did not establish their correctness.
+
+Corrected local M36 improves MFCC-DTW 75.3109 -> 71.2582 (19/22 phrases) and
+normalized shape 54.6811 -> 51.8847. A separate whole-chain experiment gives
+71.5357 / 52.6415, not a further win. Timing remains 10.5861% versus stable
+3.5987%, and production is unchanged (22/22 stable WAV SHA256 matches).
+See `M36_CHAIN_ACOUSTICS.md` and `metrics/m36-chain-acoustic-20260927.json`.
+
+## Earlier boundary / next evidence (superseded by the checkpoint above)
 
 Still not proven/promoted:
 
@@ -283,13 +297,14 @@ Still not proven/promoted:
 - route-level binding of the now-proven caller-owned interval-marker and
   buffered/current step rotation to the value-level previous/current PCM
   source context around `0x10107c20`;
-- route-level executor composition across drop / initial / ordinary / cross;
+- full route-level executor composition across drop / initial / ordinary /
+  zero-cross / terminal / nonzero-cross;
 - post-terminal descriptor metadata/event finalization;
 - exact x87 last-bit window oracle;
 - any production or Android promotion.
 
-The next implementation target is route-level composition of the recovered
-source binding, step buffers and marker state at descriptor boundaries.
-Integrate the recovered nonzero cross executor only after live ownership is
-captured or statically proven at that route, then repeat the exact A/B bundle.
-The stable renderer remains the production default.
+The next implementation target is a multi-descriptor experimental adapter that
+feeds live descriptor ownership into the recovered route wrapper. Integrate
+the nonzero cross executor into that adapter only after the ownership is
+captured at the route boundary, then repeat the exact A/B bundle. The stable
+renderer remains the production default.

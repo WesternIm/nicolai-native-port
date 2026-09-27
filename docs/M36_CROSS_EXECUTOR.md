@@ -45,6 +45,12 @@ The two step records use the existing `LegacyTdsStepM33` representation. Their
 original. Boundaries remain explicit absolute coordinates in their respective
 PCM vectors, so descriptor identity cannot be silently lost.
 
+`legacy_runtime_execute_cross_route_m36()` adds the caller transaction around
+that executor: it binds the previous/current descriptor source context, stages
+the four PCM phases, then applies `legacy_runtime_bookkeep_m36()` to synchronize
+both step slots and interval markers. Output, runtime state and step buffers are
+committed together only after both layers succeed.
+
 ## Transaction boundary
 
 Before writing, the executor validates:
@@ -62,11 +68,15 @@ partial waveform nor partial cursor/selection rotation.
 
 ## Deliberate integration boundary
 
-This executor closes the nonzero cross PCM/state composition only. It is linked
-into `nicolai_port` but has no production caller. A route-level M36 experiment
-still needs to combine dropped rollback, initial, ordinary, zero-cross and this
-nonzero-cross executor with the completed deferred-terminal PCM path. The
-post-terminal descriptor metadata/event finalization remains an explicit
-fallback boundary.
+This closes the portable nonzero cross PCM/state plus caller transaction, but it
+still has no production caller. A full route-level M36 experiment needs to
+combine dropped rollback, initial, ordinary, zero-cross and this nonzero-cross
+route with the completed deferred-terminal PCM path. Live descriptor capture,
+post-terminal metadata/event finalization and acoustic promotion remain
+explicit boundaries.
+
+The `m36-chain` profile now provides a bounded experimental caller with explicit
+previous/current PCM and deferred-step ownership. Its route/flush policy is not
+the full original caller: see `M36_CHAIN_ACOUSTICS.md` for the measured limits.
 
 No proprietary DLL or voice-data bytes are stored in the repository.

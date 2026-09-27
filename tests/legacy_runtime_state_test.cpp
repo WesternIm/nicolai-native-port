@@ -36,15 +36,14 @@ int main() {
         assert(!r.valid && r.path == LegacyRuntimeWritePathM36::Invalid);
     }
 
-    // 0x10107c20 synchronizes both caller step slots and rotates the
-    // non-terminal marker quartet after a positive ordinary write.
+    // Ordinary writes swap once: +0x78 retains the OLD +0x74 record.
     {
         LegacyRuntimeStateM36 s;
         s.word24 = 8; s.word26 = 3; s.word28 = 11; s.word2a = 4;
         nicolai::LegacyRuntimeStepBuffersM36 buffers;
         buffers.valid = true;
         buffers.at_74.interval_index = 9;
-        buffers.at_78.interval_index = 9;
+        buffers.at_78.interval_index = 8;
         const auto r = nicolai::legacy_runtime_bookkeep_m36(
             s, buffers, 1, 5, step(2), false, true);
         assert(r.valid && r.path == LegacyRuntimeWritePathM36::Ordinary);
@@ -52,25 +51,23 @@ int main() {
         assert(!r.terminal_markers_saved && !r.dropped);
         assert(s.word24 == 3 && s.word28 == 4 && s.word2a == 1 && s.word26 == 0);
         assert(buffers.valid && buffers.at_74.interval_index == 1 &&
-            buffers.at_78.interval_index == 1);
-        assert(buffers.at_74.step.count == 2 &&
-            buffers.at_78.step.first_period == 100);
+            buffers.at_78.interval_index == 9);
+        assert(buffers.at_74.step.count == 2);
     }
 
-    // Initial and cross positive paths use the same marker rotation, even
-    // though their PCM executors own different source bases.
+    // Initial/cross execute BOTH early and common rotations/swaps.
     for (bool cross : {false, true}) {
         LegacyRuntimeStateM36 s;
         s.word26 = 5; s.word2a = 6;
         nicolai::LegacyRuntimeStepBuffersM36 buffers;
         const auto r = nicolai::legacy_runtime_bookkeep_m36(
-            s, buffers, 0, 5, step(1), cross, !cross);
+            s, buffers, 1, 5, step(1), cross, false);
         assert(r.valid && r.step_buffers_written && r.interval_markers_rotated);
-        assert(s.word24 == 5 && s.word28 == 6 && s.word2a == 0 && s.word26 == 0);
-        assert(buffers.at_74.interval_index == 0 && buffers.at_78.interval_index == 0);
+        assert(s.word24 == 0 && s.word28 == 1 && s.word2a == 1 && s.word26 == 0);
+        assert(buffers.at_74.interval_index == 1 && buffers.at_78.interval_index == 1);
     }
 
-    // The positive terminal path writes both slots but saves the previous
+    // The positive terminal path swaps once but saves the previous
     // marker pair in +0x2c/+0x2e instead of rotating the current quartet.
     {
         LegacyRuntimeStateM36 s;
@@ -85,8 +82,7 @@ int main() {
         assert(s.word2c == 7 && s.word2e == 4);
     }
 
-    // A dropped step before the first positive write, and a dropped step
-    // while a descriptor crossing is pending, only set the bridge flag.
+    // Pending-cross drops do nothing; other drops only set the bridge flag.
     {
         LegacyRuntimeStateM36 s;
         s.word26 = 4; s.word2a = 2;
@@ -102,34 +98,46 @@ int main() {
         r = nicolai::legacy_runtime_bookkeep_m36(
             s, buffers, 1, 5, step(0), true, true);
         assert(r.valid && r.dropped && !r.step_buffers_written);
-        assert(s.word26 == 1 && buffers.at_74.interval_index == before.at_74.interval_index);
+        assert(s.word26 == 4 && buffers.at_74.interval_index == before.at_74.interval_index);
     }
 
-    // Once positive writing has started, a dropped non-terminal interval
-    // still synchronizes the step slots and advances the marker quartet.
+    // A started drop preserves the last POSITIVE step/marker, not this index.
     {
         LegacyRuntimeStateM36 s;
         s.word26 = 1; s.word2a = 0;
         nicolai::LegacyRuntimeStepBuffersM36 buffers;
         const auto r = nicolai::legacy_runtime_bookkeep_m36(
             s, buffers, 1, 5, step(0), false, true);
-        assert(r.valid && r.dropped && r.step_buffers_written);
-        assert(r.interval_markers_rotated && !r.terminal_markers_saved);
-        assert(s.word24 == 1 && s.word28 == 0 && s.word2a == 1 && s.word26 == 0);
-        assert(buffers.at_74.interval_index == 1 && buffers.at_74.step.count == 0);
+        assert(r.valid && r.dropped && !r.step_buffers_written);
+        assert(!r.interval_markers_rotated && !r.terminal_markers_saved);
+        assert(s.word24 == 0 && s.word28 == 0 && s.word2a == 0 && s.word26 == 1);
+        assert(!buffers.valid);
     }
 
-    // A started dropped terminal interval follows the same saved-marker tail
-    // as the positive deferred-terminal path.
+    // Dropped terminal bookkeeping does NOT perform the positive saved tail.
+    // Its optional rewind belongs to the separate rollback primitive.
     {
         LegacyRuntimeStateM36 s;
         s.word26 = 9; s.word2a = 2;
         nicolai::LegacyRuntimeStepBuffersM36 buffers;
         const auto r = nicolai::legacy_runtime_bookkeep_m36(
             s, buffers, 3, 5, step(0), false, true);
-        assert(r.valid && r.dropped && r.step_buffers_written &&
-            r.terminal_markers_saved);
-        assert(s.word2c == 9 && s.word2e == 2 && s.word26 == 9 && s.word2a == 2);
+        assert(r.valid && r.dropped && !r.step_buffers_written &&
+            !r.terminal_markers_saved);
+        assert(s.word2c == 0 && s.word2e == 0 && s.word26 == 1 && s.word2a == 2);
+    }
+
+    // A terminal cross/initial route still reaches the common terminal tail.
+    for (bool cross : {false, true}) {
+        LegacyRuntimeStateM36 s;
+        s.word26 = 5; s.word2a = 6;
+        nicolai::LegacyRuntimeStepBuffersM36 buffers;
+        const auto r = nicolai::legacy_runtime_bookkeep_m36(
+            s, buffers, 3, 5, step(1), cross, false);
+        assert(r.valid && r.interval_markers_rotated && r.terminal_markers_saved);
+        assert(s.word24 == 5 && s.word28 == 6 && s.word2a == 3 && s.word26 == 0);
+        assert(s.word2c == 0 && s.word2e == 3);
+        assert(buffers.at_74.interval_index == 3 && buffers.at_78.interval_index == 3);
     }
 
     // Invalid step/route inputs are transactional and leave both state and

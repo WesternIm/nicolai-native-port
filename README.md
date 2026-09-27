@@ -1,3 +1,22 @@
+# Nicolai Native Port — M36 acoustic checkpoint
+
+The corrected opt-in local M36 renderer reduces MFCC-DTW from 75.3109 to
+71.2582 against the same 22 original WAVs (19 phrase improvements). Caller
+step-slot rotation, dropped-source markers and cross source coordinates were
+corrected; exact paths and counted fallback writes stay transactional.
+
+A separate `m36-chain` A/B now exercises descriptor-owned nonzero crossings,
+but scores 71.5357 and does not beat corrected local. Neither experiment beats
+stable spectral shape or timing, so production remains unchanged and the
+stable 22 WAVs are SHA256-identical to the earlier checkpoint.
+
+See [acoustic evidence and reproduction](docs/M36_CHAIN_ACOUSTICS.md),
+[scalar metrics](docs/metrics/m36-chain-acoustic-20260927.json), and
+[corrected caller bookkeeping](docs/M36_CALLER_BOOKKEEPING.md).
+No proprietary inputs or WAVs are committed.
+
+---
+
 # Nicolai Native Port — M35
 
 M35 audits the measurement and execution clocks without changing synthesis.

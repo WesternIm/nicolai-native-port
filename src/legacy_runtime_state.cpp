@@ -104,12 +104,11 @@ LegacyRuntimeBookkeepingM36 legacy_runtime_bookkeep_m36(
     out.dropped = step.count == 0;
     out.interval_index = interval_index;
 
-    // The original dropped tail has a deliberately narrow pre-write branch:
-    // a pending descriptor crossing, or no positive write having started yet,
-    // does not rotate either caller step slot or the interval markers.
-    if (step.count == 0 &&
-        (cross_descriptor_pending || !already_started)) {
-        state.word26 = 1;
+    // 0x10107f65 branches directly to loop advancement for pending cross.
+    // All other drops reach +0x26=1, without touching either buffered record.
+    // The separate rollback primitive owns the conditional dropped-tail rewind.
+    if (step.count == 0) {
+        if (!cross_descriptor_pending) state.word26 = 1;
         return out;
     }
 
@@ -117,13 +116,26 @@ LegacyRuntimeBookkeepingM36 legacy_runtime_bookkeep_m36(
     auto staged_buffers = buffers;
     const LegacyRuntimeStepRecordM36 record{
         static_cast<std::int16_t>(interval_index), step};
-    staged_buffers.at_74 = record;
-    staged_buffers.at_78 = record;
-    staged_buffers.valid = true;
-
-    const bool terminal_save =
-        route.path == LegacyRuntimeWritePathM36::DeferredTerminal ||
-        (step.count == 0 && interval_index == node_count - 2);
+    auto swap_write = [&] {
+        std::swap(staged_buffers.at_74, staged_buffers.at_78);
+        staged_buffers.at_74 = record;
+        staged_buffers.valid = true;
+    };
+    auto rotate = [&] {
+        staged_state.word24 = staged_state.word26;
+        staged_state.word28 = staged_state.word2a;
+        staged_state.word2a = static_cast<std::int16_t>(interval_index);
+        staged_state.word26 = 0;
+        out.interval_markers_rotated = true;
+    };
+    if (route.path == LegacyRuntimeWritePathM36::CrossTransition ||
+        route.path == LegacyRuntimeWritePathM36::InitialTransition) {
+        rotate();
+        swap_write();
+    }
+    // Shared positive tail at 0x10107ece executes even after early rotation.
+    swap_write();
+    const bool terminal_save = interval_index == node_count - 2;
     if (terminal_save) {
         // 0x10107f38..0x10107f60 preserves the dropped marker (or zero) in
         // +0x2c and the previous marker index in +0x2e.
@@ -131,14 +143,7 @@ LegacyRuntimeBookkeepingM36 legacy_runtime_bookkeep_m36(
         staged_state.word2e = staged_state.word2a;
         out.terminal_markers_saved = true;
     } else {
-        // 0x10107f19..0x10107f33 and the positive cross/initial branches
-        // carry the previous marker pair forward and make this interval the
-        // new current marker.
-        staged_state.word24 = staged_state.word26;
-        staged_state.word28 = staged_state.word2a;
-        staged_state.word2a = static_cast<std::int16_t>(interval_index);
-        staged_state.word26 = 0;
-        out.interval_markers_rotated = true;
+        rotate();
     }
 
     state = staged_state;

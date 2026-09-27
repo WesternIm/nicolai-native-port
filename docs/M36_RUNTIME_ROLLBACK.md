@@ -32,13 +32,15 @@ higher-level names to the caller gates.
 
 The same `0x10107c20` loop owns the two five-WORD step slots at state `+0x74`
 and `+0x78` and the interval-marker WORDs at `+0x24..+0x2e`. After a successful
-positive path it synchronizes both slots with the local record, whose first WORD
-is the current interval index. A started dropped interval follows that slot
-update as well; a pre-start or pending-cross drop does not.
+positive ordinary/deferred path it swaps once and overwrites +0x74, preserving
+the old +0x74 at +0x78. Initial/cross paths swap/write twice. No dropped
+interval updates a step slot. The first WORD is the current interval index.
 
 Non-terminal success rotates `24 <- 26`, `28 <- 2a`, `2a <- interval_index`,
-`26 <- 0`. Positive deferred-terminal and started dropped-terminal paths instead
-save `2c <- 26` and `2e <- 2a` while leaving the current quartet intact. The
+`26 <- 0`. Initial/cross do this early and again in the non-terminal common
+tail. Positive terminal paths save `2c <- 26` and `2e <- 2a` after any early
+rotation; drops do not take that positive tail. Pending-cross drops do nothing;
+other drops set +0x26 after optional rollback. The
 portable `legacy_runtime_bookkeep_m36()` contract and its path matrix live in
 `M36_CALLER_BOOKKEEPING.md`; it remains separate from PCM execution and
 production integration.
@@ -96,7 +98,7 @@ left_source_position = source_position[i]
 left_interval_width  = source_position[i+1] - source_position[i]
 ```
 
-When `state +0x26 != 0`, saved dropped index `k = +0x2a` changes the left side:
+When `state +0x26 != 0`, the last positive marker `k = +0x2a` changes the left side:
 
 ```text
 left_source_position = source_position[k+1]
