@@ -25,6 +25,7 @@ jobs:
         run: |
           $failed = $false
           foreach ($file in @(
+            '.\tools\m36_sapi_trigger.ps1',
             '.\tools\run_ab_compare.ps1',
             '.\tools\run_m36_original_probe.ps1',
             '.\tools\run_m36_runtime_capture.ps1'
@@ -49,13 +50,20 @@ jobs:
       - name: Configure Win32 x86
         run: cmake -S . -B build-win32 -A Win32 -DBUILD_TESTING=ON
       - name: Build M36 Win32 contracts and capture debugger
-        run: cmake --build build-win32 --config Debug --target nicolai_m36_phone_probe legacy_phone_features_test nicolai_m36_runtime_capture legacy_runtime_state_test legacy_runtime_executor_m36_test stateful_tds_m36_test --parallel
+        run: cmake --build build-win32 --config Debug --target nicolai_m36_phone_probe legacy_phone_features_test nicolai_m36_runtime_capture legacy_runtime_state_test legacy_runtime_executor_m36_test stateful_tds_m36_test nicolai_m36_route_probe m36_route_capture_test nicolai_legacy_startup_trace legacy_startup_trace_fixture --parallel
       - name: Run portable Win32 phone-feature corpus
         shell: pwsh
         run: |
           .\build-win32\Debug\legacy_phone_features_test.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\build-win32\Debug\nicolai_m36_phone_probe.exe
-          ctest --test-dir build-win32 -C Debug --output-on-failure -R "(legacy_runtime_state|legacy_runtime_executor_m36|stateful_tds_m36)_test"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ctest --test-dir build-win32 -C Debug --output-on-failure -R "(m36_route_capture|legacy_runtime_state|legacy_runtime_executor_m36|stateful_tds_m36)_test"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_m36_routes.py --probe build-win32/Debug/nicolai_m36_route_probe.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/test_m36_startup_trace.py --tracer build-win32/Debug/nicolai_legacy_startup_trace.exe --fixture build-win32/Debug/legacy_startup_trace_fixture.exe
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   metric-contracts:
     runs-on: ubuntu-latest

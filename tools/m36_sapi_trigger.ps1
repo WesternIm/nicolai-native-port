@@ -17,7 +17,14 @@ if (-not (Test-Path -LiteralPath $corpusPath)) {
 $out = [System.IO.Path]::GetFullPath((Join-Path $repoRoot $OutputDir))
 New-Item -ItemType Directory -Force -Path $out | Out-Null
 
+function Write-Stage([string]$stage) {
+    [Console]::Out.WriteLine("M36_SAPI_STAGE $stage")
+    [Console]::Out.Flush()
+}
+
+Write-Stage "create-voice"
 $voice = New-Object -ComObject SAPI.SpVoice
+Write-Stage "enumerate-tokens"
 $tokens = @($voice.GetVoices())
 $selected = $null
 $selectedDescription = $null
@@ -33,15 +40,26 @@ if ($null -eq $selected) {
     throw "Nicolai was not found in 32-bit SAPI5"
 }
 
+Write-Stage "select-voice $selectedDescription"
 $voice.Voice = $selected
+Write-Stage "voice-selected"
+Write-Stage "set-rate"
 $voice.Rate = 0
+Write-Stage "set-volume"
 $voice.Volume = 100
+Write-Stage "create-format"
 $audioFormat = New-Object -ComObject SAPI.SpAudioFormat
 $audioFormat.Type = 18 # SAFT16kHz16BitMono
 
 $phrases = @()
 if ($WarmupOnly) {
-    $phrases = @([pscustomobject]@{ id = 'warmup'; text = 'мама' })
+    # Windows PowerShell 5.1 reads BOM-less script literals in the ANSI code
+    # page. Read the diagnostic phrase from the explicitly UTF-8 corpus instead.
+    $firstRow = Get-Content -LiteralPath $corpusPath -Encoding UTF8 |
+        Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1
+    $firstParts = $firstRow -split "`t", 2
+    if ($firstParts.Count -ne 2) { throw "Invalid warm-up corpus row" }
+    $phrases = @([pscustomobject]@{ id = 'warmup'; text = $firstParts[1] })
 } else {
     foreach ($line in Get-Content -LiteralPath $corpusPath -Encoding UTF8) {
         if ([string]::IsNullOrWhiteSpace($line)) { continue }
@@ -58,8 +76,11 @@ foreach ($item in $phrases) {
     try {
         $stream.Format = $audioFormat
         $stream.Open($wav, 3, $false) # SSFMCreateForWrite
+        Write-Stage "set-stream $($item.id)"
         $voice.AudioOutputStream = $stream
+        Write-Stage "speak $($item.id)"
         [void]$voice.Speak($item.text, 0)
+        Write-Stage "spoken $($item.id)"
     } finally {
         try { $stream.Close() } catch { }
         [void][Runtime.InteropServices.Marshal]::FinalReleaseComObject($stream)

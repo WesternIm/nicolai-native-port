@@ -5,6 +5,8 @@ param(
     [int]$ReadyTimeoutSeconds = 20,
     [int]$WarmupTimeoutSeconds = 30,
     [int]$TriggerTimeoutSeconds = 180,
+    [ValidateSet('features', 'route')]
+    [string]$CaptureMode = 'features',
     [switch]$SkipBuild
 )
 
@@ -20,14 +22,16 @@ try {
     }
 
     $outputDir = [System.IO.Path]::GetFullPath($OutputRoot)
-    New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
-    $records = Join-Path $outputDir "phone-records.jsonl"
-    $auditReport = Join-Path $outputDir "phone-records-audit.json"
+    if (Test-Path -LiteralPath $outputDir) {
+        throw "OutputRoot must be fresh; refusing to overwrite previous evidence: $outputDir"
+    }
+    New-Item -ItemType Directory -Path $outputDir | Out-Null
+    $recordStem = if ($CaptureMode -eq 'route') { 'caller-route' } else { 'phone-records' }
+    $records = Join-Path $outputDir ($recordStem + '.jsonl')
+    $auditReport = Join-Path $outputDir ($recordStem + '-audit.json')
     $captureStdout = Join-Path $outputDir "capture.stdout.log"
     $captureStderr = Join-Path $outputDir "capture.stderr.log"
     $stopFile = Join-Path $outputDir "capture.stop"
-    Remove-Item -Force -ErrorAction SilentlyContinue `
-        $records,$auditReport,$captureStdout,$captureStderr,$stopFile
 
     function Invoke-SapiTrigger(
         [string]$Label,
@@ -50,7 +54,8 @@ try {
             -RedirectStandardError $stderr
         if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
             try { $process.Kill() } catch { }
-            throw "$Label timed out after $TimeoutSeconds seconds; see $stdout and $stderr"
+            $stage = Get-Content -LiteralPath $stdout -ErrorAction SilentlyContinue | Select-Object -Last 1
+            throw "$Label timed out after $TimeoutSeconds seconds; last stage: $stage; see $stdout and $stderr"
         }
         if ($process.ExitCode -ne 0) {
             $detail = if (Test-Path $stderr) { Get-Content $stderr -Raw } else { "" }
@@ -77,9 +82,13 @@ try {
     Write-Host "Using ettsengine PID $($engine.Id)"
 
     if (-not $SkipBuild) {
-        & cmake -S . -B $BuildDir -A Win32 -DBUILD_TESTING=ON
+        if (Test-Path -LiteralPath (Join-Path $BuildDir 'CMakeCache.txt')) {
+            & cmake -S . -B $BuildDir -DBUILD_TESTING=ON
+        } else {
+            & cmake -S . -B $BuildDir -A Win32 -DBUILD_TESTING=ON
+        }
         if ($LASTEXITCODE -ne 0) { throw "CMake Win32 configure failed" }
-        & cmake --build $BuildDir --config Debug --target nicolai_m36_runtime_capture --parallel
+        & cmake --build $BuildDir --config Debug --target nicolai_m36_runtime_capture nicolai_m36_route_probe --parallel
         if ($LASTEXITCODE -ne 0) { throw "M36 runtime capture build failed" }
     }
 
@@ -91,11 +100,14 @@ try {
         throw "Capture executable was not found under $BuildDir"
     }
 
-    $capture = Start-Process -FilePath $captureExe -ArgumentList @(
+    $captureArguments = @(
         [string]$engine.Id,
         ('"' + $records + '"'),
         ('"' + $stopFile + '"')
-    ) -PassThru -WindowStyle Hidden -RedirectStandardOutput $captureStdout `
+    )
+    if ($CaptureMode -eq 'route') { $captureArguments += '--route' }
+    $capture = Start-Process -FilePath $captureExe -ArgumentList $captureArguments `
+      -PassThru -WindowStyle Hidden -RedirectStandardOutput $captureStdout `
       -RedirectStandardError $captureStderr
 
     $deadline = (Get-Date).AddSeconds($ReadyTimeoutSeconds)
@@ -135,13 +147,23 @@ try {
     Write-Host $lastLine
     if (-not (Test-Path $records)) { throw "Capture produced no record file" }
     $recordCount = @(Get-Content $records).Count
-    if ($recordCount -le 0) { throw "Capture produced zero feature records" }
+    if ($recordCount -le 0) { throw "Capture produced zero records" }
 
-    Write-Host "Auditing captured original records against independent M36 replay"
-    & $Python (Join-Path $PSScriptRoot "audit_phone_features_m36.py") `
-        $records --output $auditReport
+    Write-Host "Auditing captured original records ($CaptureMode)"
+    if ($CaptureMode -eq 'route') {
+        $routeProbe = @(
+            (Join-Path $BuildDir 'Debug/nicolai_m36_route_probe.exe'),
+            (Join-Path $BuildDir 'nicolai_m36_route_probe.exe')
+        ) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+        if (-not $routeProbe) { throw 'Route probe executable was not found' }
+        & $Python (Join-Path $PSScriptRoot 'audit_m36_routes.py') `
+            $records --probe $routeProbe --output $auditReport
+    } else {
+        & $Python (Join-Path $PSScriptRoot "audit_phone_features_m36.py") `
+            $records --output $auditReport
+    }
     if ($LASTEXITCODE -ne 0) {
-        throw "M36 runtime phone-feature audit found mismatches; see $auditReport"
+        throw "M36 runtime $CaptureMode audit failed; see $auditReport"
     }
 
     Write-Host "M36 runtime capture + audit complete: $recordCount records"

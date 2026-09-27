@@ -15,6 +15,11 @@ See [acoustic evidence and reproduction](docs/M36_CHAIN_ACOUSTICS.md),
 [corrected caller bookkeeping](docs/M36_CALLER_BOOKKEEPING.md).
 No proprietary inputs or WAVs are committed.
 
+The [next route-capture checkpoint](docs/M36_ROUTE_CAPTURE.md) adds original
+caller instrumentation, compiled-portable route auditing and bounded startup
+diagnostics. Its contracts pass, but live capture is blocked at SAPI rate
+initialization; this is not a new acoustic improvement or PCM-parity result.
+
 ---
 
 # Nicolai Native Port — M35

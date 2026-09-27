@@ -265,12 +265,16 @@ bool file_exists(const std::string& path) {
     return attr != INVALID_FILE_ATTRIBUTES &&
         (attr & FILE_ATTRIBUTE_DIRECTORY) == 0;
 }
+#include "m36_route_capture.inc"
 } // namespace
 
+#ifndef NICOLAI_CAPTURE_TEST
 int main(int argc, char** argv) {
+    if (argc == 5 && std::string(argv[4]) == "--route")
+        return run_route_capture(static_cast<DWORD>(std::stoul(argv[1])), argv[2], argv[3]);
     if (argc < 3 || argc > 4) {
         std::cerr << "usage: nicolai_m36_runtime_capture <ettsengine-pid> "
-                     "<output.jsonl> [stop-file]\n";
+                     "<output.jsonl> [stop-file] [--route]\n";
         return 2;
     }
 
@@ -492,3 +496,4 @@ int main(int argc, char** argv) {
         return 1;
     }
 }
+#endif
