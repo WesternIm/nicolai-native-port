@@ -283,13 +283,14 @@ Still not proven/promoted:
 - route-level binding of the now-proven caller-owned interval-marker and
   buffered/current step rotation to the value-level previous/current PCM
   source context around `0x10107c20`;
-- route-level executor composition across drop / initial / ordinary / cross;
+- full route-level executor composition across drop / initial / ordinary /
+  zero-cross / terminal / nonzero-cross;
 - post-terminal descriptor metadata/event finalization;
 - exact x87 last-bit window oracle;
 - any production or Android promotion.
 
-The next implementation target is route-level composition of the recovered
-source binding, step buffers and marker state at descriptor boundaries.
-Integrate the recovered nonzero cross executor only after live ownership is
-captured or statically proven at that route, then repeat the exact A/B bundle.
-The stable renderer remains the production default.
+The next implementation target is a multi-descriptor experimental adapter that
+feeds live descriptor ownership into the recovered route wrapper. Integrate
+the nonzero cross executor into that adapter only after the ownership is
+captured at the route boundary, then repeat the exact A/B bundle. The stable
+renderer remains the production default.

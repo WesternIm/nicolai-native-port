@@ -113,6 +113,37 @@ int main() {
     assert(state.selection_a == 392);
     assert(state.selection_b == 302);
 
+    // Route-level composition commits PCM, cursor/selection state, marker
+    // rotation and both caller step slots as one transaction.
+    {
+        nicolai::LegacyRuntimeStateM36 route_state;
+        route_state.cursor = 2;
+        route_state.selection_a = 7;
+        route_state.selection_b = 5;
+        nicolai::LegacyRuntimeStepBuffersM36 route_buffers;
+        route_buffers.at_74.interval_index = 77;
+        route_buffers.at_78.interval_index = 77;
+        std::vector<std::int16_t> route_output{111, 222};
+        const auto route = nicolai::legacy_runtime_execute_cross_route_m36(
+            route_output, route_state, route_buffers,
+            previous_pcm, previous_positions, current_pcm, current_positions,
+            2, 1, 5, true, buffered_step, current_step);
+        assert(route.valid);
+        assert(route.pcm.valid && route.pcm.total_grains_written == 5);
+        assert(route.bookkeeping.valid);
+        assert(route.bookkeeping.path ==
+            nicolai::LegacyRuntimeWritePathM36::CrossTransition);
+        assert(route_state.cursor == 482);
+        assert(route_state.word24 == 0 && route_state.word28 == 0);
+        assert(route_state.word2a == 1 && route_state.word26 == 0);
+        assert(route_buffers.valid);
+        assert(route_buffers.at_74.interval_index == 1);
+        assert(route_buffers.at_78.interval_index == 1);
+        assert(route_buffers.at_74.step.count == current_step.count);
+        assert(route_buffers.at_78.step.first_period ==
+            current_step.first_period);
+    }
+
     // A source failure in the final current-repeat phase must not expose any
     // earlier staged PCM or state rotations to the caller.
     {
@@ -143,6 +174,31 @@ int main() {
                 previous_pcm, previous_positions, short_current,
                 current_positions, geometry_state, 2, 1);
         assert(!invalid_context.valid);
+
+        nicolai::LegacyRuntimeStateM36 failed_route_state;
+        failed_route_state.cursor = 2;
+        failed_route_state.selection_a = 7;
+        nicolai::LegacyRuntimeStepBuffersM36 failed_route_buffers;
+        failed_route_buffers.at_74.interval_index = 19;
+        failed_route_buffers.at_78.interval_index = 19;
+        std::vector<std::int16_t> failed_route_output{111, 222};
+        const auto before_route_state = failed_route_state;
+        const auto before_route_buffers = failed_route_buffers;
+        const auto before_route_output = failed_route_output;
+        const auto failed_route =
+            nicolai::legacy_runtime_execute_cross_route_m36(
+                failed_route_output, failed_route_state, failed_route_buffers,
+                previous_pcm, previous_positions, short_current,
+                current_positions, 2, 1, 5, true,
+                buffered_step, current_step);
+        assert(!failed_route.valid);
+        assert(failed_route_output == before_route_output);
+        assert(failed_route_state.cursor == before_route_state.cursor);
+        assert(failed_route_state.selection_a ==
+            before_route_state.selection_a);
+        assert(failed_route_buffers.valid == before_route_buffers.valid);
+        assert(failed_route_buffers.at_74.interval_index ==
+            before_route_buffers.at_74.interval_index);
     }
 
     // Invalid or dropped step records are outside the nonzero cross executor.

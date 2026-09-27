@@ -337,6 +337,55 @@ LegacyRuntimeCrossExecutionM36 legacy_runtime_execute_cross_m36(
         buffered_step, current_step);
 }
 
+LegacyRuntimeCrossRouteExecutionM36 legacy_runtime_execute_cross_route_m36(
+    std::vector<std::int16_t>& output,
+    LegacyRuntimeStateM36& state,
+    LegacyRuntimeStepBuffersM36& buffers,
+    const std::vector<std::int16_t>& previous_pcm,
+    const std::vector<std::int32_t>& previous_positions,
+    const std::vector<std::int16_t>& current_pcm,
+    const std::vector<std::int32_t>& current_positions,
+    int buffered_interval_index,
+    int current_interval_index,
+    int node_count,
+    bool already_started,
+    const LegacyTdsStepM33& buffered_step,
+    const LegacyTdsStepM33& current_step) {
+    LegacyRuntimeCrossRouteExecutionM36 result;
+    auto staged_output = output;
+    auto staged_state = state;
+    auto staged_buffers = buffers;
+
+    // The original cross call observes marker/step state before the caller's
+    // post-success rotation, so bind and execute against the pre-bookkeeping
+    // state first.
+    const auto context = legacy_runtime_cross_source_context_m36(
+        previous_pcm, previous_positions, current_pcm, current_positions,
+        staged_state, buffered_interval_index, current_interval_index);
+    if (!context.valid) return result;
+
+    const auto pcm = legacy_runtime_execute_cross_m36(
+        staged_output, staged_state, previous_pcm, current_pcm, context,
+        buffered_step, current_step);
+    if (!pcm.valid) return result;
+
+    // `cross_descriptor_pending=true` selects the caller's cross route while
+    // preserving the positive-count step record and applying the common
+    // marker/slot update only after all PCM phases have committed locally.
+    const auto bookkeeping = legacy_runtime_bookkeep_m36(
+        staged_state, staged_buffers, current_interval_index, node_count,
+        current_step, true, already_started);
+    if (!bookkeeping.valid) return result;
+
+    output = std::move(staged_output);
+    state = staged_state;
+    buffers = staged_buffers;
+    result.valid = true;
+    result.pcm = pcm;
+    result.bookkeeping = bookkeeping;
+    return result;
+}
+
 LegacyRuntimeTerminalExecutionM36 legacy_runtime_execute_terminal_m36(
     std::vector<std::int16_t>& output,
     LegacyRuntimeStateM36& state,
