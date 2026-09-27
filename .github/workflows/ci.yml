@@ -28,7 +28,8 @@ jobs:
             '.\tools\m36_sapi_trigger.ps1',
             '.\tools\run_ab_compare.ps1',
             '.\tools\run_m36_original_probe.ps1',
-            '.\tools\run_m36_runtime_capture.ps1'
+            '.\tools\run_m36_runtime_capture.ps1',
+            '.\tools\package_windows_talker.ps1'
           )) {
             $tokens = $null
             $errors = $null
@@ -78,3 +79,25 @@ jobs:
         run: |
           python tools/test_m35_metrics.py
           python tools/test_m36_phone_features.py
+
+  windows-test-package:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure standalone Release
+        run: cmake -S . -B build-talker -A Win32 -DNICOLAI_STATIC_RUNTIME=ON -DBUILD_TESTING=ON
+      - name: Build test talker
+        run: cmake --build build-talker --config Release --target NicolaiTalker talker_backend_test --parallel
+      - name: Run voice-free UI and profile contracts
+        run: ctest --test-dir build-talker -C Release --output-on-failure -R "talker_(backend_test|ui_smoke)"
+      - name: Package without proprietary inputs
+        shell: pwsh
+        run: ./tools/package_windows_talker.ps1 -BuildDir build-talker
+      - name: Verify packaged EXE and ZIP
+        run: python tools/test_windows_talker.py --exe build-talker/Release/NicolaiTalker.exe --zip out/Nicolai-Test-win32.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Nicolai-Test-win32
+          path: out/Nicolai-Test-win32.zip
+          if-no-files-found: error
+          retention-days: 30
