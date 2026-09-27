@@ -373,7 +373,8 @@ int ui(HINSTANCE instance, bool smoke, const fs::path& test_voice = {}, Profile 
         if (!screenshot.empty()) snapshot(window, screenshot);
         if (!test_voice.empty()) {
             SetWindowTextW(app.voice, test_voice.c_str());
-            SetWindowTextW(app.text, L"Мама мыла раму.");
+            // Exercise the actual startup text; replacing it with an easier
+            // phrase previously concealed a word-initial allophone failure.
             SendMessageW(app.profile, CB_SETCURSEL, static_cast<int>(test_profile), 0);
             try { start_job(app); } catch (...) { DestroyWindow(window); return 1; }
             const ULONGLONG deadline = GetTickCount64() + 65000;

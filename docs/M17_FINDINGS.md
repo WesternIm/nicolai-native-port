@@ -60,7 +60,8 @@ M17 therefore uses the following **topology-compatible approximation**:
 ```text
 stressed               -> *0
 first pretonic          -> *1 family
-remote pretonic a/o     -> a3
+word-initial reduced a/o-> a1 (including remote pretonic)
+interior remote a/o     -> a3
 post-tonic non-final a/o-> a5
 word-final reduced a/o  -> a4
 other reduced vowels    -> *4 family where available
@@ -68,6 +69,14 @@ other reduced vowels    -> *4 family where available
 
 This mapping is intentionally documented as an independent approximation, not
 a recovered historical name/meaning for every suffix.
+
+The word-initial distinction was added after the Windows talker's startup
+phrase failed on `акустику` with `missing_diphone_#_a3`. Local catalog inspection
+confirmed `# -> a1` exists and `# -> a3` does not. The shared frontend now chooses
+`a1` for initial unstressed а/о, keeping stressed, unreduced, iotated and interior
+vowel rules unchanged. The renderer still rejects missing diphones; it does not
+substitute sounds. This graph-compatible correction is not a claim that the
+original NLP's entire allophone selection has been recovered.
 
 Examples with the legacy dictionary:
 

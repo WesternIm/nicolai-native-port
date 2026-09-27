@@ -17,8 +17,9 @@ Every synthesis job is an owned child of the same EXE. User text travels in an
 explicit UTF-8 file, not interpolated shell commands; paths use wide Win32 APIs
 and quoted argv. Each port child sets both M36 flags explicitly, so inherited
 experimental flags cannot leak into stable. The child uses the existing A/B
-frontend, coefficients, output gain and terminal silence without changing the
-production renderer. Cancellation/timeout kills only that owned child, never
+frontend, coefficients, output gain and terminal silence. Acoustic renderer
+defaults remain unchanged; the shared frontend correction below applies to all
+port callers. Cancellation/timeout kills only that owned child, never
 an existing original server. The window remains responsive when SAPI stalls.
 
 The original mode is implemented, but successful original audio is NOT proven
@@ -54,9 +55,10 @@ python tools/test_windows_talker.py --exe build-talker/Release/NicolaiTalker.exe
   --check-original
 ```
 
-The GUI-job and child-render paths produce real speech in each of the three
-port modes; the resulting WAV for the synthetic phrase is byte-identical to
-the established batch renderer for that profile. Stable differs from M36 local,
+The GUI-job path synthesizes the actual startup phrase in each of the three
+port modes. Child-render WAVs for three synthetic phrases (simple, startup and
+initial-vowel regression) are byte-identical to the established batch renderer
+for each profile: nine WAV comparisons. Stable differs from M36 local,
 so the profile selector is not comparing stable output against itself. This
 is wrapper/profile parity, not new acoustic progress or a 22-phrase oracle.
 Missing input, invalid profiles, Cyrillic/space-containing input/output paths,
@@ -67,6 +69,32 @@ The full local Win32 Release CTest run passed 31/31. The executable's imports
 are Windows system DLLs only (no VCRUNTIME/MSVCP DLL requirement). A screenshot
 rendered by the app's own UI smoke mode was inspected for clipped controls and
 readability. The test frontend adds no networking or registry mutations.
+
+## Startup phrase regression (2026-09-27)
+
+The first package failed on `Привет! Это Николай. Проверяем голос и акустику.`
+with `missing_diphone_#_a3`. The failure is in shared frontend selection, not
+voice installation: initial unstressed а/о was treated like an interior remote
+pretonic vowel. The local voice graph has `# -> a1`, but not `# -> a3`.
+
+```powershell
+nicolai_m10_probe.exe C:\path\to\Elan\nicolai16.dat "#" a1
+# present=yes, exit 0
+nicolai_m10_probe.exe C:\path\to\Elan\nicolai16.dat "#" a3
+# present=no, exit 1
+```
+
+The shared frontend now selects initial reduced `a1`, preserving interior `a3`
+(e.g. молоко), stressed vowels and disabled reduction. Generic explicit-stress
+contracts cover акустику, аппарат, оборона, огород and атом without relying on
+external dictionaries. They remain active in Release and report failures to
+stderr with a normal nonzero exit instead of an interactive CRT abort dialog.
+The GUI job regression uses its default edit-control text, not an easier
+replacement phrase. Local x64 Debug 30/30 and x86 Release 31/31 passed after the
+fix, as did the three real GUI jobs and nine CLI/batch WAV comparisons. All 22
+stable WAVs from the existing UTF-8 A/B corpus remain byte-identical to the
+pre-fix baseline. This fixes synthesis coverage; it does not establish closer
+acoustic parity with the original. Original SAPI startup remains unverified.
 
 ## User data and feedback
 

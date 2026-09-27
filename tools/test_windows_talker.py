@@ -55,20 +55,18 @@ def main():
             if not args.batch:
                 raise ValueError("--batch is required for local parity checks")
             # Match the existing A/B path exactly, not a newly invented recipe.
-            text.write_text("Мама мыла раму.", encoding="utf-8")
+            cases = {
+                "test": "Мама мыла раму.",
+                "startup": "Привет! Это Николай. Проверяем голос и акустику.",
+                "initial": "Акусти\u0301ка. Аппара\u0301т. Оборо\u0301на. Огоро\u0301д. А\u0301том. Молоко\u0301.",
+            }
             corpus = temp / "corpus.tsv"
-            corpus.write_text("test\tМама мыла раму.\n", encoding="utf-8")
+            corpus.write_text("".join(f"{name}\t{phrase}\n" for name, phrase in cases.items()), encoding="utf-8")
             hashes = {}
             for profile in ("stable", "m36-local", "m36-chain"):
                 subprocess.run([str(args.exe.resolve()), "--ui-job-test", str(args.voice.resolve()), profile],
                                capture_output=True, timeout=70, check=True)
-                output = temp / f"{profile}.wav"
                 contaminated = dict(os.environ, NICOLAI_M36_TRANSITION_EXECUTOR="1", NICOLAI_M36_CHAIN_EXECUTOR="1")
-                result = invoke(args.exe, args.voice, text, profile, output, contaminated)
-                assert result.returncode == 0, result.stderr.decode("utf-8", errors="replace")
-                with wave.open(str(output)) as wav:
-                    assert (wav.getnchannels(), wav.getsampwidth(), wav.getframerate()) == (1, 2, 16000)
-                    assert wav.getnframes() > 0
                 env = dict(os.environ)
                 for name in list(env):
                     if name.startswith("NICOLAI_"):
@@ -79,10 +77,19 @@ def main():
                 subprocess.run([str(args.batch.resolve()), str(args.voice / "nicolai16.dat"),
                                 str(args.voice / "exc_rus.txt"), str(args.voice / "abb_rus.txt"),
                                 str(corpus), str(target)], capture_output=True, check=True, timeout=65, env=env)
-                assert output.read_bytes() == (target / "test.wav").read_bytes(), profile
-                hashes[profile] = hashlib.sha256(output.read_bytes()).hexdigest()
+                for name, phrase in cases.items():
+                    text.write_text(phrase, encoding="utf-8")
+                    output = temp / f"{profile}-{name}.wav"
+                    result = invoke(args.exe, args.voice, text, profile, output, contaminated)
+                    assert result.returncode == 0, (profile, name, result.stderr.decode("utf-8", errors="replace"))
+                    with wave.open(str(output)) as wav:
+                        assert (wav.getnchannels(), wav.getsampwidth(), wav.getframerate()) == (1, 2, 16000)
+                        assert wav.getnframes() > 0
+                    assert output.read_bytes() == (target / f"{name}.wav").read_bytes(), (profile, name)
+                    if name == "test":
+                        hashes[profile] = hashlib.sha256(output.read_bytes()).hexdigest()
             assert hashes["stable"] != hashes["m36-local"], "experimental mode is accidentally stable"
-            print("local voice: all 3 profiles match existing batch renderer byte-for-byte")
+            print("local voice: startup GUI job and 3 phrases x 3 profiles pass; child WAVs match batch byte-for-byte")
     if args.zip:
         with zipfile.ZipFile(args.zip) as package:
             assert set(package.namelist()) == {"NicolaiTalker.exe", "README.txt", "build.json"}
