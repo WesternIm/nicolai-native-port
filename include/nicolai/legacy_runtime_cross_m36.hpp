@@ -73,6 +73,24 @@ struct LegacyRuntimeCrossBuffersM36 {
     std::vector<std::int16_t> secondary;
 };
 
+// Value-level binding of the two descriptor-owned PCM bases used by original
+// 0x10108cf0. The original receives previous/current descriptor pointers and
+// reads source positions from +0x30 and PCM bases from +0x4c. Portable code
+// supplies the already-materialized vectors instead of exposing those raw
+// proprietary pointers; this result preserves the recovered owner/index and
+// writer-boundary relationship.
+struct LegacyRuntimeCrossSourceContextM36 {
+    bool valid = false;
+    bool used_saved_interval = false;
+    int previous_interval_index = 0;
+    int current_interval_index = 0;
+    int previous_boundary = 0;
+    int current_boundary = 0;
+    int previous_pcm_samples = 0;
+    int current_pcm_samples = 0;
+    LegacyRuntimeCrossGeometryM36 geometry;
+};
+
 LegacyRuntimeCrossPrimaryLayoutM36 legacy_runtime_cross_primary_layout_m36(
     int previous_interval_width,
     int previous_window_length,
@@ -91,6 +109,20 @@ LegacyRuntimeCrossBuffersM36 legacy_runtime_cross_buffers_m36(
     const std::vector<std::int16_t>& previous_pcm,
     const std::vector<std::int16_t>& current_pcm,
     const LegacyRuntimeCrossGeometryM36& geometry);
+
+// Bind the caller-owned previous/current descriptor source context before a
+// nonzero cross executor is called. This is deliberately a pure value-level
+// contract: it validates the exact source spans needed by the recovered
+// temporary buffers and derives the raw writer boundaries from the selected
+// descriptor intervals. It does not mutate runtime state or output PCM.
+LegacyRuntimeCrossSourceContextM36 legacy_runtime_cross_source_context_m36(
+    const std::vector<std::int16_t>& previous_pcm,
+    const std::vector<std::int32_t>& previous_positions,
+    const std::vector<std::int16_t>& current_pcm,
+    const std::vector<std::int32_t>& current_positions,
+    const LegacyRuntimeStateM36& state,
+    int buffered_interval_index,
+    int current_interval_index);
 
 // Writer phase 1, 0x1010944a..0x10109480: raw previous PCM at its selected
 // boundary against the tail of primary temp.

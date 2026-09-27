@@ -207,6 +207,23 @@ all plan sources/windows, executes the buffered entry/repeats and current
 entry/repeats, and stages both PCM and runtime state until every phase succeeds.
 Details and static addresses are in `M36_CROSS_EXECUTOR.md`.
 
+## Caller-owned source binding
+
+The caller boundary is now represented by
+`legacy_runtime_cross_source_context_m36()`. In the original call frame,
+`0x10108cf0` receives the previous and current descriptor objects, reads each
+descriptor's source-position table at `+0x30` and PCM base at `+0x4c`, then
+uses the selected interval ends as the raw writer boundaries. The portable
+binding takes value-level PCM/position vectors, preserves the selected and
+saved interval index, validates every temporary-buffer source span, and
+derives the previous/current writer boundaries without exposing proprietary
+object pointers.
+
+`legacy_runtime_execute_cross_m36()` has an overload that accepts this bound
+context. It still performs the complete transactional phase validation; the
+binding only prevents a caller from pairing a previous/current source slice
+with a geometry or boundary from another descriptor.
+
 ## Current integration boundary
 
 The nonzero cross path no longer has unknown temporary-buffer samples, writer
@@ -218,7 +235,9 @@ window storage; portable vector ownership replaces that resource operation.
 The earlier helper near `0x1010a930` appears to service a side metadata/event
 object and remains outside the audio executor until that ownership is proven.
 
-No recovered M36 executor is wired into production or `StatefulTdsM34` yet.
+No recovered M36 executor is wired into production or `StatefulTdsM34` yet;
+the new binding is a portable contract and does not claim live descriptor
+capture or acoustic parity.
 
 The zero-byte branch is also composed transactionally by
 `legacy_runtime_execute_zero_cross_m36()`: it executes the recovered ordinary

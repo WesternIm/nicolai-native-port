@@ -77,6 +77,19 @@ LegacyRuntimeCrossExecutionM36 legacy_runtime_execute_cross_m36(
     const LegacyTdsStepM33& buffered_step,
     const LegacyTdsStepM33& current_step);
 
+// Same executor through the recovered caller-owned source binding. The
+// context fixes the previous/current descriptor PCM ownership and interval
+// boundaries; the transaction still validates every writer phase before
+// committing output or runtime state.
+LegacyRuntimeCrossExecutionM36 legacy_runtime_execute_cross_m36(
+    std::vector<std::int16_t>& output,
+    LegacyRuntimeStateM36& state,
+    const std::vector<std::int16_t>& previous_pcm,
+    const std::vector<std::int16_t>& current_pcm,
+    const LegacyRuntimeCrossSourceContextM36& context,
+    const LegacyTdsStepM33& buffered_step,
+    const LegacyTdsStepM33& current_step);
+
 // Execute the proven deferred-terminal PCM sequence transactionally. The
 // original calls 0x10108210 only for the last interval, writes one grain using
 // step.first_period (regardless of a larger positive step.count), rotates the

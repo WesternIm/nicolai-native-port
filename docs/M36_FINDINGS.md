@@ -278,16 +278,18 @@ Still not proven/promoted:
 
 - successful real 22-phrase Gate B capture with zero audit mismatches;
 - upstream producer parity for feature records / voicing;
-- caller step-buffer ownership and extended source context needed to compose
-  nonzero cross transitions in the portable chain;
-- binding the now-proven caller-owned interval-marker and buffered/current step
-  rotation to extended previous/current PCM source context around `0x10107c20`;
+- live caller step-buffer/source capture needed to compose nonzero cross
+  transitions in the portable chain;
+- route-level binding of the now-proven caller-owned interval-marker and
+  buffered/current step rotation to the value-level previous/current PCM
+  source context around `0x10107c20`;
 - route-level executor composition across drop / initial / ordinary / cross;
 - post-terminal descriptor metadata/event finalization;
 - exact x87 last-bit window oracle;
 - any production or Android promotion.
 
-The next implementation target is caller-owned step-buffer/source ownership at
-descriptor boundaries. Integrate the recovered nonzero cross executor only
-after that state is captured or statically proven, then repeat the exact A/B
-bundle. The stable renderer remains the production default.
+The next implementation target is route-level composition of the recovered
+source binding, step buffers and marker state at descriptor boundaries.
+Integrate the recovered nonzero cross executor only after live ownership is
+captured or statically proven at that route, then repeat the exact A/B bundle.
+The stable renderer remains the production default.

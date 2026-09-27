@@ -47,6 +47,22 @@ int main() {
     const auto buffered_step = step(3, 100, 0);
     const auto current_step = step(2, 90, 0);
 
+    // The caller-owned binding recovers the descriptor +0x4c PCM bases and
+    // derives raw writer boundaries from the selected interval ends.
+    const auto context = nicolai::legacy_runtime_cross_source_context_m36(
+        previous_pcm, previous_positions, current_pcm, current_positions,
+        geometry_state, 2, 1);
+    assert(context.valid);
+    assert(!context.used_saved_interval);
+    assert(context.previous_interval_index == 2);
+    assert(context.current_interval_index == 1);
+    assert(context.previous_boundary == 260);
+    assert(context.current_boundary == 190);
+    assert(context.previous_pcm_samples == 400);
+    assert(context.current_pcm_samples == 470);
+    assert(context.geometry.previous_interval_width ==
+        geometry.previous_interval_width);
+
     nicolai::LegacyRuntimeStateM36 state;
     state.cursor = 2;
     state.selection_a = 7;
@@ -80,8 +96,8 @@ int main() {
     assert(expected_first_written);
 
     const auto result = nicolai::legacy_runtime_execute_cross_m36(
-        output, state, previous_pcm, current_pcm, geometry,
-        260, 190, buffered_step, current_step);
+        output, state, previous_pcm, current_pcm, context,
+        buffered_step, current_step);
     assert(result.valid);
     assert(result.buffered_grains_written == 3);
     assert(result.current_grains_written == 2);
@@ -115,6 +131,18 @@ int main() {
         assert(failed_state.cursor == before_state.cursor);
         assert(failed_state.selection_a == before_state.selection_a);
         assert(failed_state.selection_b == before_state.selection_b);
+    }
+
+    // Source ownership is validated before a caller can reach the executor;
+    // a truncated current descriptor must not produce a half-bound context.
+    {
+        const std::vector<std::int16_t> short_current(
+            current_pcm.begin(), current_pcm.begin() + 150);
+        const auto invalid_context =
+            nicolai::legacy_runtime_cross_source_context_m36(
+                previous_pcm, previous_positions, short_current,
+                current_positions, geometry_state, 2, 1);
+        assert(!invalid_context.valid);
     }
 
     // Invalid or dropped step records are outside the nonzero cross executor.

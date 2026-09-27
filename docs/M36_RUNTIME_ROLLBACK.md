@@ -256,8 +256,8 @@ The large unknown area is now narrower:
 
 - route-level executor composition around the completed nonzero cross path;
 - route-level binding of the now-proven interval-marker and buffered/current
-  step rotation to extended previous/current PCM descriptor ownership around
-  `0x10107c20`;
+  step rotation to the recovered value-level previous/current PCM descriptor
+  ownership binding around `0x10107c20`;
 - post-terminal descriptor metadata/event finalization;
 - live Gate A/B capture validation and x87 last-bit window validation.
 

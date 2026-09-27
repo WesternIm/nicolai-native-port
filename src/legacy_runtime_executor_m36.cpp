@@ -322,6 +322,21 @@ LegacyRuntimeCrossExecutionM36 legacy_runtime_execute_cross_m36(
     return result;
 }
 
+LegacyRuntimeCrossExecutionM36 legacy_runtime_execute_cross_m36(
+    std::vector<std::int16_t>& output,
+    LegacyRuntimeStateM36& state,
+    const std::vector<std::int16_t>& previous_pcm,
+    const std::vector<std::int16_t>& current_pcm,
+    const LegacyRuntimeCrossSourceContextM36& context,
+    const LegacyTdsStepM33& buffered_step,
+    const LegacyTdsStepM33& current_step) {
+    if (!context.valid) return {};
+    return legacy_runtime_execute_cross_m36(
+        output, state, previous_pcm, current_pcm, context.geometry,
+        context.previous_boundary, context.current_boundary,
+        buffered_step, current_step);
+}
+
 LegacyRuntimeTerminalExecutionM36 legacy_runtime_execute_terminal_m36(
     std::vector<std::int16_t>& output,
     LegacyRuntimeStateM36& state,

@@ -232,6 +232,78 @@ LegacyRuntimeCrossBuffersM36 legacy_runtime_cross_buffers_m36(
     return out;
 }
 
+LegacyRuntimeCrossSourceContextM36 legacy_runtime_cross_source_context_m36(
+    const std::vector<std::int16_t>& previous_pcm,
+    const std::vector<std::int32_t>& previous_positions,
+    const std::vector<std::int16_t>& current_pcm,
+    const std::vector<std::int32_t>& current_positions,
+    const LegacyRuntimeStateM36& state,
+    int buffered_interval_index,
+    int current_interval_index) {
+    LegacyRuntimeCrossSourceContextM36 out;
+    if (previous_pcm.size() >
+            static_cast<std::size_t>(std::numeric_limits<int>::max()) ||
+        current_pcm.size() >
+            static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        return out;
+
+    const auto geometry = legacy_runtime_cross_geometry_m36(
+        previous_positions, current_positions, state,
+        buffered_interval_index, current_interval_index);
+    if (!geometry.valid || previous_pcm.empty() || current_pcm.empty())
+        return out;
+
+    // The temporary buffers read the two descriptor-owned PCM bases at these
+    // four exact spans. The raw writer boundaries are intentionally derived
+    // from the selected interval ends, not from the temporary-buffer starts.
+    const int previous_extent = std::min(
+        geometry.previous_interval_width, geometry.current_interval_width);
+    const int current_extent = std::min(
+        geometry.current_interval_width, geometry.current_next_width);
+    if (!source_slice_fits(previous_pcm, geometry.previous_source_start,
+            geometry.previous_window_length) ||
+        !source_slice_fits(current_pcm, geometry.current_source_start,
+            geometry.current_window_length) ||
+        !source_slice_fits(previous_pcm, geometry.previous_forward_source_start,
+            previous_extent) ||
+        !source_slice_fits(current_pcm, geometry.current_forward_source_start,
+            current_extent))
+        return out;
+
+    const auto previous_index = geometry.previous_interval_index;
+    const auto current_index = geometry.current_interval_index;
+    if (previous_index < 0 || previous_index + 1 >=
+            static_cast<int>(previous_positions.size()) ||
+        current_index < 0 || current_index + 1 >=
+            static_cast<int>(current_positions.size()))
+        return out;
+
+    // 0x10108cf0 phase 1 reads the previous descriptor at the end of the
+    // selected previous interval. Phase 3/4 use the end of the current
+    // interval, except at the terminal current node where the original uses
+    // the current start because no following interval exists.
+    const int previous_boundary =
+        previous_positions[static_cast<std::size_t>(previous_index + 1)];
+    const bool current_terminal = current_index + 1 ==
+        static_cast<int>(current_positions.size()) - 1;
+    const int current_boundary = current_terminal ?
+        current_positions[static_cast<std::size_t>(current_index)] :
+        current_positions[static_cast<std::size_t>(current_index + 1)];
+    if (previous_boundary < 0 || current_boundary < 0)
+        return out;
+
+    out.valid = true;
+    out.used_saved_interval = geometry.used_saved_interval;
+    out.previous_interval_index = previous_index;
+    out.current_interval_index = current_index;
+    out.previous_boundary = previous_boundary;
+    out.current_boundary = current_boundary;
+    out.previous_pcm_samples = static_cast<int>(previous_pcm.size());
+    out.current_pcm_samples = static_cast<int>(current_pcm.size());
+    out.geometry = geometry;
+    return out;
+}
+
 LegacyRuntimeCrossWriterPlanM36 legacy_runtime_cross_entry_plan_m36(
     int previous_interval_width,
     int previous_boundary,

@@ -146,11 +146,12 @@ Relevant notes:
 
 ## Next checkpoint
 
-1. Recover/capture the extended previous/current PCM-source ownership still
-   missing from the caller boundary at `0x10107c20`.
-2. Bind the now-proven step/marker bookkeeping and integrate the already
-   transactional nonzero cross executor only after that
-   ownership is proven; keep the stable renderer and M34 fallback intact.
+1. Feed the recovered value-level previous/current PCM-source binding from
+   `0x10107c20` into the route-level executor while retaining the stable
+   renderer and M34 fallback.
+2. Compose binding, step/marker bookkeeping and the transactional nonzero
+   cross executor only at a route boundary whose live descriptor ownership is
+   captured; do not infer that ownership from a single diphone slice.
 3. Restore live Gate B if the legacy Acapela server can be made to start without
    changing the proprietary installation.
 4. Re-run the exact same 22-phrase A/B bundle.
