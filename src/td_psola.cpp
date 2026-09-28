@@ -48,6 +48,44 @@ double grain_hann(long rel, int radius) {
 
 } // namespace
 
+void blend_uncovered_edges_m40(Pcm16Mono& pcm,
+    const std::vector<std::int16_t>& mapped_source,
+    const std::vector<double>& weights,
+    std::size_t fade_samples) {
+    const std::size_t n = pcm.samples.size();
+    if (n == 0 || mapped_source.size() != n || weights.size() < n || fade_samples == 0)
+        return;
+    // Only a large covered/uncovered discontinuity needs repair. Blending
+    // every coverage edge changes vowel timbre and even downstream join phase.
+    constexpr int kRiskyStep = 6000; // pre-output-gain PCM, 12k at the speaker
+    std::vector<double> grain_mix(n, 1.0);
+    bool needs_blend = false;
+    for (std::size_t i = 1; i < n; ++i) {
+        const bool before = weights[i - 1] > 1e-8;
+        const bool after = weights[i] > 1e-8;
+        if (before == after ||
+            std::abs(static_cast<int>(pcm.samples[i]) - pcm.samples[i - 1]) <= kRiskyStep)
+            continue;
+        needs_blend = true;
+        const std::size_t edge = after ? i : i - 1;
+        for (std::size_t k = 0; k < fade_samples; ++k) {
+            if (after && edge + k >= n) break;
+            if (!after && k > edge) break;
+            const std::size_t j = after ? edge + k : edge - k;
+            if (weights[j] <= 1e-8) break;
+            const double t = static_cast<double>(k + 1) / static_cast<double>(fade_samples);
+            const double mix = 0.5 - 0.5 * std::cos(kPi * t);
+            grain_mix[j] = std::min(grain_mix[j], mix);
+        }
+    }
+    if (!needs_blend) return;
+    for (std::size_t i = 0; i < n; ++i) {
+        if (grain_mix[i] == 1.0) continue;
+        pcm.samples[i] = clip16(grain_mix[i] * pcm.samples[i] +
+                                (1.0 - grain_mix[i]) * mapped_source[i]);
+    }
+}
+
 double td_psola_pitch_scale_at(const TdPsolaConfig& config, double position) {
     if (!config.use_three_point_pitch) return config.pitch_scale;
     const double x = std::clamp(position, 0.0, 1.0);
@@ -203,12 +241,34 @@ Pcm16Mono td_psola_resynthesize(
         if (wsum[i] > 1e-8) {
             out.samples[i] = clip16(acc[i] / wsum[i]);
         } else {
+            ++d.uncovered_samples;
             // Preserve uncovered edge samples by simple time mapping rather
             // than introducing digital silence.
             const double src = static_cast<double>(i) / config.duration_scale;
             const auto j = std::min<std::size_t>(source.samples.size() - 1,
                 static_cast<std::size_t>(std::max(0.0, std::floor(src))));
             out.samples[i] = source.samples[j];
+        }
+    }
+
+    if (config.blend_uncovered_edges_m40) {
+        std::vector<std::int16_t> mapped(target_len);
+        for (std::size_t i = 0; i < target_len; ++i) {
+            const auto j = std::min<std::size_t>(source.samples.size() - 1,
+                static_cast<std::size_t>(static_cast<double>(i) / config.duration_scale));
+            mapped[i] = source.samples[j];
+        }
+        blend_uncovered_edges_m40(out, mapped, wsum,
+            std::min<std::size_t>(32, static_cast<std::size_t>(maxp)));
+    }
+
+    for (std::size_t i = 1; config.audit_transients_m40 && i < out.samples.size(); ++i) {
+        const int step = std::abs(static_cast<int>(out.samples[i]) - out.samples[i - 1]);
+        if (step > d.max_output_step) {
+            d.max_output_step = step;
+            d.max_output_step_at = i;
+            d.max_step_weight_before = wsum[i - 1];
+            d.max_step_weight_after = wsum[i];
         }
     }
 

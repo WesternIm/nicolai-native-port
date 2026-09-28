@@ -6,9 +6,9 @@ playback/stop/replay, Save WAV and access to per-job logs. It is built as x86 so
 the original installed 32-bit Nicolai token is visible, and runs on x86/x64
 Windows. The static Release runtime avoids a separate VC++ runtime install.
 
-Five selections are exposed: stable native port (default), experimental M36
-local, experimental M36 chain, experimental M38 connected-word timing, and the
-installed original Nicolai via SAPI5.
+Six selections are exposed: stable native port (default), experimental M36
+local, experimental M36 chain, experimental M38 connected-word timing,
+experimental M40 transient repair, and the installed original Nicolai via SAPI5.
 The port modes use three external voice files directly and do not load Elan
 DLLs. The original mode uses only a matching Nicolai/Elan Russian token; it
 never silently substitutes another installed voice or falls back to the port.
@@ -56,10 +56,10 @@ python tools/test_windows_talker.py --exe build-talker/Release/NicolaiTalker.exe
   --check-original
 ```
 
-The GUI-job path synthesizes the actual startup phrase in each of the four
-port modes. Child-render WAVs for five synthetic phrases (single word, simple,
-startup, initial-vowel and initial-u regressions) are byte-identical to the
-established batch renderer for each profile: twenty WAV comparisons. Stable differs from M36 local and M38,
+The GUI-job path synthesizes the actual startup phrase in each of the five
+port modes. Child-render WAVs for six synthetic phrases (single word, simple,
+startup, initial-vowel, initial-u and number/transient regressions) are byte-identical to the
+established batch renderer for each port profile: thirty WAV comparisons. Stable differs from M36 local, M38 and M40,
 so the profile selector is not comparing stable output against itself. This
 is wrapper/profile parity, not new acoustic progress or a 22-phrase oracle.
 Missing input, invalid profiles, Cyrillic/space-containing input/output paths,

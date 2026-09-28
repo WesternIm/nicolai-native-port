@@ -72,6 +72,25 @@ int main() {
     assert(q.samples.size() == 750);
     assert(d.synthesis_marks > d.source_marks);
     assert(d.mean_target_period > 40.0 && d.mean_target_period < 60.0);
+
+    // M40: do not leave a full-scale step where grain coverage ends and the
+    // original time-mapped source takes over. The default path is untouched.
+    nicolai::Pcm16Mono seam;
+    seam.sample_rate = 16000;
+    seam.samples = {0, 0, -12000, -12000, -12000, 10000, 10000, 10000};
+    const std::vector<std::int16_t> mapped(8, 10000);
+    const std::vector<double> weights{1, 1, 1, 1, 1, 0, 0, 0};
+    auto all_covered = seam;
+    nicolai::blend_uncovered_edges_m40(all_covered, mapped,
+        std::vector<double>(8, 1.0), 4);
+    assert(all_covered.samples == seam.samples);
+    nicolai::blend_uncovered_edges_m40(seam, mapped, weights, 4);
+    assert(seam.samples[0] == 0 && seam.samples[5] == 10000 && seam.samples[7] == 10000);
+    int largest_step = 0;
+    for (std::size_t i = 1; i < seam.samples.size(); ++i)
+        largest_step = std::max(largest_step,
+            std::abs(static_cast<int>(seam.samples[i]) - seam.samples[i - 1]));
+    assert(largest_step < 22000);
     std::cout << "td_psola_test: PASSED source_marks=" << d.source_marks
               << " synth_marks=" << d.synthesis_marks
               << " target_period=" << d.mean_target_period << "\n";

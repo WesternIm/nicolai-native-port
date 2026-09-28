@@ -57,7 +57,16 @@ struct TdPsolaConfig {
     // M33 ablation: disable M13's sample-correlation phase trims, without
     // claiming to reproduce the PC's synthesis-mark-aligned join.
     bool search_join_phase = true;
+    // M40 opt-in: blend a grain-covered edge into the original time-mapped
+    // samples before PSOLA coverage ends. False preserves the old PCM exactly.
+    bool blend_uncovered_edges_m40 = false;
+    bool audit_transients_m40 = false;
 };
+
+void blend_uncovered_edges_m40(Pcm16Mono& pcm,
+    const std::vector<std::int16_t>& mapped_source,
+    const std::vector<double>& weights,
+    std::size_t fade_samples);
 
 // Evaluate the M24 three-point contour at normalized source position [0,1].
 // With use_three_point_pitch=false this is exactly config.pitch_scale.
@@ -73,6 +82,13 @@ struct TdPsolaDiagnostics {
     double duration_scale = 1.0;
     double mean_source_period = 0.0;
     double mean_target_period = 0.0;
+    // Diagnostic only: distinguish a source/grain transient from an uncovered
+    // sample or a near-zero overlap normalization denominator.
+    std::size_t uncovered_samples = 0;
+    int max_output_step = 0;
+    std::size_t max_output_step_at = 0;
+    double max_step_weight_before = 0.0;
+    double max_step_weight_after = 0.0;
 };
 
 Pcm16Mono td_psola_resynthesize(

@@ -31,6 +31,7 @@ struct M15UnitDiagnostics {
     SegSpanLayout layout;
     std::vector<M15RunDiagnostics> runs;
     std::vector<OlaJoinDiagnostics> internal_joins;
+    std::vector<std::size_t> internal_join_centers;
     int left_period_hint = 0;
     int right_period_hint = 0;
 };

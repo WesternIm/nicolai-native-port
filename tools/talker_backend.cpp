@@ -14,6 +14,7 @@ Profile parse_profile(const std::string& value) {
     if (value == "m36-local") return Profile::M36Local;
     if (value == "m36-chain") return Profile::M36Chain;
     if (value == "m38-boundary") return Profile::M38Boundary;
+    if (value == "m40-transient") return Profile::M40Transient;
     throw std::runtime_error("unknown test profile");
 }
 const char* profile_name(Profile profile) {
@@ -22,6 +23,7 @@ const char* profile_name(Profile profile) {
     case Profile::M36Local: return "m36-local";
     case Profile::M36Chain: return "m36-chain";
     case Profile::M38Boundary: return "m38-boundary";
+    case Profile::M40Transient: return "m40-transient";
     }
     throw std::runtime_error("unknown test profile");
 }
@@ -34,6 +36,8 @@ LegacyTimingPolicy timing_policy(Profile profile) {
     }
     if (profile == Profile::M38Boundary)
         policy.word_boundary_speech_share_m38 = 0.5;
+    if (profile == Profile::M40Transient)
+        policy.blend_uncovered_edges_m40 = true;
     return policy;
 }
 void set_profile_environment(Profile profile) {

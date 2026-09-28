@@ -82,6 +82,7 @@ jobs:
           python tools/test_join_audit.py
           python tools/test_talker_pair_alignment.py
           python tools/test_spectral_balance_m39.py
+          python tools/test_transients_m40.py
 
   windows-test-package:
     runs-on: windows-latest

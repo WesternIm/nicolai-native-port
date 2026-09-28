@@ -10,12 +10,18 @@ int main() {
     require(parse_profile("m36-local") == Profile::M36Local);
     require(parse_profile("m36-chain") == Profile::M36Chain);
     require(parse_profile("m38-boundary") == Profile::M38Boundary);
+    require(parse_profile("m40-transient") == Profile::M40Transient);
     const auto stable = timing_policy(Profile::Stable);
     require(!stable.use_stateful_tds_m34 && !stable.shared_phone_duration_m34);
     require(stable.word_boundary_speech_share_m38 == 0.0);
+    require(!stable.blend_uncovered_edges_m40);
     const auto m38 = timing_policy(Profile::M38Boundary);
     require(!m38.use_stateful_tds_m34 && !m38.shared_phone_duration_m34);
     require(m38.word_boundary_speech_share_m38 == 0.5);
+    require(!m38.blend_uncovered_edges_m40);
+    const auto m40 = timing_policy(Profile::M40Transient);
+    require(m40.blend_uncovered_edges_m40 && !m40.use_stateful_tds_m34);
+    require(m40.word_boundary_speech_share_m38 == 0.0);
     for (auto profile : {Profile::M36Local, Profile::M36Chain}) {
         const auto experimental = timing_policy(profile);
         require(experimental.use_stateful_tds_m34 && experimental.shared_phone_duration_m34);
