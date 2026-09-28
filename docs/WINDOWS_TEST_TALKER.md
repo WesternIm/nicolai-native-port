@@ -22,11 +22,11 @@ defaults remain unchanged; the shared frontend correction below applies to all
 port callers. Cancellation/timeout kills only that owned child, never
 an existing original server. The window remains responsive when SAPI stalls.
 
-The original mode is implemented, but successful original audio is NOT proven
-on this host: a bounded real run enumerated/selected Nicolai then timed out at
-`original_sapi_stage=set-rate` before Speak, reproducing the earlier startup
-problem. Do not call this an original-versus-port PCM parity result. Port
-playback is independent of that original installation failure.
+Original SAPI is intermittent on this host. User-owned GUI jobs have produced
+original WAVs, while later independent bounded runs stalled at
+`original_sapi_stage=set-rate` before Speak. A fresh original job must succeed
+before treating a new comparison as paired evidence. Port playback is
+independent of this original installation issue.
 
 ## Build and package
 
@@ -56,9 +56,9 @@ python tools/test_windows_talker.py --exe build-talker/Release/NicolaiTalker.exe
 ```
 
 The GUI-job path synthesizes the actual startup phrase in each of the three
-port modes. Child-render WAVs for three synthetic phrases (simple, startup and
-initial-vowel regression) are byte-identical to the established batch renderer
-for each profile: nine WAV comparisons. Stable differs from M36 local,
+port modes. Child-render WAVs for four synthetic phrases (simple, startup,
+initial-vowel and initial-u regressions) are byte-identical to the established
+batch renderer for each profile: twelve WAV comparisons. Stable differs from M36 local,
 so the profile selector is not comparing stable output against itself. This
 is wrapper/profile parity, not new acoustic progress or a 22-phrase oracle.
 Missing input, invalid profiles, Cyrillic/space-containing input/output paths,
@@ -94,7 +94,24 @@ replacement phrase. Local x64 Debug 30/30 and x86 Release 31/31 passed after the
 fix, as did the three real GUI jobs and nine CLI/batch WAV comparisons. All 22
 stable WAVs from the existing UTF-8 A/B corpus remain byte-identical to the
 pre-fix baseline. This fixes synthesis coverage; it does not establish closer
-acoustic parity with the original. Original SAPI startup remains unverified.
+acoustic parity with the original. See the newer M37 note for the initial-u
+regression, join instrumentation and paired gap audit.
+
+## M37 acoustic triage (2026-09-28)
+
+The shared frontend now selects a catalog-supported `# -> u1` for an initial
+unstressed у instead of unavailable `# -> u4`. It removes the synthesis error
+on the user's longer phrase without changing the 22 existing stable corpus
+WAVs. The stable renderer reports final-PCM join coordinates and overlap/trim/
+correlation diagnostics; these are read-only and do not change samples. The
+GUI discards its current-WAV association when the engine is changed and uses
+profile-specific suggested Save WAV names, preventing accidental mislabeled
+A/B recordings. `--ui-job-test` covers this reset.
+
+The analysis method, three small paired results, and explicit limits are in
+[`M37_ACOUSTIC_TRIAGE.md`](M37_ACOUSTIC_TRIAGE.md). This checkpoint improves
+coverage and diagnosis, **not yet audible acoustic parity**. Do not smooth or
+remove every quiet interval: some are expected stop closures or word pauses.
 
 ## User data and feedback
 

@@ -59,6 +59,7 @@ def main():
                 "test": "Мама мыла раму.",
                 "startup": "Привет! Это Николай. Проверяем голос и акустику.",
                 "initial": "Акусти\u0301ка. Аппара\u0301т. Оборо\u0301на. Огоро\u0301д. А\u0301том. Молоко\u0301.",
+                "street": "На улице было тихо. Уговори\u0301л друга выйти.",
             }
             corpus = temp / "corpus.tsv"
             corpus.write_text("".join(f"{name}\t{phrase}\n" for name, phrase in cases.items()), encoding="utf-8")
@@ -74,9 +75,13 @@ def main():
                 if profile == "m36-local": env["NICOLAI_M36_TRANSITION_EXECUTOR"] = "1"
                 if profile == "m36-chain": env["NICOLAI_M36_CHAIN_EXECUTOR"] = "1"
                 target = temp / f"batch-{profile}"
-                subprocess.run([str(args.batch.resolve()), str(args.voice / "nicolai16.dat"),
-                                str(args.voice / "exc_rus.txt"), str(args.voice / "abb_rus.txt"),
-                                str(corpus), str(target)], capture_output=True, check=True, timeout=65, env=env)
+                batch = subprocess.run([str(args.batch.resolve()), str(args.voice / "nicolai16.dat"),
+                                        str(args.voice / "exc_rus.txt"), str(args.voice / "abb_rus.txt"),
+                                        str(corpus), str(target)], capture_output=True, check=True, timeout=65, env=env)
+                for name in cases:
+                    assert (target / f"{name}.wav").is_file(), (profile, name,
+                        batch.stdout.decode("utf-8", errors="replace")[-1200:],
+                        batch.stderr.decode("utf-8", errors="replace")[-1200:])
                 for name, phrase in cases.items():
                     text.write_text(phrase, encoding="utf-8")
                     output = temp / f"{profile}-{name}.wav"
@@ -85,11 +90,22 @@ def main():
                     with wave.open(str(output)) as wav:
                         assert (wav.getnchannels(), wav.getsampwidth(), wav.getframerate()) == (1, 2, 16000)
                         assert wav.getnframes() > 0
+                        frames = wav.getnframes()
+                    joins = [line.removeprefix("join=").split(",") for line in
+                             result.stdout.decode("utf-8", errors="replace").splitlines()
+                             if line.startswith("join=")]
+                    if profile == "stable":
+                        assert joins and all(len(join) == 7 for join in joins), (profile, name)
+                        assert all(0 <= int(join[2]) < frames for join in joins), (profile, name)
+                        assert all(int(joins[i][2]) <= int(joins[i + 1][2])
+                                   for i in range(len(joins) - 1)), (profile, name)
+                    else:
+                        assert not joins, (profile, name)
                     assert output.read_bytes() == (target / f"{name}.wav").read_bytes(), (profile, name)
                     if name == "test":
                         hashes[profile] = hashlib.sha256(output.read_bytes()).hexdigest()
             assert hashes["stable"] != hashes["m36-local"], "experimental mode is accidentally stable"
-            print("local voice: startup GUI job and 3 phrases x 3 profiles pass; child WAVs match batch byte-for-byte")
+            print("local voice: startup GUI job and 4 phrases x 3 profiles pass; child WAVs match batch byte-for-byte")
     if args.zip:
         with zipfile.ZipFile(args.zip) as package:
             assert set(package.namelist()) == {"NicolaiTalker.exe", "README.txt", "build.json"}

@@ -231,6 +231,9 @@ std::string select_vowel_phone(std::uint32_t cp, bool soft_context,
             return soft_context ? "O0" : "o0"; // ё is normally stressed; defensive fallback
         case U'у':
             if (soft_context) return "U4";
+            // u4 is an interior reduced form: the recorded voice has # -> u1
+            // but no # -> u4. Keep stressed/unreduced у on the full u0 path.
+            if (word_initial) return "u1";
             return pre ? "u1" : "u4";
         case U'ю': return "U4";
         case U'ы': return pre ? "y1" : "y4";

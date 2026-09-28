@@ -44,6 +44,18 @@ int main() {
     auto full = nicolai::russian_text_to_nicolai_phones("акусти\xCC\x81ку", unreduced);
     require(full.valid && full.phones[1] == "a0");
 
+    // Initial reduced у has a recorded # -> u1 entry; # -> u4 is absent.
+    // Keep the non-initial and stressed paths independent of this rule.
+    auto street = front("улице");
+    require(street.valid && street.words[0].stress_source == "heuristic");
+    require(street.phones.size() > 2 && street.phones[1] == "u1");
+    auto remote_u = front("уговори\xCC\x81л");
+    require(remote_u.valid && remote_u.phones[1] == "u1");
+    auto stressed_u = front("у\xCC\x81тро");
+    require(stressed_u.valid && stressed_u.phones[1] == "u0");
+    auto full_u = nicolai::russian_text_to_nicolai_phones("уговори\xCC\x81л", unreduced);
+    require(full_u.valid && full_u.phones[1] == "u0");
+
     // Voicing/devoicing assimilation.
     expect("сказка", {"#","s","k","a0","s","k","a4","#"});
     expect("вокзал", {"#","v","a1","g","z","a0","l","#"});

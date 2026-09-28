@@ -1157,8 +1157,12 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
             out.pcm.samples.insert(out.pcm.samples.end(),rendered[i].samples.begin(),rendered[i].samples.end());
             continue;
         }
+        const auto before=out.pcm.samples.size();
         out.pcm=hann_ola_join(out.pcm,rendered[i],lp,rp,&jd,policy.search_join_phase);
         if(!jd.valid){out.error="join_failed";return out;}
+        const auto center_offset=std::min(before,jd.left_trim+jd.overlap_samples/2);
+        out.joins.push_back({i,phones[i],before-center_offset,jd.overlap_samples,
+                             jd.left_trim,jd.right_trim,jd.normalized_correlation});
     }
     out.valid=true;
     return out;

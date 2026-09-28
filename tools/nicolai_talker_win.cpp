@@ -230,7 +230,13 @@ void browse(App& app) {
     CoTaskMemFree(item);
 }
 void save(App& app) {
-    wchar_t destination[32768] = L"nicolai-test.wav";
+    wchar_t destination[32768]{};
+    const wchar_t* suggested[]{L"nicolai-stable.wav", L"nicolai-m36-local.wav",
+                               L"nicolai-m36-chain.wav", L"nicolai-original-sapi.wav"};
+    const LRESULT selected = SendMessageW(app.profile, CB_GETCURSEL, 0, 0);
+    if (selected < 0 || selected > 3) throw std::runtime_error("Choose a synthesis profile before saving.");
+    const std::wstring filename(suggested[selected]);
+    std::copy(filename.begin(), filename.end(), destination);
     OPENFILENAMEW dialog{}; dialog.lStructSize = sizeof(dialog);
     dialog.hwndOwner = app.window;
     dialog.lpstrFilter = L"WAV audio\0*.wav\0\0";
@@ -335,6 +341,15 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wparam, LPARAM lp
             reinterpret_cast<MINMAXINFO*>(lparam)->ptMinTrackSize = {740, 450}; return 0;
         case WM_TIMER: poll(*app); return 0;
         case WM_COMMAND:
+            if (LOWORD(wparam) == kProfile && HIWORD(wparam) == CBN_SELCHANGE) {
+                // A selected engine is not proof that the previous WAV came
+                // from it. Keep the file in TestRuns but require a fresh job.
+                PlaySoundW(nullptr, nullptr, 0);
+                app->wav.clear();
+                controls(*app, false);
+                status(*app, L"Режим изменён. Нажми «Произнести», чтобы получить новый WAV.");
+                return 0;
+            }
             if (HIWORD(wparam) != BN_CLICKED) break;
             switch (LOWORD(wparam)) {
             case kSpeak: if (!app->child) start_job(*app); break;
@@ -385,10 +400,15 @@ int ui(HINSTANCE instance, bool smoke, const fs::path& test_voice = {}, Profile 
                 }
                 Sleep(20);
             }
-            const bool ok = !app.child && !app.wav.empty() &&
+            const bool rendered = !app.child && !app.wav.empty() &&
                 IsWindowEnabled(app.save) && IsWindowEnabled(app.replay) && IsWindowEnabled(app.speak);
+            SendMessageW(app.profile, CB_SETCURSEL, (static_cast<int>(test_profile) + 1) % 4, 0);
+            SendMessageW(window, WM_COMMAND, MAKEWPARAM(kProfile, CBN_SELCHANGE),
+                         reinterpret_cast<LPARAM>(app.profile));
+            const bool reset = app.wav.empty() && !IsWindowEnabled(app.save) &&
+                !IsWindowEnabled(app.replay) && IsWindowEnabled(app.speak);
             stop_job(app); DestroyWindow(window);
-            return ok ? 0 : 1;
+            return rendered && reset ? 0 : 1;
         }
         const std::wstring sample = L"Проверка: ёжик, кавычки «текст» и путь C:\\Голос\\";
         SetWindowTextW(app.text, sample.c_str());
@@ -426,6 +446,11 @@ int render_job(int count, wchar_t** arguments) {
         << "\ninitial=" << result.m36_initial_paths << "\ncross=" << result.m36_cross_paths
         << "\nterminal_flushes=" << result.m36_terminal_flushes
         << "\nfallbacks=" << result.m36_fallbacks << '\n';
+    for (const auto& join : result.joins)
+        std::cout << "join=" << join.shared_phone_index << ',' << join.shared_phone
+                  << ',' << join.center_sample
+                  << ',' << join.overlap_samples << ',' << join.left_trim
+                  << ',' << join.right_trim << ',' << join.normalized_correlation << '\n';
     return 0;
 }
 void render_original(const fs::path& text_file, const fs::path& output) {
