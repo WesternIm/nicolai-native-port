@@ -81,6 +81,7 @@ jobs:
           python tools/test_m36_phone_features.py
           python tools/test_join_audit.py
           python tools/test_talker_pair_alignment.py
+          python tools/test_spectral_balance_m39.py
 
   windows-test-package:
     runs-on: windows-latest
