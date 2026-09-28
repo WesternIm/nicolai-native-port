@@ -79,6 +79,7 @@ jobs:
         run: |
           python tools/test_m35_metrics.py
           python tools/test_m36_phone_features.py
+          python tools/test_join_audit.py
 
   windows-test-package:
     runs-on: windows-latest

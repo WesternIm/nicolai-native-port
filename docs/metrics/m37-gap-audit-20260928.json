@@ -1,0 +1,43 @@
+{
+  "schema": "nicolai-m37-gap-audit-summary-v1",
+  "method": "10 ms frame RMS below max(60 PCM units, 2% of each WAV's maximum frame RMS), within active samples, minimum interval 30 ms",
+  "limitation": "Three short, unaligned local pairs; quiet intervals include natural stop closures and do not prove join causality or perceptual defect. Raw text and WAVs are not committed.",
+  "pairs": [
+    {
+      "id": "startup",
+      "original_sha256": "f09b0d5d01c521dcd528f42420cc56fe2d318061a8e31653e1947c228217645f",
+      "stable_sha256": "7c706aca6768f0b76f46ab9ee53c18fd67fcba203dfe159714b1fc4a52554f63",
+      "original_duration_ms": 4261.4,
+      "stable_duration_ms": 4205.4,
+      "original_quiet_intervals": 9,
+      "stable_quiet_intervals": 13,
+      "original_quiet_total_ms": 1240,
+      "stable_quiet_total_ms": 1370,
+      "stable_join_count": 46
+    },
+    {
+      "id": "short-repetition",
+      "original_sha256": "0710b17035a4f2934640cfe70ba31f9f4e8e56d10f2cd8bb6302283b5623d2d4",
+      "stable_sha256": "95caf9ab2357e696ba262838bf34f3aa9397b883625d27d9e37293af1bd6d307",
+      "original_duration_ms": 1600.4,
+      "stable_duration_ms": 1432.2,
+      "original_quiet_intervals": 2,
+      "stable_quiet_intervals": 4,
+      "original_quiet_total_ms": 220,
+      "stable_quiet_total_ms": 270,
+      "stable_join_count": 13
+    },
+    {
+      "id": "short-exclamation",
+      "original_sha256": "77cd690bdc4b31286a90e9949142e81f8a26f60d3a7068c7957cfe6979d3e181",
+      "stable_sha256": "9a51a1c421b0e95eda418319540d7e5273b4861e0372e705f420f899e08116d3",
+      "original_duration_ms": 1028.8,
+      "stable_duration_ms": 1117.8,
+      "original_quiet_intervals": 1,
+      "stable_quiet_intervals": 2,
+      "original_quiet_total_ms": 40,
+      "stable_quiet_total_ms": 150,
+      "stable_join_count": 6
+    }
+  ]
+}

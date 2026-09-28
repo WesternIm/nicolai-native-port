@@ -342,11 +342,25 @@ struct LegacyTimedDiphone {
     double right_energy_gain = 1.0;
 };
 
+// Read-only telemetry for the stable renderer's joins. The sample position is
+// the center of the actual overlap in the final PCM, before output gain and
+// terminal silence (neither changes the position). No synthesis choice uses it.
+struct LegacyRenderedJoin {
+    std::size_t shared_phone_index = 0;
+    std::string shared_phone;
+    std::size_t center_sample = 0;
+    std::size_t overlap_samples = 0;
+    std::size_t left_trim = 0;
+    std::size_t right_trim = 0;
+    double normalized_correlation = 0.0;
+};
+
 struct DiphoneChainLegacyResult {
     bool valid = false;
     std::string error;
     Pcm16Mono pcm;
     std::vector<LegacyTimedDiphone> timings;
+    std::vector<LegacyRenderedJoin> joins;
     std::size_t tds_intervals_m34 = 0, tds_grains_m34 = 0, tds_dropped_m34 = 0;
     int tds_final_carry_m34 = 0;
     std::int64_t tds_target_samples_m35 = 0, tds_budget_samples_m35 = 0, tds_emitted_samples_m35 = 0;
