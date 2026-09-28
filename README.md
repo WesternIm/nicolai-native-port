@@ -1,5 +1,11 @@
 # Nicolai Native Port — M36 acoustic checkpoint
 
+For a ready-to-test Windows frontend, see [original PC voice and port in one
+EXE](docs/WINDOWS_TEST_TALKER.md). The CI artifact `Nicolai-Test-win32` contains
+the standalone test UI without proprietary voice data. Stable is the default;
+experimental modes are clearly labeled, and original SAPI requires a working
+installed Nicolai voice.
+
 The corrected opt-in local M36 renderer reduces MFCC-DTW from 75.3109 to
 71.2582 against the same 22 original WAVs (19 phrase improvements). Caller
 step-slot rotation, dropped-source markers and cross source coordinates were
@@ -14,6 +20,11 @@ See [acoustic evidence and reproduction](docs/M36_CHAIN_ACOUSTICS.md),
 [scalar metrics](docs/metrics/m36-chain-acoustic-20260927.json), and
 [corrected caller bookkeeping](docs/M36_CALLER_BOOKKEEPING.md).
 No proprietary inputs or WAVs are committed.
+
+The [next route-capture checkpoint](docs/M36_ROUTE_CAPTURE.md) adds original
+caller instrumentation, compiled-portable route auditing and bounded startup
+diagnostics. Its contracts pass, but live capture is blocked at SAPI rate
+initialization; this is not a new acoustic improvement or PCM-parity result.
 
 ---
 

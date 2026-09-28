@@ -229,7 +229,13 @@ Expected use:
 The runner now has bounded SAPI warm-up/trigger timeouts, cleans up the debugger
 on failure, supports `-SkipBuild`, and accepts a preconfigured NMake x86 build.
 On the 2026-09-27 host the installed SAPI token was present, but the legacy
-Acapela runtime hung on its first `Speak` before `ettsengine.exe` appeared.
+Acapela runtime stalled during initialization. Later stage tracing pinpoints
+`SAPI.SpVoice.Rate = 0`, before `Speak`; direct `/nogui` server startup exits
+normally with code 0 after 250 ms. The SAPI launcher waits indefinitely for
+the named `ETTSSDK Ready` event after successful process creation, without
+checking whether that child has exited. The reason for the server exit remains
+unresolved; see `M36_ROUTE_CAPTURE.md` for the bounded startup tracer and new
+caller-route capture/audit mode.
 Consequently Gate B remains unavailable on that host; this is not recorded as a
 phone-feature mismatch.
 

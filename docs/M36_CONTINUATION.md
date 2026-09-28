@@ -1,5 +1,10 @@
 # M36 continuation — original phone-feature and runtime state recovery
 
+**Route-capture checkpoint (2026-09-27):** `m36-runtime-route-oracle` adds
+original caller instrumentation and a compiled-portable route audit. See
+`M36_ROUTE_CAPTURE.md`. No live route capture or new acoustic improvement is
+claimed: this host hangs at `SAPI.SpVoice.Rate = 0`, before `Speak`.
+
 **Superseding checkpoint (2026-09-27):** branch `m36-acoustic-chain`.
 The old step-slot/drop assertions and previous cross end-boundary were wrong.
 See `M36_CALLER_BOOKKEEPING.md` for corrected dataflow and
@@ -58,8 +63,10 @@ The resulting phone-record audit must contain nonzero records with zero invalid
 and zero mismatched records. CI cannot execute these two proprietary-runtime
 gates but does build the Win32 x86 tooling and run all portable contracts.
 The 2026-09-27 host exposed the Nicolai SAPI token, but the old Acapela runtime
-hung on its first warm-up `Speak` before `ettsengine.exe` appeared. The capture
-runner now times out and cleans up this failure instead of hanging indefinitely.
+hung during voice initialization. Stage tracing later narrowed this to
+`SAPI.SpVoice.Rate = 0`, before `Speak`. Direct server startup exited normally
+with code 0 after 250 ms, without becoming ready. The capture runner times out
+and preserves this failure evidence; the underlying startup cause is unresolved.
 
 ## One-click A/B measurement path
 

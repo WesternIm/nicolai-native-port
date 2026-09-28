@@ -190,7 +190,7 @@ enum class VowelPosition {
 };
 
 std::string select_vowel_phone(std::uint32_t cp, bool soft_context,
-                               VowelPosition pos, bool reduction) {
+                               VowelPosition pos, bool reduction, bool word_initial) {
     cp = lower_ru(cp);
     if (!reduction || pos == VowelPosition::Stressed) {
         switch (cp) {
@@ -215,6 +215,11 @@ std::string select_vowel_phone(std::uint32_t cp, bool soft_context,
         // Akanye: unstressed о shares Nicolai's reduced а family.
         case U'а': case U'о':
             if (soft_context) return pre ? "A1" : "i4";
+            // Initial unstressed а/о uses the a1 entry form even when stress
+            // is remote. a3 remains an interior reduction: # -> a3 is absent
+            // from Nicolai's graph. This is frontend selection, not a missing
+            // diphone substitution in the renderer.
+            if (word_initial) return "a1";
             if (pre) return "a1";
             if (remote_pre) return "a3";
             if (post) return "a5";
@@ -226,6 +231,9 @@ std::string select_vowel_phone(std::uint32_t cp, bool soft_context,
             return soft_context ? "O0" : "o0"; // ё is normally stressed; defensive fallback
         case U'у':
             if (soft_context) return "U4";
+            // u4 is an interior reduced form: the recorded voice has # -> u1
+            // but no # -> u4. Keep stressed/unreduced у on the full u0 path.
+            if (word_initial) return "u1";
             return pre ? "u1" : "u4";
         case U'ю': return "U4";
         case U'ы': return pre ? "y1" : "y4";
@@ -271,7 +279,7 @@ std::vector<std::string> word_to_phones(const std::vector<std::uint32_t>& w,
                 vp = only_signs_after ? VowelPosition::WordFinalUnstressed
                                       : VowelPosition::Posttonic;
             }
-            auto v = select_vowel_phone(cp, soft, vp, reduction);
+            auto v = select_vowel_phone(cp, soft, vp, reduction, i == 0);
             if (!v.empty()) out.push_back(std::move(v));
             ++vowel_ord;
             force_iotation = false;
