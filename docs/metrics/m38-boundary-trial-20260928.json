@@ -1,0 +1,30 @@
+{
+  "schema": "nicolai-m38-boundary-trial-summary-v1",
+  "method": "RMS-normalized MFCC 1..12, 10-ms hop, 20% constrained DTW; quiet below max(60 PCM units, 2% max 10-ms RMS). Aligned excess quiet sums max(0, portable gap duration minus quiet time in DTW-mapped original span) for gaps covering a # join.",
+  "caveat": "Unannotated phone boundaries and DTW warping; objective diagnostics only. Raw local WAVs, text and logs are not included.",
+  "reference_corpus": {
+    "all_phrase_count": 22,
+    "changed_multiword_ids": ["012", "013", "014", "016", "017", "018", "019", "020", "021", "022"],
+    "unchanged_phrase_count": 12,
+    "stable": {"mean_mfcc_dtw_cost": 45.0761, "duration_mae_ms": 59.72, "word_join_excess_quiet_ms": 1971.3, "word_join_gap_count": 27, "all_quiet_ms": 4160},
+    "m38_boundary_share_0_5": {"mean_mfcc_dtw_cost": 44.2014, "duration_mae_ms": 59.70, "word_join_excess_quiet_ms": 1144.0, "word_join_gap_count": 26, "all_quiet_ms": 3340, "mfcc_improved_phrases": 8},
+    "rejected_word_boundary_scale_0_2": {"mean_mfcc_dtw_cost": 41.7949, "duration_mae_ms": 273.51, "word_join_excess_quiet_ms": 350.0, "word_join_gap_count": 17, "all_quiet_ms": 2540}
+  },
+  "changed_phrase_rows": [
+    {"id": "012", "stable_shape": 38.965, "m38_shape": 37.950, "stable_duration_error_ms": 25.1, "m38_duration_error_ms": 31.0, "stable_word_excess_ms": 180.0, "m38_word_excess_ms": 110.0},
+    {"id": "013", "stable_shape": 54.075, "m38_shape": 50.211, "stable_duration_error_ms": 71.2, "m38_duration_error_ms": 74.2, "stable_word_excess_ms": 130.0, "m38_word_excess_ms": 57.8},
+    {"id": "014", "stable_shape": 35.763, "m38_shape": 34.260, "stable_duration_error_ms": -49.3, "m38_duration_error_ms": -58.9, "stable_word_excess_ms": 160.0, "m38_word_excess_ms": 70.0},
+    {"id": "016", "stable_shape": 49.306, "m38_shape": 47.483, "stable_duration_error_ms": 8.2, "m38_duration_error_ms": 10.0, "stable_word_excess_ms": 290.0, "m38_word_excess_ms": 160.0},
+    {"id": "017", "stable_shape": 45.509, "m38_shape": 47.594, "stable_duration_error_ms": -25.6, "m38_duration_error_ms": -29.1, "stable_word_excess_ms": 161.3, "m38_word_excess_ms": 101.3},
+    {"id": "018", "stable_shape": 42.253, "m38_shape": 40.494, "stable_duration_error_ms": 61.9, "m38_duration_error_ms": 73.0, "stable_word_excess_ms": 190.0, "m38_word_excess_ms": 107.4},
+    {"id": "019", "stable_shape": 47.699, "m38_shape": 46.704, "stable_duration_error_ms": -117.2, "m38_duration_error_ms": -103.1, "stable_word_excess_ms": 210.0, "m38_word_excess_ms": 120.0},
+    {"id": "020", "stable_shape": 47.324, "m38_shape": 46.098, "stable_duration_error_ms": 41.9, "m38_duration_error_ms": 36.4, "stable_word_excess_ms": 340.0, "m38_word_excess_ms": 237.5},
+    {"id": "021", "stable_shape": 57.083, "m38_shape": 56.889, "stable_duration_error_ms": -138.1, "m38_duration_error_ms": -122.5, "stable_word_excess_ms": 250.0, "m38_word_excess_ms": 150.0},
+    {"id": "022", "stable_shape": 32.784, "m38_shape": 34.331, "stable_duration_error_ms": -58.7, "m38_duration_error_ms": -58.8, "stable_word_excess_ms": 60.0, "m38_word_excess_ms": 30.0}
+  ],
+  "user_pairs": [
+    {"id": "startup", "stable_shape": 44.843, "m38_shape": 43.229, "stable_word_excess_quiet_ms": 320, "m38_word_excess_quiet_ms": 90, "stable_duration_error_ms": -56.0, "m38_duration_error_ms": -32.0},
+    {"id": "short-repetition", "stable_shape": 39.156, "m38_shape": 40.685, "stable_word_excess_quiet_ms": 30, "m38_word_excess_quiet_ms": 13.6, "stable_duration_error_ms": -168.2, "m38_duration_error_ms": -171.2},
+    {"id": "short-exclamation", "stable_shape": 50.145, "m38_shape": 45.818, "stable_word_excess_quiet_ms": 120, "m38_word_excess_quiet_ms": 90, "stable_duration_error_ms": 89.0, "m38_duration_error_ms": 96.1}
+  ]
+}

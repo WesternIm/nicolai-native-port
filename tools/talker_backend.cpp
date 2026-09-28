@@ -13,6 +13,7 @@ Profile parse_profile(const std::string& value) {
     if (value == "stable") return Profile::Stable;
     if (value == "m36-local") return Profile::M36Local;
     if (value == "m36-chain") return Profile::M36Chain;
+    if (value == "m38-boundary") return Profile::M38Boundary;
     throw std::runtime_error("unknown test profile");
 }
 const char* profile_name(Profile profile) {
@@ -20,16 +21,19 @@ const char* profile_name(Profile profile) {
     case Profile::Stable: return "stable";
     case Profile::M36Local: return "m36-local";
     case Profile::M36Chain: return "m36-chain";
+    case Profile::M38Boundary: return "m38-boundary";
     }
     throw std::runtime_error("unknown test profile");
 }
 LegacyTimingPolicy timing_policy(Profile profile) {
     profile_name(profile); // Reject invalid enum values, never default silently.
     LegacyTimingPolicy policy;
-    if (profile != Profile::Stable) {
+    if (profile == Profile::M36Local || profile == Profile::M36Chain) {
         policy.use_stateful_tds_m34 = true;
         policy.shared_phone_duration_m34 = true;
     }
+    if (profile == Profile::M38Boundary)
+        policy.word_boundary_speech_share_m38 = 0.5;
     return policy;
 }
 void set_profile_environment(Profile profile) {

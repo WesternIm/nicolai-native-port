@@ -57,6 +57,7 @@ def main():
             # Match the existing A/B path exactly, not a newly invented recipe.
             cases = {
                 "test": "Мама мыла раму.",
+                "single": "Мама.",
                 "startup": "Привет! Это Николай. Проверяем голос и акустику.",
                 "initial": "Акусти\u0301ка. Аппара\u0301т. Оборо\u0301на. Огоро\u0301д. А\u0301том. Молоко\u0301.",
                 "street": "На улице было тихо. Уговори\u0301л друга выйти.",
@@ -64,7 +65,9 @@ def main():
             corpus = temp / "corpus.tsv"
             corpus.write_text("".join(f"{name}\t{phrase}\n" for name, phrase in cases.items()), encoding="utf-8")
             hashes = {}
-            for profile in ("stable", "m36-local", "m36-chain"):
+            single_word_hashes = {}
+            punctuation_hashes = {}
+            for profile in ("stable", "m36-local", "m36-chain", "m38-boundary"):
                 subprocess.run([str(args.exe.resolve()), "--ui-job-test", str(args.voice.resolve()), profile],
                                capture_output=True, timeout=70, check=True)
                 contaminated = dict(os.environ, NICOLAI_M36_TRANSITION_EXECUTOR="1", NICOLAI_M36_CHAIN_EXECUTOR="1")
@@ -74,6 +77,7 @@ def main():
                         env.pop(name)
                 if profile == "m36-local": env["NICOLAI_M36_TRANSITION_EXECUTOR"] = "1"
                 if profile == "m36-chain": env["NICOLAI_M36_CHAIN_EXECUTOR"] = "1"
+                if profile == "m38-boundary": env["NICOLAI_M38_BOUNDARY_SPEECH_SHARE"] = "0.5"
                 target = temp / f"batch-{profile}"
                 batch = subprocess.run([str(args.batch.resolve()), str(args.voice / "nicolai16.dat"),
                                         str(args.voice / "exc_rus.txt"), str(args.voice / "abb_rus.txt"),
@@ -94,7 +98,7 @@ def main():
                     joins = [line.removeprefix("join=").split(",") for line in
                              result.stdout.decode("utf-8", errors="replace").splitlines()
                              if line.startswith("join=")]
-                    if profile == "stable":
+                    if profile in ("stable", "m38-boundary"):
                         assert joins and all(len(join) == 7 for join in joins), (profile, name)
                         assert all(0 <= int(join[2]) < frames for join in joins), (profile, name)
                         assert all(int(joins[i][2]) <= int(joins[i + 1][2])
@@ -102,10 +106,17 @@ def main():
                     else:
                         assert not joins, (profile, name)
                     assert output.read_bytes() == (target / f"{name}.wav").read_bytes(), (profile, name)
-                    if name == "test":
+                    if name == "startup":
                         hashes[profile] = hashlib.sha256(output.read_bytes()).hexdigest()
+                    if name == "single":
+                        single_word_hashes[profile] = hashlib.sha256(output.read_bytes()).hexdigest()
+                    if name == "initial":
+                        punctuation_hashes[profile] = hashlib.sha256(output.read_bytes()).hexdigest()
             assert hashes["stable"] != hashes["m36-local"], "experimental mode is accidentally stable"
-            print("local voice: startup GUI job and 4 phrases x 3 profiles pass; child WAVs match batch byte-for-byte")
+            assert hashes["stable"] != hashes["m38-boundary"], "boundary experiment is accidentally stable"
+            assert single_word_hashes["stable"] == single_word_hashes["m38-boundary"], "single word changed"
+            assert punctuation_hashes["stable"] == punctuation_hashes["m38-boundary"], "punctuation boundary changed"
+            print("local voice: startup GUI job and 5 phrases x 4 profiles pass; child WAVs match batch byte-for-byte")
     if args.zip:
         with zipfile.ZipFile(args.zip) as package:
             assert set(package.namelist()) == {"NicolaiTalker.exe", "README.txt", "build.json"}
@@ -113,7 +124,7 @@ def main():
             assert manifest["proprietary_inputs_included"] is False
             assert manifest["original_sapi_engine_included"] is False
             assert manifest["original_sapi_requires_installed_voice"] is True
-            assert manifest["profiles"] == ["stable", "m36-local", "m36-chain", "original-sapi"]
+            assert manifest["profiles"] == ["stable", "m36-local", "m36-chain", "m38-boundary", "original-sapi"]
             image = package.read("NicolaiTalker.exe")
             nt = int.from_bytes(image[0x3c:0x40], "little")
             assert int.from_bytes(image[nt + 4:nt + 6], "little") == 0x14c

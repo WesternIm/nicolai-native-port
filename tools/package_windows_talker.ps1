@@ -42,7 +42,7 @@ try {
         architecture = 'Windows x86 (also runs on x64)'
         configuration = 'Release, static MSVC runtime'
         exe_sha256 = $hash
-        profiles = @('stable', 'm36-local', 'm36-chain', 'original-sapi')
+        profiles = @('stable', 'm36-local', 'm36-chain', 'm38-boundary', 'original-sapi')
         proprietary_inputs_included = $false
         original_sapi_engine_included = $false
         original_sapi_requires_installed_voice = $true

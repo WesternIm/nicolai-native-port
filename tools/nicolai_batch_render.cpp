@@ -59,6 +59,7 @@ int main(int argc,char**argv){
    if(const char* v=std::getenv("NICOLAI_PHONE_SCALE")) policy.phone_duration_scale=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_UTTERANCE_BOUNDARY_SCALE")) policy.utterance_boundary_scale=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_WORD_BOUNDARY_SCALE")) policy.word_boundary_scale=std::atof(v);
+   if(const char* v=std::getenv("NICOLAI_M38_BOUNDARY_SPEECH_SHARE")) policy.word_boundary_speech_share_m38=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_COMMA_BOUNDARY_SCALE")) policy.comma_boundary_scale=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_WORDSTR_CONTOUR_STRENGTH")) policy.wordstr_contour_strength=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_PHONE_SIDE_STRENGTH")) policy.phone_side_strength=std::atof(v);
