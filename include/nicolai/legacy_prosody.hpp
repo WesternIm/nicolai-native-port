@@ -165,6 +165,12 @@ struct LegacyTimingPolicy {
     double weak_punctuation_boundary_scale = 1.20;
     double strong_punctuation_boundary_scale = 1.60;
 
+    // M38 experiment: keep the calibrated duration of each internal plain
+    // word-boundary diphone, but allocate less of it to the # half and more to
+    // its spoken-phone half. Zero is the stable renderer's exact old path.
+    // Never applies to punctuation, utterance edges, or stateful M36.
+    double word_boundary_speech_share_m38 = 0.0;
+
     // M21: relative utterance-position contour recovered from wordstr.par
     // indices 7/12/17.  The raw legacy contour is normalized over the words
     // in the utterance so this stage changes local pacing without reintroducing

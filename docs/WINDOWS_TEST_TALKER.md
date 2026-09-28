@@ -6,8 +6,9 @@ playback/stop/replay, Save WAV and access to per-job logs. It is built as x86 so
 the original installed 32-bit Nicolai token is visible, and runs on x86/x64
 Windows. The static Release runtime avoids a separate VC++ runtime install.
 
-Four selections are exposed: stable native port (default), experimental M36
-local, experimental M36 chain, and the installed original Nicolai via SAPI5.
+Five selections are exposed: stable native port (default), experimental M36
+local, experimental M36 chain, experimental M38 connected-word timing, and the
+installed original Nicolai via SAPI5.
 The port modes use three external voice files directly and do not load Elan
 DLLs. The original mode uses only a matching Nicolai/Elan Russian token; it
 never silently substitutes another installed voice or falls back to the port.
@@ -55,10 +56,10 @@ python tools/test_windows_talker.py --exe build-talker/Release/NicolaiTalker.exe
   --check-original
 ```
 
-The GUI-job path synthesizes the actual startup phrase in each of the three
-port modes. Child-render WAVs for four synthetic phrases (simple, startup,
-initial-vowel and initial-u regressions) are byte-identical to the established
-batch renderer for each profile: twelve WAV comparisons. Stable differs from M36 local,
+The GUI-job path synthesizes the actual startup phrase in each of the four
+port modes. Child-render WAVs for five synthetic phrases (single word, simple,
+startup, initial-vowel and initial-u regressions) are byte-identical to the
+established batch renderer for each profile: twenty WAV comparisons. Stable differs from M36 local and M38,
 so the profile selector is not comparing stable output against itself. This
 is wrapper/profile parity, not new acoustic progress or a 22-phrase oracle.
 Missing input, invalid profiles, Cyrillic/space-containing input/output paths,
@@ -112,6 +113,18 @@ The analysis method, three small paired results, and explicit limits are in
 [`M37_ACOUSTIC_TRIAGE.md`](M37_ACOUSTIC_TRIAGE.md). This checkpoint improves
 coverage and diagnosis, **not yet audible acoustic parity**. Do not smooth or
 remove every quiet interval: some are expected stop closures or word pauses.
+
+## M38 opt-in connected-word trial (2026-09-28)
+
+The M38 profile keeps the stable diphone renderer but redistributes each plain
+internal word-boundary diphone's calibrated target from its `#` half to its
+spoken half. Punctuation and utterance edges are untouched; the stable profile
+remains byte-identical. It is an A/B candidate, not a proven replacement. On
+10 multiword reference phrases, aligned excess quiet at word joins fell from
+1971 to 1144 ms while duration MAE stayed about 59.7 ms. MFCC-DTW improved in
+8/10 phrases, but two worsened, and one of three user short pairs also worsened.
+See [`M38_BOUNDARY_TRIAL.md`](M38_BOUNDARY_TRIAL.md) for exact method, scalar
+evidence and limitations. The pitch/intonation gap remains open.
 
 ## User data and feedback
 

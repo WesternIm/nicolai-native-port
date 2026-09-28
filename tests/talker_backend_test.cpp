@@ -9,8 +9,13 @@ int main() {
     require(parse_profile("stable") == Profile::Stable);
     require(parse_profile("m36-local") == Profile::M36Local);
     require(parse_profile("m36-chain") == Profile::M36Chain);
+    require(parse_profile("m38-boundary") == Profile::M38Boundary);
     const auto stable = timing_policy(Profile::Stable);
     require(!stable.use_stateful_tds_m34 && !stable.shared_phone_duration_m34);
+    require(stable.word_boundary_speech_share_m38 == 0.0);
+    const auto m38 = timing_policy(Profile::M38Boundary);
+    require(!m38.use_stateful_tds_m34 && !m38.shared_phone_duration_m34);
+    require(m38.word_boundary_speech_share_m38 == 0.5);
     for (auto profile : {Profile::M36Local, Profile::M36Chain}) {
         const auto experimental = timing_policy(profile);
         require(experimental.use_stateful_tds_m34 && experimental.shared_phone_duration_m34);
@@ -19,6 +24,9 @@ int main() {
         require(std::string(std::getenv("NICOLAI_M36_CHAIN_EXECUTOR")) == (profile == Profile::M36Chain ? "1" : "0"));
     }
     set_profile_environment(Profile::Stable);
+    require(std::string(std::getenv("NICOLAI_M36_TRANSITION_EXECUTOR")) == "0");
+    require(std::string(std::getenv("NICOLAI_M36_CHAIN_EXECUTOR")) == "0");
+    set_profile_environment(Profile::M38Boundary);
     require(std::string(std::getenv("NICOLAI_M36_TRANSITION_EXECUTOR")) == "0");
     require(std::string(std::getenv("NICOLAI_M36_CHAIN_EXECUTOR")) == "0");
     bool rejected = false;

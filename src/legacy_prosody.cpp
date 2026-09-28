@@ -976,6 +976,29 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
             }
         }
 
+        const double boundary_share=std::clamp(policy.word_boundary_speech_share_m38,0.0,0.75);
+        if(!policy.use_stateful_tds_m34 && boundary_share>0.0 && L>0.0 && R>0.0 &&
+           (phones[i]=="#")!=(phones[i+1]=="#")){
+            const std::size_t bi=phones[i]=="#" ? i : i+1;
+            const bool plain_word=std::any_of(boundaries.begin(),boundaries.end(),
+                [&](const FrontendBoundary& b){
+                    return b.phone_index==bi && b.kind==FrontendBoundaryKind::Word;
+                });
+            if(bi>0 && bi+1<phones.size() && plain_word){
+                const bool left_spoken=phones[i]!="#";
+                const double spoken_source=left_spoken?L:R;
+                const double boundary_source=left_spoken?R:L;
+                const double boundary_scale=std::max(0.20,u.base_scale*(1.0-boundary_share));
+                const double spoken_scale=(u.base_scale*(L+R)-boundary_source*boundary_scale)/spoken_source;
+                // Reject extreme source splits rather than change the total
+                // clock or silently clamp only one side of the balance.
+                if(spoken_scale>=0.20 && spoken_scale<=3.00){
+                    left_scale=left_spoken?spoken_scale:boundary_scale;
+                    right_scale=left_spoken?boundary_scale:spoken_scale;
+                }
+            }
+        }
+
         // M32: consume [l%d] where the PC runtime does: on the phone feature
         // record represented by each side of this diphone. Unlike M31's
         // weighted whole-unit projection, this deliberately changes the two
