@@ -67,6 +67,25 @@ earlier pYIN comparison still has sparse/unstable speech coverage; do not use
 its conditional F0 score alone for promotion. M38 remains experimental until
 listening and a larger held-out corpus justify it.
 
+## First listening feedback
+
+The user's first A/B listen found M38 and the ordinary port approximately the
+same. Fresh GUI job logs confirm that the two profiles actually rendered:
+the startup pair has 67,287 stable versus 67,670 M38 samples at 16 kHz (a
+24-ms total difference), while the short repeated pair has 22,916 versus
+22,867 samples (3 ms). The WAV hashes differ, so this is not a profile-selection
+or stale-output failure. In the startup alignment, M38 reduces several
+unneeded internal-word quiet intervals, but the two longest pauses already
+have substantial corresponding quiet in the original. This explains why the
+scalar gap metric can improve without an obvious change to the whole voice.
+
+Treat the listening result as negative evidence for promoting M38, not as a
+reason to turn its strength up blindly: this trial leaves the source voice,
+pitch and voicing trajectory untouched. The next meaningful acoustic test
+needs original-runtime phone feature/coefficient and pitch/voicing evidence,
+then an isolated renderer trial with a new A/B listen. Keep M38 opt-in and the
+stable path unchanged.
+
 ## Reproduce locally
 
 Install `tools/requirements-parity.txt` in a local Python environment and use
