@@ -1,0 +1,32 @@
+{
+  "schema": "m39-acoustic-screen-v1",
+  "date": "2026-09-28",
+  "reference": "local 22-phrase original Nicolai SAPI pack; PCM and text not committed",
+  "f0_metric": "measure_parity.py 12-bin YIN relative MAE; diagnostic without original voicing labels",
+  "split": "odd/even phrase IDs from the same pack, not independent held-out data",
+  "trials": [
+    {"name": "stable", "f0_all_percent": 13.48, "f0_odd_percent": 14.87, "f0_even_percent": 11.93, "f0_wins": 0, "f0_losses": 0, "mfcc_dtw": 52.01, "duration_mae_percent": 3.60},
+    {"name": "earlier_lift", "pitch_declination_mid": 1.00, "f0_all_percent": 14.99, "f0_odd_percent": 16.40, "f0_even_percent": 13.77, "f0_wins": 7, "f0_losses": 15, "mfcc_dtw": 51.93, "duration_mae_percent": 3.40},
+    {"name": "lower_tail", "pitch_declination_end": 0.70, "f0_all_percent": 13.89, "f0_odd_percent": 14.30, "f0_even_percent": 13.50, "f0_wins": 8, "f0_losses": 14, "mfcc_dtw": 52.42, "duration_mae_percent": 3.63},
+    {"name": "lift_and_tail", "pitch_declination_mid": 1.00, "pitch_declination_end": 0.70, "f0_all_percent": 14.45, "f0_odd_percent": 16.43, "f0_even_percent": 12.46, "f0_wins": 9, "f0_losses": 13, "mfcc_dtw": 52.42, "duration_mae_percent": 3.44},
+    {"name": "stress_105", "pitch_stressed_vowel_boost": 1.05, "f0_all_percent": 14.31, "f0_odd_percent": 15.80, "f0_even_percent": 12.89, "f0_wins": 10, "f0_losses": 12, "mfcc_dtw": 52.26, "duration_mae_percent": 3.53},
+    {"name": "stress_110", "pitch_stressed_vowel_boost": 1.10, "f0_all_percent": 15.39, "f0_odd_percent": 16.48, "f0_even_percent": 14.37, "f0_wins": 5, "f0_losses": 17, "mfcc_dtw": 53.02, "duration_mae_percent": 3.62}
+  ],
+  "spectral_screen": {
+    "phrases": 22,
+    "high_to_low_port_minus_reference_mean_db": 1.1227,
+    "high_to_low_port_minus_reference_median_db": 0.5573,
+    "phrases_port_brighter": 12,
+    "flatness_port_minus_reference_mean": 0.0068,
+    "phrases_port_flatter_spectrum": 16,
+    "caveat": "utterance-level active frames, not phone-aligned and not a breathiness score"
+  },
+  "original_feature_capture": {
+    "status": "blocked_before_synthesis",
+    "default_last_stage": "set-rate",
+    "skip_rate_last_stage": "set-volume",
+    "skip_rate_and_volume_last_stage": "set-stream",
+    "temporary_bypass_switches_retained": false
+  },
+  "decision": "No pitch, EQ or noise change promoted; stable output unchanged."
+}
