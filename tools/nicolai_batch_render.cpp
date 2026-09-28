@@ -60,6 +60,8 @@ int main(int argc,char**argv){
    if(const char* v=std::getenv("NICOLAI_UTTERANCE_BOUNDARY_SCALE")) policy.utterance_boundary_scale=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_WORD_BOUNDARY_SCALE")) policy.word_boundary_scale=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_M38_BOUNDARY_SPEECH_SHARE")) policy.word_boundary_speech_share_m38=std::atof(v);
+   if(const char* v=std::getenv("NICOLAI_M40_BLEND_UNCOVERED")) policy.blend_uncovered_edges_m40=std::atoi(v)!=0;
+   policy.audit_transients_m40=std::getenv("NICOLAI_AUDIT_TRANSIENTS")!=nullptr;
    if(const char* v=std::getenv("NICOLAI_COMMA_BOUNDARY_SCALE")) policy.comma_boundary_scale=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_WORDSTR_CONTOUR_STRENGTH")) policy.wordstr_contour_strength=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_PHONE_SIDE_STRENGTH")) policy.phone_side_strength=std::atof(v);
@@ -110,6 +112,18 @@ int main(int argc,char**argv){
    nicolai::write_wav_pcm16_mono(std::filesystem::path(argv[5])/(id+".wav"),a.pcm);
    std::cout<<"P\t"<<id<<"\t"<<a.pcm.samples.size()<<"\t"<<fr.phones.size(); for(const auto&ph:fr.phones) std::cout<<"\t"<<ph; std::cout<<"\n"; for(const auto&t:a.timings) std::cout<<"D\t"<<id<<"\t"<<t.label<<"\t"<<t.source_ms<<"\t"<<t.target_ms<<"\t"<<t.duration_scale<<"\t"<<t.left_duration_scale<<"\t"<<t.right_duration_scale<<"\t"<<t.left_energy_gain<<"\t"<<t.right_energy_gain<<"\n";
    for(const auto&j:a.joins) std::cout<<"J\t"<<id<<"\t"<<j.shared_phone_index<<"\t"<<j.shared_phone<<"\t"<<j.center_sample<<"\t"<<j.overlap_samples<<"\t"<<j.left_trim<<"\t"<<j.right_trim<<"\t"<<j.normalized_correlation<<"\n";
+   if(std::getenv("NICOLAI_AUDIT_TRANSIENTS"))
+       for(const auto&u:a.unit_transients){
+           std::cout<<"U\t"<<id<<"\t"<<u.label<<"\t"<<u.source_max_step<<"\t"<<u.source_max_step_at
+                    <<"\t"<<u.rendered_max_step<<"\t"<<u.rendered_max_step_at<<"\t"<<u.internal_joins;
+           for(std::size_t k=0;k<u.run_output_samples.size();++k)
+               std::cout<<"\trun="<<u.run_output_samples[k]<<","<<(u.run_voiced[k]?"v":"u")
+                        <<",uncovered="<<u.run_uncovered_samples[k]
+                        <<",step="<<u.run_psola_max_steps[k]<<"@"<<u.run_psola_max_step_at[k]
+                        <<",weights="<<u.run_psola_weight_before[k]<<"/"<<u.run_psola_weight_after[k];
+           for(const auto n:u.internal_join_centers) std::cout<<"\tjoin="<<n;
+           std::cout<<"\n";
+       }
   }
   return 0;
  }catch(const std::exception&e){std::cerr<<e.what()<<"\n";return 1;}

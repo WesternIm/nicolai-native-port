@@ -266,9 +266,29 @@ Pcm16Mono td_psola_piecewise_m23(
     for (std::size_t i = 0; i < target_len; ++i) {
         if (wsum[i] > 1e-8) out.samples[i] = clip16(acc[i] / wsum[i]);
         else {
+            ++d.uncovered_samples;
             const auto j = std::min<std::size_t>(source.samples.size() - 1,
                 static_cast<std::size_t>(std::floor(tm.inverse(static_cast<double>(i)))));
             out.samples[i] = source.samples[j];
+        }
+    }
+    if (pitch_config.blend_uncovered_edges_m40) {
+        std::vector<std::int16_t> mapped(target_len);
+        for (std::size_t i = 0; i < target_len; ++i) {
+            const auto j = std::min<std::size_t>(source.samples.size() - 1,
+                static_cast<std::size_t>(std::floor(tm.inverse(static_cast<double>(i)))));
+            mapped[i] = source.samples[j];
+        }
+        blend_uncovered_edges_m40(out, mapped, wsum,
+            std::min<std::size_t>(32, static_cast<std::size_t>(maxp)));
+    }
+    for (std::size_t i = 1; pitch_config.audit_transients_m40 && i < out.samples.size(); ++i) {
+        const int step = std::abs(static_cast<int>(out.samples[i]) - out.samples[i - 1]);
+        if (step > d.max_output_step) {
+            d.max_output_step = step;
+            d.max_output_step_at = i;
+            d.max_step_weight_before = wsum[i - 1];
+            d.max_step_weight_after = wsum[i];
         }
     }
     d.synthesis_marks = synth_marks.size();
@@ -425,6 +445,7 @@ Pcm16Mono resynthesize_seg_m15(
     out = rendered.front();
     for (std::size_t i = 1; i < rendered.size(); ++i) {
         OlaJoinDiagnostics jd;
+        const std::size_t before = out.samples.size();
         const double lps = td_psola_pitch_scale_at(config, 1.0);
         const double rps = td_psola_pitch_scale_at(config, 0.0);
         const int lp = right_hints[i - 1] > 0
@@ -433,7 +454,11 @@ Pcm16Mono resynthesize_seg_m15(
             ? static_cast<int>(std::lround(left_hints[i] / rps)) : 0;
         out = hann_ola_join(out, rendered[i], lp, rp, &jd, config.search_join_phase);
         if (!jd.valid) return {};
-        if (diagnostics) diagnostics->internal_joins.push_back(jd);
+        if (diagnostics) {
+            diagnostics->internal_joins.push_back(jd);
+            diagnostics->internal_join_centers.push_back(
+                before - std::min(before, jd.left_trim + jd.overlap_samples / 2));
+        }
     }
     return out;
 }
@@ -547,6 +572,7 @@ Pcm16Mono resynthesize_seg_m32_phone_sides(
     out = rendered.front();
     for (std::size_t i = 1; i < rendered.size(); ++i) {
         OlaJoinDiagnostics jd;
+        const std::size_t before = out.samples.size();
         const double den = std::max(1.0, static_cast<double>(source.samples.size()));
         const double left_pos = static_cast<double>(layout.runs[i - 1].source_end) / den;
         const double right_pos = static_cast<double>(layout.runs[i].source_begin) / den;
@@ -558,7 +584,11 @@ Pcm16Mono resynthesize_seg_m32_phone_sides(
             static_cast<int>(std::lround(left_hints[i] / right_pitch)) : 0;
         out = hann_ola_join(out, rendered[i], lp, rp, &jd, pitch_config.search_join_phase);
         if (!jd.valid) return {};
-        if (diagnostics) diagnostics->internal_joins.push_back(jd);
+        if (diagnostics) {
+            diagnostics->internal_joins.push_back(jd);
+            diagnostics->internal_join_centers.push_back(
+                before - std::min(before, jd.left_trim + jd.overlap_samples / 2));
+        }
     }
     const PiecewiseDurationMapM23 unit_tm{
         static_cast<double>(std::min(layout.split_sample_estimate, source.samples.size())),

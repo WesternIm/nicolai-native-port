@@ -12,6 +12,14 @@
 
 namespace nicolai {
 namespace {
+std::pair<int,std::size_t> max_pcm_step(const Pcm16Mono& pcm){
+    int best=0; std::size_t at=0;
+    for(std::size_t i=1;i<pcm.samples.size();++i){
+        const int step=std::abs(static_cast<int>(pcm.samples[i])-pcm.samples[i-1]);
+        if(step>best){best=step;at=i;}
+    }
+    return {best,at};
+}
 std::uint32_t le32(const std::vector<std::uint8_t>&b,std::size_t o){if(o+4>b.size())return 0;return std::uint32_t(b[o])|(std::uint32_t(b[o+1])<<8)|(std::uint32_t(b[o+2])<<16)|(std::uint32_t(b[o+3])<<24);}
 std::string phone4(std::uint32_t x){char c[5]={char(x&255),char((x>>8)&255),char((x>>16)&255),char((x>>24)&255),0};return std::string(c);}
 int first_period(const SegRunSpan&s){return s.voiced&&!s.periods.empty()?s.periods.front():0;}
@@ -1118,6 +1126,8 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         cfg.use_three_point_pitch=anchor_strength>0.0 || physical_strength>0.0 || physical_terminal_strength>0.0 || empty_strength>0.0 || single_strength>0.0 || policy.pitch_declination_strength>0.0 || std::abs(stress_boost-1.0)>1e-12;
         cfg.pitch_scale_start=ps0; cfg.pitch_scale_mid=psm; cfg.pitch_scale_end=ps1;
         cfg.search_join_phase=policy.search_join_phase;
+        cfg.blend_uncovered_edges_m40=policy.blend_uncovered_edges_m40;
+        cfg.audit_transients_m40=policy.audit_transients_m40;
         const bool side_duration=std::abs(left_scale-right_scale)>=1e-10;
         const bool side_energy=std::abs(left_energy_gain-1.0)>=1e-12 ||
                                std::abs(right_energy_gain-1.0)>=1e-12;
@@ -1142,6 +1152,23 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         }
         if(!m36_chain){
             if(pcm.samples.empty()){out.error="render_failed";return out;}
+            if(policy.audit_transients_m40){
+                const auto [source_step,source_at]=max_pcm_step(u.raw);
+                const auto [rendered_step,rendered_at]=max_pcm_step(pcm);
+                LegacyUnitTransient transient{u.label,source_step,source_at,
+                                              rendered_step,rendered_at,ud.internal_joins.size()};
+                transient.internal_join_centers=ud.internal_join_centers;
+                for(const auto&run:ud.runs){
+                    transient.run_output_samples.push_back(run.output_samples);
+                    transient.run_voiced.push_back(run.voiced);
+                    transient.run_uncovered_samples.push_back(run.psola.uncovered_samples);
+                    transient.run_psola_max_steps.push_back(run.psola.max_output_step);
+                    transient.run_psola_max_step_at.push_back(run.psola.max_output_step_at);
+                    transient.run_psola_weight_before.push_back(run.psola.max_step_weight_before);
+                    transient.run_psola_weight_after.push_back(run.psola.max_step_weight_after);
+                }
+                out.unit_transients.push_back(std::move(transient));
+            }
             rendered.push_back(std::move(pcm));
         }
         lh.push_back(ud.left_period_hint); rh.push_back(ud.right_period_hint);

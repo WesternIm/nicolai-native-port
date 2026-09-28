@@ -170,6 +170,10 @@ struct LegacyTimingPolicy {
     // its spoken-phone half. Zero is the stable renderer's exact old path.
     // Never applies to punctuation, utterance edges, or stateful M36.
     double word_boundary_speech_share_m38 = 0.0;
+    // M40 experiment: continuity at the voiced-grain/uncovered-source seam.
+    // Opt-in only; neither source marks nor target duration are changed.
+    bool blend_uncovered_edges_m40 = false;
+    bool audit_transients_m40 = false;
 
     // M21: relative utterance-position contour recovered from wordstr.par
     // indices 7/12/17.  The raw legacy contour is normalized over the words
@@ -361,12 +365,31 @@ struct LegacyRenderedJoin {
     double normalized_correlation = 0.0;
 };
 
+struct LegacyUnitTransient {
+    std::string label;
+    int source_max_step = 0;
+    std::size_t source_max_step_at = 0;
+    int rendered_max_step = 0;
+    std::size_t rendered_max_step_at = 0;
+    std::size_t internal_joins = 0;
+    std::vector<std::size_t> internal_join_centers;
+    std::vector<std::size_t> run_output_samples;
+    std::vector<bool> run_voiced;
+    std::vector<std::size_t> run_uncovered_samples;
+    std::vector<int> run_psola_max_steps;
+    std::vector<std::size_t> run_psola_max_step_at;
+    std::vector<double> run_psola_weight_before;
+    std::vector<double> run_psola_weight_after;
+};
+
 struct DiphoneChainLegacyResult {
     bool valid = false;
     std::string error;
     Pcm16Mono pcm;
     std::vector<LegacyTimedDiphone> timings;
     std::vector<LegacyRenderedJoin> joins;
+    // Read-only diagnostic; never used to select a synthesis path.
+    std::vector<LegacyUnitTransient> unit_transients;
     std::size_t tds_intervals_m34 = 0, tds_grains_m34 = 0, tds_dropped_m34 = 0;
     int tds_final_carry_m34 = 0;
     std::int64_t tds_target_samples_m35 = 0, tds_budget_samples_m35 = 0, tds_emitted_samples_m35 = 0;

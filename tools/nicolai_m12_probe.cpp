@@ -46,8 +46,9 @@ static Stats stats(const std::vector<std::int16_t>& s) {
 }
 
 int main(int argc, char** argv) {
-    if (argc < 2 || argc > 3) {
-        std::cerr << "usage: nicolai_m12_probe nicolai16.dat [out.wav]\n";
+    if (argc < 2 || (argc > 3 && (argc != 6 || std::string(argv[2]) != "--unit"))) {
+        std::cerr << "usage: nicolai_m12_probe nicolai16.dat [out.wav]\n"
+                  << "   or: nicolai_m12_probe nicolai16.dat --unit LEFT RIGHT out.wav\n";
         return 2;
     }
     const auto bytes = read_all(argv[1]);
@@ -63,6 +64,26 @@ int main(int argc, char** argv) {
 
     const auto cat = nicolai::parse_nicolai_diphone_catalog(bytes, layout);
     if (!cat.valid) { std::cerr << "diphone catalog failed: " << cat.error << "\n"; return 1; }
+
+    if (argc == 6) {
+        const auto* unit = nicolai::find_diphone(cat, argv[3], argv[4]);
+        if (!unit) { std::cerr << "requested diphone not found\n"; return 1; }
+        const auto encoded = nicolai::extract_diphone_compressed_bytes(bytes, cat, *unit);
+        const auto pcm = nicolai::decode_g711_alaw_pcm(encoded, static_cast<int>(acoustic.sample_rate));
+        if (pcm.samples.empty()) { std::cerr << "requested diphone decoded empty\n"; return 1; }
+        int max_step = 0;
+        std::size_t max_step_at = 0;
+        for (std::size_t i = 1; i < pcm.samples.size(); ++i) {
+            const int step = std::abs(static_cast<int>(pcm.samples[i]) - pcm.samples[i - 1]);
+            if (step > max_step) { max_step = step; max_step_at = i; }
+        }
+        nicolai::write_wav_pcm16_mono(argv[5], pcm);
+        std::cout << "unit=" << argv[3] << "->" << argv[4]
+                  << " samples=" << pcm.samples.size()
+                  << " max_step=" << max_step
+                  << " max_step_at=" << max_step_at << "\n";
+        return 0;
+    }
 
     std::cout << "Nicolai native-port M12 direct A-law waveform probe\n\n";
     std::cout << "sample_rate: " << acoustic.sample_rate << " Hz\n";
