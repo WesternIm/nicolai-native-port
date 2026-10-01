@@ -51,7 +51,7 @@ jobs:
       - name: Configure Win32 x86
         run: cmake -S . -B build-win32 -A Win32 -DBUILD_TESTING=ON
       - name: Build M36 Win32 contracts and capture debugger
-        run: cmake --build build-win32 --config Debug --target nicolai_m36_phone_probe legacy_phone_features_test nicolai_m36_runtime_capture legacy_runtime_state_test legacy_runtime_executor_m36_test stateful_tds_m36_test nicolai_m36_route_probe m36_route_capture_test nicolai_legacy_startup_trace legacy_startup_trace_fixture --parallel
+        run: cmake --build build-win32 --config Debug --target nicolai_m45_span_probe nicolai_m36_phone_probe legacy_phone_features_test nicolai_m36_runtime_capture legacy_runtime_state_test legacy_runtime_executor_m36_test stateful_tds_m36_test nicolai_m36_route_probe m36_route_capture_test nicolai_legacy_startup_trace legacy_startup_trace_fixture --parallel
       - name: Run portable Win32 phone-feature corpus
         shell: pwsh
         run: |
@@ -85,6 +85,7 @@ jobs:
           python tools/test_transients_m40.py
           python tools/test_join_periods_m42.py
           python tools/test_rhythm_m43.py
+          python tools/test_m45_spans.py
 
   windows-test-package:
     runs-on: windows-latest

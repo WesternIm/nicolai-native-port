@@ -6,6 +6,12 @@ the standalone test UI without proprietary voice data. Stable is the default;
 experimental modes are clearly labeled, and original SAPI requires a working
 installed Nicolai voice.
 
+The diagnostic-only [M45 original phrase-boundary route](docs/M45_ORIGINAL_SPAN_ROUTE.md)
+locates the raw separator producer in the original DLL and verifies 164
+synthetic intermediate cases with an isolated x86 probe. It corrects the old
+skip-flag interpretation to a morphology candidate count. No synthesis profile,
+GUI package, pitch strength or timing default is changed by this checkpoint.
+
 The opt-in [M44 original-lexicon checkpoint](docs/M44_LEXICON_STRESS.md) reads
 63,294 original stem records plus suffix/stress tables from local EDAT inputs.
 `m44-lexicon` inherits M43 and adds a conservative stem-stress noun/main-verb

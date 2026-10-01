@@ -58,6 +58,13 @@ For the canonical class-1 record (`q = 70,80,90,100,30`), an ordinary three-mark
 
 ## 4. Lower-level dynamic authoring span splitter
 
+M45 update: the byte called a "skip-count flag" below is the first byte of
+the per-word morphology block: its candidate count. The raw separator producer
+is the previously unexamined initial part of this same function. See
+[M45 original span route](M45_ORIGINAL_SPAN_ROUTE.md) for the complete caller
+sequence and 164 bounded original-function controls. The M31 helper remains a
+decision-only projection, not the complete function.
+
 M30 established that `0x10214f40` consumes `(/)`-bounded authoring spans. M31 moves upstream and isolates the splitter at `0x10216c70`.
 
 The effective run count includes an item when either:

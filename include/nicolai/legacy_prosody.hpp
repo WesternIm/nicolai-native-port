@@ -134,6 +134,9 @@ struct LegacyAuthoringSplitItemM31 {
     char raw_separator = 0;
     bool code_empty = true;
     bool annotated_has_left = false;
+    // M45 identifies the original byte as a morphology candidate count.
+    // This older decision-only projection means candidate_count != 0; it
+    // does not reproduce the complete one-based scan/resume loops.
     bool legacy_skip_count = false;
 };
 
