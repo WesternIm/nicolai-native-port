@@ -1,5 +1,5 @@
 #include "nicolai/russian_stress.hpp"
-#include <cassert>
+#include <cstdlib>
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -18,11 +18,33 @@ static std::vector<std::uint8_t> cp1251_fixture() {
     return {raw, raw + sizeof(raw)};
 }
 
+static void require(bool ok) {
+    if (!ok) { std::cerr << "Russian stress contract failed\n"; std::exit(EXIT_FAILURE); }
+}
+
 int main() {
     auto d = nicolai::parse_exc_rus_cp1251(cp1251_fixture());
-    assert(d.valid);
-    assert(nicolai::lookup_stress_vowel(d, "абажур").value() == 2); // а-а-У
-    assert(nicolai::lookup_stress_vowel(d, "абрикос").value() == 2); // а-и-О
-    assert(nicolai::lookup_stress_vowel(d, "абрис").value() == 0);   // А-и
+    require(d.valid);
+    require(nicolai::lookup_stress_vowel(d, "абажур") == 2); // а-а-У
+    require(nicolai::lookup_stress_vowel(d, "абрикос") == 2); // а-и-О
+    require(nicolai::lookup_stress_vowel(d, "абрис") == 0);   // А-и
+    d.stress_vowel_by_word = {{"акустика",1},{"физика",0},{"логика",0},{"рука",1},{"река",1}};
+    for (const auto* word : {"акустику","акустике","акустики","акустикой","акустикою"})
+        require(nicolai::lookup_fixed_ika_stress_m43(d, word) == 1);
+    require(nicolai::lookup_fixed_ika_stress_m43(d, "физику") == 0);
+    require(nicolai::lookup_fixed_ika_stress_m43(d, "логику") == 0);
+    for (const auto* word : {"руку","реку","неизвестику","техника","акустический","мини-акустику"})
+        require(!nicolai::lookup_fixed_ika_stress_m43(d, word));
+    d.stress_vowel_by_word["акустика"] = 3; // End-stressed lemma is not the fixed-stem class.
+    require(!nicolai::lookup_fixed_ika_stress_m43(d, "акустику"));
+    d.stress_vowel_by_word["акустика"] = 1;
+    d.stress_vowel_by_word["акустике"] = 2; // Conflicting family refuses unknown forms.
+    require(!nicolai::lookup_fixed_ika_stress_m43(d, "акустику"));
+    require(nicolai::lookup_fixed_ika_stress_m43(d, "акустике") == 2); // Exact wins.
+    d.stress_vowel_by_word.erase("акустике");
+    d.stress_vowel_by_word["акустик"] = 2; // Potential masculine homonym disagrees.
+    require(!nicolai::lookup_fixed_ika_stress_m43(d, "акустику"));
+    d.valid = false;
+    require(!nicolai::lookup_fixed_ika_stress_m43(d, "физику"));
     std::cout << "russian_stress_test: PASSED\n";
 }

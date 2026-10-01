@@ -84,6 +84,7 @@ jobs:
           python tools/test_spectral_balance_m39.py
           python tools/test_transients_m40.py
           python tools/test_join_periods_m42.py
+          python tools/test_rhythm_m43.py
 
   windows-test-package:
     runs-on: windows-latest
@@ -92,9 +93,9 @@ jobs:
       - name: Configure standalone Release
         run: cmake -S . -B build-talker -A Win32 -DNICOLAI_STATIC_RUNTIME=ON -DBUILD_TESTING=ON
       - name: Build test talker
-        run: cmake --build build-talker --config Release --target NicolaiTalker talker_backend_test russian_frontend_test --parallel
+        run: cmake --build build-talker --config Release --target NicolaiTalker talker_backend_test russian_frontend_test russian_stress_test word_rhythm_m43_test --parallel
       - name: Run voice-free UI and profile contracts
-        run: ctest --test-dir build-talker -C Release --output-on-failure -R "talker_(backend_test|ui_smoke)|russian_frontend_test"
+        run: ctest --test-dir build-talker -C Release --output-on-failure -R "talker_(backend_test|ui_smoke)|russian_(frontend|stress)_test|word_rhythm_m43_test"
       - name: Package without proprietary inputs
         shell: pwsh
         run: ./tools/package_windows_talker.ps1 -BuildDir build-talker

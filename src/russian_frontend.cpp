@@ -170,6 +170,10 @@ std::pair<std::size_t,std::string> resolve_stress(
     if (options.stress_dictionary && options.stress_dictionary->valid) {
         if (auto s = lookup_stress_vowel(*options.stress_dictionary, source); s && *s < nv)
             return {*s,"dictionary"};
+        if (options.enable_fixed_ika_stress_m43) {
+            if (auto s = lookup_fixed_ika_stress_m43(*options.stress_dictionary, source); s && *s < nv)
+                return {*s,"dictionary-ika-m43"};
+        }
     }
     if (options.use_builtin_stress_fallback) {
         const auto it = builtin_stress().find(source);

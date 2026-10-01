@@ -26,4 +26,10 @@ RussianStressDictionary load_exc_rus_cp1251(const std::filesystem::path& path);
 std::optional<std::size_t> lookup_stress_vowel(
     const RussianStressDictionary& dict, const std::string& lowercase_utf8_word);
 
+// Opt-in, limited fixed-stem -ика family fallback. Exact forms retain priority;
+// missing/conflicting/end-stressed anchors and compound words are not guessed.
+// This is not a general Russian morphological or legacy NLP implementation.
+std::optional<std::size_t> lookup_fixed_ika_stress_m43(
+    const RussianStressDictionary& dict, const std::string& lowercase_utf8_word);
+
 } // namespace nicolai

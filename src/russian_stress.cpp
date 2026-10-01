@@ -1,6 +1,7 @@
 #include "nicolai/russian_stress.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <fstream>
 #include <iterator>
@@ -131,6 +132,51 @@ std::optional<std::size_t> lookup_stress_vowel(
     const auto it = dict.stress_vowel_by_word.find(lowercase_utf8_word);
     if (it == dict.stress_vowel_by_word.end()) return std::nullopt;
     return it->second;
+}
+
+std::optional<std::size_t> lookup_fixed_ika_stress_m43(
+    const RussianStressDictionary& dict, const std::string& word) {
+    if (!dict.valid) return std::nullopt;
+    if (auto exact = lookup_stress_vowel(dict, word)) return exact;
+    // UTF-8 endings always start on a codepoint boundary. Restrict the stem to
+    // lowercase Russian letters: no compounds, numbers or stripped regex keys.
+    const auto russian_vowels = [](const std::string& stem) -> std::optional<std::size_t> {
+        std::size_t count = 0;
+        for (std::size_t i = 0; i < stem.size(); i += 2) {
+            if (i + 1 >= stem.size()) return std::nullopt;
+            const auto a = static_cast<unsigned char>(stem[i]);
+            const auto b = static_cast<unsigned char>(stem[i + 1]);
+            if (!((a == 0xd0 && b >= 0xb0 && b <= 0xbf) ||
+                  (a == 0xd1 && b >= 0x80 && b <= 0x8f) ||
+                  (a == 0xd1 && b == 0x91))) return std::nullopt;
+            const auto letter = stem.substr(i, 2);
+            if (letter == "а" || letter == "о" || letter == "у" || letter == "ы" ||
+                letter == "э" || letter == "и" || letter == "я" || letter == "ё" ||
+                letter == "ю" || letter == "е") ++count;
+        }
+        return count;
+    };
+    const std::array<std::string, 6> endings = {"ика", "ику", "ике", "ики", "икой", "икою"};
+    for (const auto& ending : endings) {
+        if (word.size() <= ending.size() ||
+            word.compare(word.size() - ending.size(), ending.size(), ending) != 0) continue;
+        const auto stem = word.substr(0, word.size() - ending.size()) + "ик";
+        const auto vowels = russian_vowels(stem);
+        if (!vowels) return std::nullopt;
+        const auto anchor = lookup_stress_vowel(dict, stem + "а");
+        if (!anchor || *anchor >= *vowels) return std::nullopt;
+        // Known forms (including a possible masculine -ик homonym) must agree.
+        // Do not silently propagate one lemma across contradictory evidence.
+        if (auto masculine = lookup_stress_vowel(dict, stem); masculine && *masculine != *anchor)
+            return std::nullopt;
+        for (const auto& form : endings) {
+            const auto key = word.substr(0, word.size() - ending.size()) + form;
+            if (auto known = lookup_stress_vowel(dict, key); known && *known != *anchor)
+                return std::nullopt;
+        }
+        return anchor;
+    }
+    return std::nullopt;
 }
 
 } // namespace nicolai

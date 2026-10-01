@@ -3,6 +3,7 @@
 #include "nicolai/diphone_catalog.hpp"
 #include "nicolai/hybrid_psola.hpp"
 #include "nicolai/russian_frontend.hpp"
+#include "nicolai/word_rhythm_m43.hpp"
 
 #include <array>
 #include <cstddef>
@@ -182,6 +183,8 @@ struct LegacyTimingPolicy {
     // M42 opt-in endpoint-only period reconciliation; never enables M36.
     double join_period_continuity_m42 = 0.0;
     bool local_join_pitch_m42 = false;
+    // M43: redistribute each word's spoken duration budget, # unchanged.
+    double word_rhythm_strength_m43 = 0.0;
 
     // M21: relative utterance-position contour recovered from wordstr.par
     // indices 7/12/17.  The raw legacy contour is normalized over the words
@@ -404,6 +407,7 @@ struct DiphoneChainLegacyResult {
     std::vector<LegacyUnitTransient> unit_transients;
     std::size_t protected_internal_m41 = 0, protected_external_m41 = 0;
     std::size_t reconciled_pitch_joins_m42 = 0;
+    std::vector<WordRhythmBudgetM43> word_budgets_m43;
     std::size_t tds_intervals_m34 = 0, tds_grains_m34 = 0, tds_dropped_m34 = 0;
     int tds_final_carry_m34 = 0;
     std::int64_t tds_target_samples_m35 = 0, tds_budget_samples_m35 = 0, tds_emitted_samples_m35 = 0;

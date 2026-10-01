@@ -80,5 +80,30 @@ int main() {
 
     auto bad = front("123");
     require(!bad.valid);
+
+    // Dictionary-backed fixed-stem forms are M43-only; no example-word builtin.
+    nicolai::RussianStressDictionary dictionary;
+    dictionary.valid = true;
+    dictionary.stress_vowel_by_word = {{"акустика",1},{"физика",0},{"логика",0},{"рука",1}};
+    nicolai::RussianFrontendOptions old_options;
+    old_options.stress_dictionary = &dictionary;
+    auto wrong_form = nicolai::russian_text_to_nicolai_phones("акустику", old_options);
+    require(wrong_form.valid && wrong_form.words[0].stress_vowel_index == 3);
+    auto m43_options = old_options;
+    m43_options.enable_fixed_ika_stress_m43 = true;
+    auto forms = nicolai::russian_text_to_nicolai_phones("Акустика акустику физику логику", m43_options);
+    require(forms.valid && forms.words.size() == 4);
+    require(forms.words[0].stress_source == "dictionary");
+    require(forms.words[1].stress_source == "dictionary-ika-m43" && forms.words[1].stress_vowel_index == 1);
+    require(forms.words[1].phones == std::vector<std::string>({"a1","k","u0","s","t'","i4","k","u4"}));
+    require(forms.words[2].stress_vowel_index == 0 && forms.words[3].stress_vowel_index == 0);
+    auto marked_form = nicolai::russian_text_to_nicolai_phones("аку\xCC\x81стику", m43_options);
+    require(marked_form.valid && forms.words[1].phones == marked_form.words[0].phones);
+    auto deliberate_override = nicolai::russian_text_to_nicolai_phones("акусти\xCC\x81ку", m43_options);
+    require(deliberate_override.valid && deliberate_override.words[0].stress_vowel_index == 2 &&
+            deliberate_override.words[0].stress_source == "explicit");
+    dictionary.stress_vowel_by_word["акустику"] = 2;
+    auto exact_form = nicolai::russian_text_to_nicolai_phones("акустику", m43_options);
+    require(exact_form.valid && exact_form.words[0].stress_source == "dictionary" && exact_form.words[0].stress_vowel_index == 2);
     std::cout << "russian_frontend_test: PASSED\n";
 }

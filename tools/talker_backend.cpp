@@ -17,6 +17,7 @@ Profile parse_profile(const std::string& value) {
     if (value == "m40-transient") return Profile::M40Transient;
     if (value == "m41-preserve") return Profile::M41Preserve;
     if (value == "m42-join-pitch") return Profile::M42JoinPitch;
+    if (value == "m43-word-rhythm") return Profile::M43WordRhythm;
     throw std::runtime_error("unknown test profile");
 }
 const char* profile_name(Profile profile) {
@@ -28,11 +29,17 @@ const char* profile_name(Profile profile) {
     case Profile::M40Transient: return "m40-transient";
     case Profile::M41Preserve: return "m41-preserve";
     case Profile::M42JoinPitch: return "m42-join-pitch";
+    case Profile::M43WordRhythm: return "m43-word-rhythm";
     }
     throw std::runtime_error("unknown test profile");
 }
 LegacyTimingPolicy timing_policy(Profile profile) {
     profile_name(profile); // Reject invalid enum values, never default silently.
+    if(profile==Profile::M43WordRhythm) {
+        auto policy=timing_policy(Profile::M42JoinPitch);
+        policy.word_rhythm_strength_m43=0.25;
+        return policy;
+    }
     LegacyTimingPolicy policy;
     if (profile == Profile::M36Local || profile == Profile::M36Chain) {
         policy.use_stateful_tds_m34 = true;
@@ -74,7 +81,8 @@ void validate_voice_directory(const std::filesystem::path& directory) {
     }
 }
 DiphoneChainLegacyResult render(const std::filesystem::path& directory,
-                               const std::string& text, Profile profile) {
+                               const std::string& text, Profile profile,
+                               RussianFrontendResult* frontend_diagnostic) {
     if (text.empty() || text.size() > 64000) throw std::runtime_error("text must contain 1..64000 UTF-8 bytes");
     validate_voice_directory(directory);
     set_profile_environment(profile);
@@ -92,6 +100,7 @@ DiphoneChainLegacyResult render(const std::filesystem::path& directory,
     if (!normalized.valid) throw std::runtime_error(normalized.error);
     RussianFrontendOptions options;
     options.stress_dictionary = &stress;
+    options.enable_fixed_ika_stress_m43 = profile == Profile::M43WordRhythm;
     const auto front = russian_text_to_nicolai_phones(normalized.normalized_utf8, options);
     if (!front.valid) throw std::runtime_error(front.error);
     auto result = synthesize_diphone_chain_legacy_duration(db.bytes(), catalog,
@@ -100,6 +109,7 @@ DiphoneChainLegacyResult render(const std::filesystem::path& directory,
     if (!result.valid || result.pcm.samples.empty()) throw std::runtime_error(result.error.empty() ? "no PCM generated" : result.error);
     apply_pc_reference_output_gain(result.pcm);
     if (wordstr.valid) append_legacy_pc_terminal_silence(result.pcm, wordstr, 16000);
+    if (frontend_diagnostic) *frontend_diagnostic = front;
     return result;
 }
 }
