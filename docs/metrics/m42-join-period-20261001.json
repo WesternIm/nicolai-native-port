@@ -1,0 +1,225 @@
+{
+  "checkpoint": "M42 opt-in join-pitch listening trial, not a stable promotion",
+  "corpus_phrases": 22,
+  "selected_profile": "m42-join-pitch",
+  "profiles": {
+    "m41-preserve": {
+      "join_period_strength": 0,
+      "local_join_pitch": false,
+      "mean_mfcc_dtw": 51.880601566976,
+      "mean_active_waveform_correlation": 0.194194144493727,
+      "active_duration_mae_percent": 5.71020987158181,
+      "total_duration_mae_percent": 3.61215426535499,
+      "f0_contour_mae_percent": 13.4689980941077,
+      "rms_ratio_mae_percent": 10.2932072607374,
+      "steps_over_12000": 33,
+      "steps_over_16000": 7
+    },
+    "quarter": {
+      "join_period_strength": 0.25,
+      "local_join_pitch": false,
+      "mean_mfcc_dtw": 52.20837729800016,
+      "mean_active_waveform_correlation": 0.19282730827114658,
+      "active_duration_mae_percent": 5.763750736775844,
+      "total_duration_mae_percent": 3.481496261058608,
+      "f0_contour_mae_percent": 13.20102540666005,
+      "rms_ratio_mae_percent": 10.206888098756874,
+      "steps_over_12000": 34,
+      "steps_over_16000": 7,
+      "max_absolute_sample_delta_vs_m41": 202,
+      "phrases_with_duration_change_vs_m41": 20,
+      "phrases_with_higher_max_step_vs_m41": 4
+    },
+    "half": {
+      "join_period_strength": 0.5,
+      "local_join_pitch": false,
+      "mean_mfcc_dtw": 51.80098459344266,
+      "mean_active_waveform_correlation": 0.18543411552045133,
+      "active_duration_mae_percent": 5.622603319228785,
+      "total_duration_mae_percent": 3.4821747337207642,
+      "f0_contour_mae_percent": 13.067698648193366,
+      "rms_ratio_mae_percent": 10.292059320291337,
+      "steps_over_12000": 33,
+      "steps_over_16000": 5,
+      "max_absolute_sample_delta_vs_m41": 180,
+      "phrases_with_duration_change_vs_m41": 20,
+      "phrases_with_higher_max_step_vs_m41": 6
+    },
+    "full": {
+      "join_period_strength": 1,
+      "local_join_pitch": false,
+      "mean_mfcc_dtw": 50.96909899506329,
+      "mean_active_waveform_correlation": 0.19379432060858723,
+      "active_duration_mae_percent": 5.60161169561911,
+      "total_duration_mae_percent": 3.344826324028856,
+      "f0_contour_mae_percent": 13.722110701905274,
+      "rms_ratio_mae_percent": 10.252439549107887,
+      "steps_over_12000": 34,
+      "steps_over_16000": 4,
+      "max_absolute_sample_delta_vs_m41": 398,
+      "phrases_with_duration_change_vs_m41": 20,
+      "phrases_with_higher_max_step_vs_m41": 6
+    },
+    "local-only": {
+      "join_period_strength": 0,
+      "local_join_pitch": true,
+      "mean_mfcc_dtw": 51.89329620908293,
+      "mean_active_waveform_correlation": 0.18714036456047076,
+      "active_duration_mae_percent": 5.7917797798336865,
+      "total_duration_mae_percent": 3.4593153087906363,
+      "f0_contour_mae_percent": 13.458836829051378,
+      "rms_ratio_mae_percent": 10.346893139951954,
+      "steps_over_12000": 33,
+      "steps_over_16000": 7,
+      "max_absolute_sample_delta_vs_m41": 148,
+      "phrases_with_duration_change_vs_m41": 16,
+      "phrases_with_higher_max_step_vs_m41": 0
+    },
+    "m42-join-pitch": {
+      "join_period_strength": 0.5,
+      "local_join_pitch": true,
+      "mean_mfcc_dtw": 51.77675713273739,
+      "mean_active_waveform_correlation": 0.18110627171907057,
+      "active_duration_mae_percent": 5.480488754862307,
+      "total_duration_mae_percent": 3.3252692885924846,
+      "f0_contour_mae_percent": 13.01931052016462,
+      "rms_ratio_mae_percent": 10.342223728007017,
+      "steps_over_12000": 33,
+      "steps_over_16000": 5,
+      "max_absolute_sample_delta_vs_m41": 180,
+      "phrases_with_duration_change_vs_m41": 22,
+      "phrases_with_higher_max_step_vs_m41": 6
+    },
+    "full-local": {
+      "join_period_strength": 1,
+      "local_join_pitch": true,
+      "mean_mfcc_dtw": 51.114150149331046,
+      "mean_active_waveform_correlation": 0.18486435915292887,
+      "active_duration_mae_percent": 5.463044774115755,
+      "total_duration_mae_percent": 3.253437070528699,
+      "f0_contour_mae_percent": 13.794783622373483,
+      "rms_ratio_mae_percent": 10.309992851398585,
+      "steps_over_12000": 34,
+      "steps_over_16000": 4,
+      "max_absolute_sample_delta_vs_m41": 346,
+      "phrases_with_duration_change_vs_m41": 22,
+      "phrases_with_higher_max_step_vs_m41": 6
+    }
+  },
+  "selected_phrase_comparisons_vs_m41": {
+    "mfcc_dtw": {
+      "lower": 10,
+      "higher": 12
+    },
+    "total_duration_error": {
+      "lower": 17,
+      "higher": 5
+    },
+    "active_duration_error": {
+      "lower": 14,
+      "higher": 8
+    },
+    "diagnostic_f0_error": {
+      "lower": 16,
+      "higher": 6
+    },
+    "rms_ratio_error": {
+      "lower": 11,
+      "higher": 11
+    }
+  },
+  "join_period_screen": {
+    "joins": 265,
+    "authored_baseline": {
+      "eligible": 137,
+      "missing": 128,
+      "mean_gap_cents": 157.98471801771348,
+      "over_100_cents": 68,
+      "over_200_cents": 36
+    },
+    "authored_selected": {
+      "eligible": 137,
+      "missing": 128,
+      "mean_gap_cents": 95.46803777885708,
+      "over_100_cents": 36,
+      "over_200_cents": 11
+    },
+    "authored_matched": {
+      "eligible": 137,
+      "excluded": 128,
+      "lower_gap": 79,
+      "higher_gap": 0
+    },
+    "portable_baseline": {
+      "eligible": 18,
+      "missing": 247
+    },
+    "portable_selected": {
+      "eligible": 19,
+      "missing": 246
+    },
+    "portable_matched": {
+      "eligible": 13,
+      "excluded": 252,
+      "baseline_mean_gap_cents": 125.63856625374454,
+      "trial_mean_gap_cents": 122.53791736659481,
+      "lower_gap": 5,
+      "higher_gap": 3,
+      "within_one_cent": 5
+    },
+    "original_dtw_baseline": {
+      "eligible": 37,
+      "missing": 228
+    },
+    "original_dtw_selected": {
+      "eligible": 33,
+      "missing": 232
+    }
+  },
+  "additional_saved_text_cases": {
+    "phrases": 3,
+    "phrases_with_duration_change": 3,
+    "max_absolute_sample_delta": 114,
+    "phrases_with_higher_max_step": 1,
+    "m41_steps_over_12000": 12,
+    "m42_steps_over_12000": 14,
+    "m41_steps_over_16000": 0,
+    "m42_steps_over_16000": 0,
+    "authored_matched": {
+      "eligible": 39,
+      "excluded": 26,
+      "baseline_mean_gap_cents": 133.61329816845983,
+      "trial_mean_gap_cents": 77.38084116988541,
+      "lower_gap": 20,
+      "higher_gap": 0
+    },
+    "portable_matched": {
+      "eligible": 9,
+      "excluded": 56,
+      "baseline_mean_gap_cents": 108.607473620262,
+      "trial_mean_gap_cents": 102.42602704104135,
+      "lower_gap": 3,
+      "higher_gap": 1
+    },
+    "original_track_measured": false
+  },
+  "verification": {
+    "x64_debug_ctest": 30,
+    "x86_static_release_ctest": 31,
+    "voice_free_join_period_tests": 6,
+    "gui_cli_batch_comparisons": 42,
+    "stable_previous_baseline_byte_matches": 22,
+    "m41_previous_baseline_byte_matches": 22,
+    "m42_x64_debug_x86_release_byte_matches": 22
+  },
+  "limitations": [
+    "SEG-derived target period hints are not measured output F0.",
+    "Autocorrelation has sparse coverage and can confuse harmonics; only mutually eligible joins are compared.",
+    "Original DTW coordinates are not phone-aligned ground truth.",
+    "Historical F0 metric and PCM-step counts are diagnostic, not listening/promotion gates.",
+    "Some metrics and additional-case transient counts worsen; no perceptual superiority claim.",
+    "Midpoint pitch parameters are preserved, not interior PCM; waveform joins can change duration.",
+    "Shared phase clock, lexical stress, original feature capture and real swallowed-phone accuracy remain open.",
+    "All proprietary voice inputs and WAVs stay local."
+  ]
+}

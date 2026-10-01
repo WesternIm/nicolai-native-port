@@ -12,7 +12,7 @@ struct FrontendWord {
     std::string source_utf8;
     std::vector<std::string> phones;
     int stress_vowel_index = -1;
-    std::string stress_source; // explicit / yo / dictionary / builtin / heuristic
+    std::string stress_source; // explicit / yo / dictionary / dictionary-ika-m43 / builtin / heuristic
 };
 
 enum class FrontendBoundaryKind {
@@ -47,6 +47,7 @@ struct RussianFrontendOptions {
     bool use_builtin_stress_fallback = true;
     bool enable_vowel_reduction = true;
     bool enable_consonant_assimilation = true;
+    bool enable_fixed_ika_stress_m43 = false;
 };
 
 // M17 independent Russian grapheme-to-phone frontend. It now resolves lexical

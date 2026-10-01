@@ -1,0 +1,782 @@
+{
+  "trials22": [
+    {
+      "name": "zero",
+      "parity": {
+        "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+        "phrases": 22,
+        "rendered": 22,
+        "mean_active_waveform_correlation": 0.18110627171907057,
+        "mean_active_duration_ratio": 0.9931112879093043,
+        "active_duration_mae_percent": 5.480488754862307,
+        "total_duration_mae_percent": 3.3252692885924846,
+        "f0_contour_mae_percent": 13.01931052016462,
+        "mean_mfcc_dtw": 51.77675713273739,
+        "mean_rms_ratio": 0.9309295559339645,
+        "rms_ratio_mae_percent": 10.342223728007017
+      },
+      "transients": {
+        "phrases": 22,
+        "phrases_with_duration_change": 0,
+        "max_absolute_sample_delta": 0,
+        "total_baseline_steps_over_12000": 33,
+        "total_trial_steps_over_12000": 33,
+        "total_baseline_steps_over_16000": 5,
+        "total_trial_steps_over_16000": 5,
+        "phrases_with_higher_max_step": 0
+      }
+    },
+    {
+      "name": "eighth",
+      "parity": {
+        "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+        "phrases": 22,
+        "rendered": 22,
+        "mean_active_waveform_correlation": 0.19958684477381813,
+        "mean_active_duration_ratio": 0.9994047226502527,
+        "active_duration_mae_percent": 5.576649576361167,
+        "total_duration_mae_percent": 3.299905778225206,
+        "f0_contour_mae_percent": 16.059649220324065,
+        "mean_mfcc_dtw": 52.41410773903867,
+        "mean_rms_ratio": 0.9437079189572153,
+        "rms_ratio_mae_percent": 9.847528277965546
+      },
+      "transients": {
+        "phrases": 22,
+        "phrases_with_duration_change": 22,
+        "max_absolute_sample_delta": 336,
+        "total_baseline_steps_over_12000": 33,
+        "total_trial_steps_over_12000": 31,
+        "total_baseline_steps_over_16000": 5,
+        "total_trial_steps_over_16000": 5,
+        "phrases_with_higher_max_step": 6
+      },
+      "rhythm": {
+        "phrases": 22,
+        "baseline": {
+          "word_join_intervals": 28,
+          "word_join_mapped_intervals": 28,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 2055.4,
+          "quiet_total_ms": 5450,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 45.17727272727274,
+          "mean_shape_cost": 36.82986363636363
+        },
+        "trial": {
+          "word_join_intervals": 28,
+          "word_join_mapped_intervals": 28,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 2061.3,
+          "quiet_total_ms": 5520,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 44.81818181818182,
+          "mean_shape_cost": 37.02222727272727
+        },
+        "lower_shape_cost": 8,
+        "higher_shape_cost": 14
+      },
+      "word_budgets": {
+        "words": 49,
+        "phrases": 22,
+        "max_logged_budget_delta_samples": 0,
+        "minimum_effective_strength": 0.125,
+        "maximum_effective_strength": 0.125
+      }
+    },
+    {
+      "name": "quarter",
+      "parity": {
+        "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+        "phrases": 22,
+        "rendered": 22,
+        "mean_active_waveform_correlation": 0.20054120319355906,
+        "mean_active_duration_ratio": 0.9991634497319786,
+        "active_duration_mae_percent": 5.676544198520281,
+        "total_duration_mae_percent": 3.468898395882846,
+        "f0_contour_mae_percent": 14.476969660556946,
+        "mean_mfcc_dtw": 51.77783369713308,
+        "mean_rms_ratio": 0.9507973617819637,
+        "rms_ratio_mae_percent": 9.307610554902336
+      },
+      "transients": {
+        "phrases": 22,
+        "phrases_with_duration_change": 22,
+        "max_absolute_sample_delta": 360,
+        "total_baseline_steps_over_12000": 33,
+        "total_trial_steps_over_12000": 36,
+        "total_baseline_steps_over_16000": 5,
+        "total_trial_steps_over_16000": 5,
+        "phrases_with_higher_max_step": 6
+      },
+      "rhythm": {
+        "phrases": 22,
+        "baseline": {
+          "word_join_intervals": 28,
+          "word_join_mapped_intervals": 28,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 2055.4,
+          "quiet_total_ms": 5450,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 45.17727272727274,
+          "mean_shape_cost": 36.82986363636363
+        },
+        "trial": {
+          "word_join_intervals": 28,
+          "word_join_mapped_intervals": 28,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 2091.3,
+          "quiet_total_ms": 5480,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 46.55909090909092,
+          "mean_shape_cost": 36.862545454545455
+        },
+        "lower_shape_cost": 8,
+        "higher_shape_cost": 14
+      },
+      "word_budgets": {
+        "words": 49,
+        "phrases": 22,
+        "max_logged_budget_delta_samples": 0,
+        "minimum_effective_strength": 0.25,
+        "maximum_effective_strength": 0.25
+      }
+    },
+    {
+      "name": "half",
+      "parity": {
+        "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+        "phrases": 22,
+        "rendered": 22,
+        "mean_active_waveform_correlation": 0.18360422113010777,
+        "mean_active_duration_ratio": 1.0036321441310918,
+        "active_duration_mae_percent": 6.054447348700294,
+        "total_duration_mae_percent": 3.5268916022528525,
+        "f0_contour_mae_percent": 15.804627216209532,
+        "mean_mfcc_dtw": 52.27275269672728,
+        "mean_rms_ratio": 0.9653024497314725,
+        "rms_ratio_mae_percent": 8.12754083964971
+      },
+      "transients": {
+        "phrases": 22,
+        "phrases_with_duration_change": 22,
+        "max_absolute_sample_delta": 456,
+        "total_baseline_steps_over_12000": 33,
+        "total_trial_steps_over_12000": 41,
+        "total_baseline_steps_over_16000": 5,
+        "total_trial_steps_over_16000": 6,
+        "phrases_with_higher_max_step": 8
+      },
+      "rhythm": {
+        "phrases": 22,
+        "baseline": {
+          "word_join_intervals": 28,
+          "word_join_mapped_intervals": 28,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 2055.4,
+          "quiet_total_ms": 5450,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 45.17727272727274,
+          "mean_shape_cost": 36.82986363636363
+        },
+        "trial": {
+          "word_join_intervals": 28,
+          "word_join_mapped_intervals": 28,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 2105.4,
+          "quiet_total_ms": 5420,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 48.1818181818182,
+          "mean_shape_cost": 37.06413636363636
+        },
+        "lower_shape_cost": 10,
+        "higher_shape_cost": 12
+      },
+      "word_budgets": {
+        "words": 49,
+        "phrases": 22,
+        "max_logged_budget_delta_samples": 0,
+        "minimum_effective_strength": 0.459743,
+        "maximum_effective_strength": 0.5
+      }
+    },
+    {
+      "name": "full",
+      "parity": {
+        "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+        "phrases": 22,
+        "rendered": 22,
+        "mean_active_waveform_correlation": 0.18297785375153275,
+        "mean_active_duration_ratio": 0.9995504134231532,
+        "active_duration_mae_percent": 5.900820860022094,
+        "total_duration_mae_percent": 3.4883297823453083,
+        "f0_contour_mae_percent": 15.953223408256356,
+        "mean_mfcc_dtw": 52.09543959834151,
+        "mean_rms_ratio": 0.981518671156593,
+        "rms_ratio_mae_percent": 8.057795353699305
+      },
+      "transients": {
+        "phrases": 22,
+        "phrases_with_duration_change": 22,
+        "max_absolute_sample_delta": 396,
+        "total_baseline_steps_over_12000": 33,
+        "total_trial_steps_over_12000": 44,
+        "total_baseline_steps_over_16000": 5,
+        "total_trial_steps_over_16000": 7,
+        "phrases_with_higher_max_step": 9
+      }
+    },
+    {
+      "name": "m38-control",
+      "parity": {
+        "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+        "phrases": 22,
+        "rendered": 22,
+        "mean_active_waveform_correlation": 0.1841534313496683,
+        "mean_active_duration_ratio": 0.9950529488350809,
+        "active_duration_mae_percent": 5.580373725875221,
+        "total_duration_mae_percent": 3.392806330126278,
+        "f0_contour_mae_percent": 13.582047880991851,
+        "mean_mfcc_dtw": 50.51370008149245,
+        "mean_rms_ratio": 0.9402950714768612,
+        "rms_ratio_mae_percent": 9.606472405660261
+      },
+      "transients": {
+        "phrases": 22,
+        "phrases_with_duration_change": 10,
+        "max_absolute_sample_delta": 415,
+        "total_baseline_steps_over_12000": 33,
+        "total_trial_steps_over_12000": 33,
+        "total_baseline_steps_over_16000": 5,
+        "total_trial_steps_over_16000": 5,
+        "phrases_with_higher_max_step": 0
+      },
+      "rhythm": {
+        "phrases": 22,
+        "baseline": {
+          "word_join_intervals": 28,
+          "word_join_mapped_intervals": 28,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 2055.4,
+          "quiet_total_ms": 5450,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 45.17727272727274,
+          "mean_shape_cost": 36.82986363636363
+        },
+        "trial": {
+          "word_join_intervals": 27,
+          "word_join_mapped_intervals": 27,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 1190.6,
+          "quiet_total_ms": 4550,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 46.168181818181814,
+          "mean_shape_cost": 36.47159090909091
+        },
+        "lower_shape_cost": 7,
+        "higher_shape_cost": 3
+      },
+      "word_budgets": {
+        "words": 0,
+        "phrases": 0,
+        "max_logged_budget_delta_samples": 0,
+        "minimum_effective_strength": null,
+        "maximum_effective_strength": null
+      }
+    },
+    {
+      "name": "quarter-boundary",
+      "parity": {
+        "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+        "phrases": 22,
+        "rendered": 22,
+        "mean_active_waveform_correlation": 0.19542583542307687,
+        "mean_active_duration_ratio": 0.9956904142780129,
+        "active_duration_mae_percent": 5.756557593840633,
+        "total_duration_mae_percent": 3.5535126142085565,
+        "f0_contour_mae_percent": 15.471047677770263,
+        "mean_mfcc_dtw": 50.17424786852576,
+        "mean_rms_ratio": 0.9652211000861829,
+        "rms_ratio_mae_percent": 8.219988937762803
+      },
+      "transients": {
+        "phrases": 22,
+        "phrases_with_duration_change": 22,
+        "max_absolute_sample_delta": 713,
+        "total_baseline_steps_over_12000": 33,
+        "total_trial_steps_over_12000": 36,
+        "total_baseline_steps_over_16000": 5,
+        "total_trial_steps_over_16000": 4,
+        "phrases_with_higher_max_step": 6
+      },
+      "rhythm": {
+        "phrases": 22,
+        "baseline": {
+          "word_join_intervals": 28,
+          "word_join_mapped_intervals": 28,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 2055.4,
+          "quiet_total_ms": 5450,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 45.17727272727274,
+          "mean_shape_cost": 36.82986363636363
+        },
+        "trial": {
+          "word_join_intervals": 24,
+          "word_join_mapped_intervals": 24,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 1131.3,
+          "quiet_total_ms": 4570,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 48.36363636363637,
+          "mean_shape_cost": 36.164500000000004
+        },
+        "lower_shape_cost": 13,
+        "higher_shape_cost": 9
+      },
+      "word_budgets": {
+        "words": 49,
+        "phrases": 22,
+        "max_logged_budget_delta_samples": 0,
+        "minimum_effective_strength": 0.25,
+        "maximum_effective_strength": 0.25
+      }
+    },
+    {
+      "name": "half-boundary",
+      "parity": {
+        "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+        "phrases": 22,
+        "rendered": 22,
+        "mean_active_waveform_correlation": 0.17627066758957197,
+        "mean_active_duration_ratio": 1.0034631047205913,
+        "active_duration_mae_percent": 6.091516112000101,
+        "total_duration_mae_percent": 3.6288659302621347,
+        "f0_contour_mae_percent": 15.152412397994834,
+        "mean_mfcc_dtw": 50.23003170381794,
+        "mean_rms_ratio": 0.9838602650483577,
+        "rms_ratio_mae_percent": 6.8629781633101326
+      },
+      "transients": {
+        "phrases": 22,
+        "phrases_with_duration_change": 22,
+        "max_absolute_sample_delta": 467,
+        "total_baseline_steps_over_12000": 33,
+        "total_trial_steps_over_12000": 41,
+        "total_baseline_steps_over_16000": 5,
+        "total_trial_steps_over_16000": 7,
+        "phrases_with_higher_max_step": 11
+      }
+    },
+    {
+      "name": "timeline",
+      "parity": {
+        "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+        "phrases": 22,
+        "rendered": 22,
+        "mean_active_waveform_correlation": 0.20608889078664475,
+        "mean_active_duration_ratio": 0.9996130939626178,
+        "active_duration_mae_percent": 5.694130731133052,
+        "total_duration_mae_percent": 3.304895798319782,
+        "f0_contour_mae_percent": 16.063701113281255,
+        "mean_mfcc_dtw": 48.513944795445475,
+        "mean_rms_ratio": 0.9336547897685129,
+        "rms_ratio_mae_percent": 9.311635311072695
+      },
+      "transients": {
+        "phrases": 22,
+        "phrases_with_duration_change": 22,
+        "max_absolute_sample_delta": 441,
+        "total_baseline_steps_over_12000": 33,
+        "total_trial_steps_over_12000": 30,
+        "total_baseline_steps_over_16000": 5,
+        "total_trial_steps_over_16000": 3,
+        "phrases_with_higher_max_step": 12
+      },
+      "rhythm": {
+        "phrases": 22,
+        "baseline": {
+          "word_join_intervals": 28,
+          "word_join_mapped_intervals": 28,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 2055.4,
+          "quiet_total_ms": 5450,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 45.17727272727274,
+          "mean_shape_cost": 36.82986363636363
+        },
+        "trial": {
+          "word_join_intervals": 28,
+          "word_join_mapped_intervals": 28,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 1935.4,
+          "quiet_total_ms": 5240,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 44.12272727272727,
+          "mean_shape_cost": 34.57636363636364
+        },
+        "lower_shape_cost": 21,
+        "higher_shape_cost": 1
+      },
+      "word_budgets": {
+        "words": 0,
+        "phrases": 0,
+        "max_logged_budget_delta_samples": 0,
+        "minimum_effective_strength": null,
+        "maximum_effective_strength": null
+      }
+    },
+    {
+      "name": "timeline-quarter",
+      "parity": {
+        "reference_voice": "ELAN TTS Russian (Nicolai 16Khz)",
+        "phrases": 22,
+        "rendered": 22,
+        "mean_active_waveform_correlation": 0.21650180406156777,
+        "mean_active_duration_ratio": 1.010812492003266,
+        "active_duration_mae_percent": 5.8245923655432765,
+        "total_duration_mae_percent": 3.157932057578833,
+        "f0_contour_mae_percent": 17.261054360993064,
+        "mean_mfcc_dtw": 48.14966096462342,
+        "mean_rms_ratio": 0.9540581416153135,
+        "rms_ratio_mae_percent": 8.498947656076822
+      },
+      "transients": {
+        "phrases": 22,
+        "phrases_with_duration_change": 22,
+        "max_absolute_sample_delta": 549,
+        "total_baseline_steps_over_12000": 33,
+        "total_trial_steps_over_12000": 38,
+        "total_baseline_steps_over_16000": 5,
+        "total_trial_steps_over_16000": 5,
+        "phrases_with_higher_max_step": 13
+      },
+      "rhythm": {
+        "phrases": 22,
+        "baseline": {
+          "word_join_intervals": 28,
+          "word_join_mapped_intervals": 28,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 2055.4,
+          "quiet_total_ms": 5450,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 45.17727272727274,
+          "mean_shape_cost": 36.82986363636363
+        },
+        "trial": {
+          "word_join_intervals": 28,
+          "word_join_mapped_intervals": 28,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 1982.9,
+          "quiet_total_ms": 5250,
+          "original_quiet_total_ms": 3090,
+          "duration_mae_ms": 42.67727272727274,
+          "mean_shape_cost": 34.198181818181816
+        },
+        "lower_shape_cost": 20,
+        "higher_shape_cost": 2
+      },
+      "word_budgets": {
+        "words": 49,
+        "phrases": 22,
+        "max_logged_budget_delta_samples": 0,
+        "minimum_effective_strength": 0.25,
+        "maximum_effective_strength": 0.25
+      }
+    }
+  ],
+  "older_user_trials": [
+    {
+      "name": "quarter",
+      "transients": {
+        "phrases": 3,
+        "phrases_with_duration_change": 3,
+        "max_absolute_sample_delta": 42,
+        "total_baseline_steps_over_12000": 14,
+        "total_trial_steps_over_12000": 15,
+        "total_baseline_steps_over_16000": 0,
+        "total_trial_steps_over_16000": 0,
+        "phrases_with_higher_max_step": 2
+      },
+      "rhythm": {
+        "phrases": 3,
+        "baseline": {
+          "word_join_intervals": 8,
+          "word_join_mapped_intervals": 8,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 473.6,
+          "quiet_total_ms": 1740,
+          "original_quiet_total_ms": 1500,
+          "duration_mae_ms": 108.63333333333321,
+          "mean_shape_cost": 44.507000000000005
+        },
+        "trial": {
+          "word_join_intervals": 8,
+          "word_join_mapped_intervals": 8,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 453.6,
+          "quiet_total_ms": 1750,
+          "original_quiet_total_ms": 1500,
+          "duration_mae_ms": 108.79999999999995,
+          "mean_shape_cost": 44.214333333333336
+        },
+        "lower_shape_cost": 2,
+        "higher_shape_cost": 1
+      }
+    },
+    {
+      "name": "m38-control",
+      "transients": {
+        "phrases": 3,
+        "phrases_with_duration_change": 3,
+        "max_absolute_sample_delta": 621,
+        "total_baseline_steps_over_12000": 14,
+        "total_trial_steps_over_12000": 17,
+        "total_baseline_steps_over_16000": 0,
+        "total_trial_steps_over_16000": 1,
+        "phrases_with_higher_max_step": 1
+      },
+      "rhythm": {
+        "phrases": 3,
+        "baseline": {
+          "word_join_intervals": 8,
+          "word_join_mapped_intervals": 8,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 473.6,
+          "quiet_total_ms": 1740,
+          "original_quiet_total_ms": 1500,
+          "duration_mae_ms": 108.63333333333321,
+          "mean_shape_cost": 44.507000000000005
+        },
+        "trial": {
+          "word_join_intervals": 6,
+          "word_join_mapped_intervals": 6,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 193.6,
+          "quiet_total_ms": 1430,
+          "original_quiet_total_ms": 1500,
+          "duration_mae_ms": 99.13333333333314,
+          "mean_shape_cost": 42.89333333333334
+        },
+        "lower_shape_cost": 2,
+        "higher_shape_cost": 1
+      }
+    },
+    {
+      "name": "quarter-boundary",
+      "transients": {
+        "phrases": 3,
+        "phrases_with_duration_change": 3,
+        "max_absolute_sample_delta": 518,
+        "total_baseline_steps_over_12000": 14,
+        "total_trial_steps_over_12000": 21,
+        "total_baseline_steps_over_16000": 0,
+        "total_trial_steps_over_16000": 3,
+        "phrases_with_higher_max_step": 2
+      },
+      "rhythm": {
+        "phrases": 3,
+        "baseline": {
+          "word_join_intervals": 8,
+          "word_join_mapped_intervals": 8,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 473.6,
+          "quiet_total_ms": 1740,
+          "original_quiet_total_ms": 1500,
+          "duration_mae_ms": 108.63333333333321,
+          "mean_shape_cost": 44.507000000000005
+        },
+        "trial": {
+          "word_join_intervals": 6,
+          "word_join_mapped_intervals": 6,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 213.6,
+          "quiet_total_ms": 1540,
+          "original_quiet_total_ms": 1500,
+          "duration_mae_ms": 104.36666666666663,
+          "mean_shape_cost": 42.88033333333333
+        },
+        "lower_shape_cost": 2,
+        "higher_shape_cost": 1
+      }
+    },
+    {
+      "name": "timeline",
+      "transients": {
+        "phrases": 3,
+        "phrases_with_duration_change": 3,
+        "max_absolute_sample_delta": 392,
+        "total_baseline_steps_over_12000": 14,
+        "total_trial_steps_over_12000": 20,
+        "total_baseline_steps_over_16000": 0,
+        "total_trial_steps_over_16000": 2,
+        "phrases_with_higher_max_step": 2
+      },
+      "rhythm": {
+        "phrases": 3,
+        "baseline": {
+          "word_join_intervals": 8,
+          "word_join_mapped_intervals": 8,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 473.6,
+          "quiet_total_ms": 1740,
+          "original_quiet_total_ms": 1500,
+          "duration_mae_ms": 108.63333333333321,
+          "mean_shape_cost": 44.507000000000005
+        },
+        "trial": {
+          "word_join_intervals": 8,
+          "word_join_mapped_intervals": 8,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 413.6,
+          "quiet_total_ms": 1690,
+          "original_quiet_total_ms": 1500,
+          "duration_mae_ms": 96.29999999999988,
+          "mean_shape_cost": 42.132333333333335
+        },
+        "lower_shape_cost": 3,
+        "higher_shape_cost": 0
+      }
+    },
+    {
+      "name": "timeline-quarter",
+      "transients": {
+        "phrases": 3,
+        "phrases_with_duration_change": 3,
+        "max_absolute_sample_delta": 532,
+        "total_baseline_steps_over_12000": 14,
+        "total_trial_steps_over_12000": 21,
+        "total_baseline_steps_over_16000": 0,
+        "total_trial_steps_over_16000": 4,
+        "phrases_with_higher_max_step": 2
+      },
+      "rhythm": {
+        "phrases": 3,
+        "baseline": {
+          "word_join_intervals": 8,
+          "word_join_mapped_intervals": 8,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 473.6,
+          "quiet_total_ms": 1740,
+          "original_quiet_total_ms": 1500,
+          "duration_mae_ms": 108.63333333333321,
+          "mean_shape_cost": 44.507000000000005
+        },
+        "trial": {
+          "word_join_intervals": 8,
+          "word_join_mapped_intervals": 8,
+          "word_join_unmapped_intervals": 0,
+          "word_join_excess_quiet_ms": 383.6,
+          "quiet_total_ms": 1640,
+          "original_quiet_total_ms": 1500,
+          "duration_mae_ms": 89.39999999999986,
+          "mean_shape_cost": 41.922333333333334
+        },
+        "lower_shape_cost": 3,
+        "higher_shape_cost": 0
+      }
+    }
+  ],
+  "final_user_transients": {
+    "phrases": 3,
+    "phrases_with_duration_change": 3,
+    "max_absolute_sample_delta": 851,
+    "total_baseline_steps_over_12000": 14,
+    "total_trial_steps_over_12000": 15,
+    "total_baseline_steps_over_16000": 0,
+    "total_trial_steps_over_16000": 0,
+    "phrases_with_higher_max_step": 2
+  },
+  "final_user_rhythm": {
+    "phrases": 3,
+    "baseline": {
+      "word_join_intervals": 8,
+      "word_join_mapped_intervals": 8,
+      "word_join_unmapped_intervals": 0,
+      "word_join_excess_quiet_ms": 473.6,
+      "quiet_total_ms": 1740,
+      "original_quiet_total_ms": 1500,
+      "duration_mae_ms": 108.63333333333321,
+      "mean_shape_cost": 44.507000000000005
+    },
+    "trial": {
+      "word_join_intervals": 8,
+      "word_join_mapped_intervals": 8,
+      "word_join_unmapped_intervals": 0,
+      "word_join_excess_quiet_ms": 453.6,
+      "quiet_total_ms": 1720,
+      "original_quiet_total_ms": 1500,
+      "duration_mae_ms": 127.3333333333331,
+      "mean_shape_cost": 43.78
+    },
+    "lower_shape_cost": 2,
+    "higher_shape_cost": 1
+  },
+  "schema": "nicolai-m43-rhythm-stress-checkpoint-v1",
+  "date": "2026-10-01",
+  "baseline_profile": "m42-join-pitch",
+  "selected_profile": "m43-word-rhythm",
+  "selected_flags": {
+    "NICOLAI_M43_WORD_RHYTHM": 0.25,
+    "NICOLAI_M43_FIXED_IKA_STRESS": 1
+  },
+  "trial_flags": {
+    "zero": {
+      "rhythm": 0
+    },
+    "eighth": {
+      "rhythm": 0.125
+    },
+    "quarter": {
+      "rhythm": 0.25
+    },
+    "half": {
+      "rhythm": 0.5
+    },
+    "full": {
+      "rhythm": 1
+    },
+    "m38-control": {
+      "rhythm": 0,
+      "boundary_share": 0.5
+    },
+    "quarter-boundary": {
+      "rhythm": 0.25,
+      "boundary_share": 0.5
+    },
+    "half-boundary": {
+      "rhythm": 0.5,
+      "boundary_share": 0.5
+    },
+    "timeline": {
+      "rhythm": 0,
+      "pc_seg_timeline": true
+    },
+    "timeline-quarter": {
+      "rhythm": 0.25,
+      "pc_seg_timeline": true
+    }
+  },
+  "validation": {
+    "win32_release_ctest_passed": 32,
+    "win64_debug_ctest_passed": 31,
+    "selected_22_matches_timing_only_quarter": 22,
+    "selected_x86_x64_identical_phrases": 22,
+    "old_stable_22_identical": true,
+    "old_m42_22_identical": true,
+    "plain_acoustic_equals_explicit_accent_wav": true,
+    "acoustic_stressed_phone": "u0",
+    "inflected_acoustic_stress_vowel_ordinal": 1
+  },
+  "caveats": [
+    "Exploratory opt-in listening trial, not a demonstrated general tempo/intonation fix.",
+    "Timing-only and final stress-enabled trials are identical on all 22 corpus WAVs; user startup changes after lexical correction.",
+    "New >16000-step counts are why boundary/timeline combinations are not exposed in the GUI; lower-threshold regressions remain in selected mode.",
+    "One fixed-stem -ика family is a limited dictionary-backed heuristic, not the original NLP or full morphology.",
+    "F0 is diagnostic with sparse reliable coverage; no promotion from F0 alone.",
+    "Word budgets are conserved before PSOLA/join trimming; final wave duration can change.",
+    "Quiet intervals are not phone labels. DTW-mapped # gaps include punctuation and may misalign.",
+    "Historical parity MFCC and gain-normalized rhythm shape costs use different definitions and must not be compared numerically.",
+    "Original user WAVs are verified past captures, not freshly working SAPI; private inputs stay local."
+  ]
+}

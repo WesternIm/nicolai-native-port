@@ -6,7 +6,22 @@ the standalone test UI without proprietary voice data. Stable is the default;
 experimental modes are clearly labeled, and original SAPI requires a working
 installed Nicolai voice.
 
-The new opt-in [M41 preservation checkpoint](docs/M41_SOUND_PRESERVATION.md)
+The opt-in [M43 word-rhythm/stress checkpoint](docs/M43_WORD_RHYTHM_STRESS.md)
+redistributes each word's existing pre-join spoken budget and adds a limited
+dictionary-backed fixed-stem `-ика` inflection fallback. `m43-word-rhythm`
+selects 0.25 timing strength and corrects `акустику` to the lemma's stressed
+`у`. Timing/click metrics remain mixed; a perceived emphasis on `с` in
+`акустика` is not claimed fixed. Stable and older modes remain unchanged.
+
+The opt-in [M42 join-pitch checkpoint](docs/M42_JOIN_PERIOD_CONTINUITY.md)
+corrects internal run contour coordinates and partially reconciles guarded
+shared-phone pitch endpoints. It inherits M41 and is selectable as
+`m42-join-pitch`. Large PCM-step counts fall from 7 to 5 on 22 phrases, but
+several metrics and additional cases worsen; this is a listening trial, not
+a complete intonation/click fix or a stable promotion. Stable and M41 remain
+byte-identical to their previous baselines.
+
+The opt-in [M41 preservation checkpoint](docs/M41_SOUND_PRESERVATION.md)
 protects threatened short features at unknown/unvoiced external joins and
 uses fractional source sampling in uncovered PSOLA regions. Stable stays
 unchanged. Mean MFCC-DTW improves slightly versus M40 (52.082 -> 51.881),

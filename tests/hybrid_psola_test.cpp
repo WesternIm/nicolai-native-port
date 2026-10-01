@@ -143,6 +143,20 @@ int main() try {
     const auto old_noise=nicolai::resynthesize_seg_m32_phone_sides(ramp,one,one_layout,{},0.73,0.61,1,1);
     const auto new_noise=nicolai::resynthesize_seg_m32_phone_sides(ramp,one,one_layout,fractional,0.73,0.61,1,1);
     require(!old_noise.samples.empty() && old_noise.samples==new_noise.samples);
+    // M42: internal boundary hints use the same contour location as the
+    // adjacent generated run, not the whole unit's 0/1 pitch endpoints.
+    nicolai::M15UnitDiagnostics old_hint, local_hint;
+    auto local_contour=contour;
+    const auto old_hint_pcm=nicolai::resynthesize_seg_m15(p,s,l,local_contour,&old_hint);
+    local_contour.local_join_pitch_m42=true;
+    const auto local_hint_pcm=nicolai::resynthesize_seg_m15(p,s,l,local_contour,&local_hint);
+    require(!old_hint_pcm.samples.empty() && !local_hint_pcm.samples.empty());
+    require(old_hint.internal_joins.size()==1 && local_hint.internal_joins.size()==1);
+    const double position=static_cast<double>(l.runs[1].source_begin)/p.samples.size();
+    const int expected=static_cast<int>(std::lround(l.runs[1].periods.front()/
+        nicolai::td_psola_pitch_scale_at(local_contour,position)));
+    require(local_hint.internal_joins.front().right_period_hint==expected);
+    require(old_hint.internal_joins.front().right_period_hint!=expected);
     std::cout << "hybrid_psola_test: PASSED output=" << q.samples.size() << "\n";
 } catch(const std::exception& error) {
     std::cerr << error.what() << '\n';

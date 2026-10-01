@@ -115,6 +115,46 @@ int main() try {
     require(fractional_edge.samples.back()==nicolai::sample_pcm16_linear(ramp,tail));
     require(old_edge.samples[50]==fractional_edge.samples[50]);
     require(old_edge.samples.back()!=fractional_edge.samples.back());
+    // M42: reconcile the two target periods of a shared phone, not the
+    // ratios themselves (the source recordings have different periods).
+    for(double strength : {0.25,0.5,1.0}) {
+        nicolai::TdPsolaConfig left, right;
+        require(nicolai::reconcile_join_pitch_m42(left,right,160,220,strength));
+        const double lp=160/nicolai::td_psola_pitch_scale_at(left,1);
+        const double rp=220/nicolai::td_psola_pitch_scale_at(right,0);
+        const double residual=std::abs(1200*std::log2(lp/rp));
+        require(std::abs(residual-(1-strength)*std::abs(1200*std::log2(160.0/220)))<1e-8);
+        require(left.pitch_scale_mid==1 && right.pitch_scale_mid==1);
+        require(left.pitch_scale_start==1 && right.pitch_scale_end==1);
+        if(strength==1) require(std::abs(lp-std::sqrt(160.0*220))<1e-8 && std::abs(lp-rp)<1e-8);
+    }
+    for(const auto periods : {std::pair<double,double>{0,200}, {160,0}, {160,160},
+        {80,160}, {10,200}, {500,550}, {std::numeric_limits<double>::quiet_NaN(),200}}) {
+        nicolai::TdPsolaConfig left, right;
+        require(!nicolai::reconcile_join_pitch_m42(left,right,periods.first,periods.second,1));
+        require(!left.use_three_point_pitch && !right.use_three_point_pitch);
+        require(left.pitch_scale_end==1 && right.pitch_scale_start==1);
+    }
+    nicolai::TdPsolaConfig keep_left, keep_right;
+    require(!nicolai::reconcile_join_pitch_m42(keep_left,keep_right,160,220,0));
+    require(!keep_left.use_three_point_pitch && !keep_right.use_three_point_pitch);
+    require(!nicolai::reconcile_join_pitch_m42(keep_left,keep_right,160,220,
+        std::numeric_limits<double>::quiet_NaN()));
+    require(!keep_left.use_three_point_pitch && !keep_right.use_three_point_pitch);
+    keep_left.use_three_point_pitch=true;
+    keep_left.pitch_scale_mid=std::numeric_limits<double>::quiet_NaN();
+    require(!nicolai::reconcile_join_pitch_m42(keep_left,keep_right,160,220,1));
+    require(keep_left.pitch_scale_end==1 && !keep_right.use_three_point_pitch);
+    nicolai::TdPsolaConfig shaped_left, shaped_right;
+    shaped_left.use_three_point_pitch=shaped_right.use_three_point_pitch=true;
+    shaped_left.pitch_scale_start=0.9; shaped_left.pitch_scale_mid=1.1;
+    shaped_left.pitch_scale_end=1.2;
+    shaped_right.pitch_scale_start=0.8; shaped_right.pitch_scale_mid=1.3;
+    shaped_right.pitch_scale_end=1.4;
+    require(nicolai::reconcile_join_pitch_m42(shaped_left,shaped_right,180,160,2));
+    require(std::abs(180/shaped_left.pitch_scale_end-160/shaped_right.pitch_scale_start)<1e-8);
+    require(shaped_left.pitch_scale_start==0.9 && shaped_left.pitch_scale_mid==1.1);
+    require(shaped_right.pitch_scale_mid==1.3 && shaped_right.pitch_scale_end==1.4);
     std::cout << "td_psola_test: PASSED source_marks=" << d.source_marks
               << " synth_marks=" << d.synthesis_marks
               << " target_period=" << d.mean_target_period << "\n";

@@ -5,7 +5,7 @@
 #include <string>
 
 namespace nicolai::test_talker {
-enum class Profile { Stable, M36Local, M36Chain, M38Boundary, M40Transient, M41Preserve };
+enum class Profile { Stable, M36Local, M36Chain, M38Boundary, M40Transient, M41Preserve, M42JoinPitch, M43WordRhythm };
 Profile parse_profile(const std::string& value);
 const char* profile_name(Profile profile);
 LegacyTimingPolicy timing_policy(Profile profile);
@@ -13,5 +13,6 @@ LegacyTimingPolicy timing_policy(Profile profile);
 void set_profile_environment(Profile profile);
 void validate_voice_directory(const std::filesystem::path& directory);
 DiphoneChainLegacyResult render(const std::filesystem::path& directory,
-                               const std::string& text, Profile profile);
+                               const std::string& text, Profile profile,
+                               RussianFrontendResult* frontend_diagnostic = nullptr);
 }

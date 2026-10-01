@@ -450,8 +450,13 @@ Pcm16Mono resynthesize_seg_m15(
     for (std::size_t i = 1; i < rendered.size(); ++i) {
         OlaJoinDiagnostics jd;
         const std::size_t before = out.samples.size();
-        const double lps = td_psola_pitch_scale_at(config, 1.0);
-        const double rps = td_psola_pitch_scale_at(config, 0.0);
+        const double den = std::max(1.0,static_cast<double>(source.samples.size()));
+        const double left_pos = config.local_join_pitch_m42
+            ? static_cast<double>(layout.runs[i-1].source_end)/den : 1.0;
+        const double right_pos = config.local_join_pitch_m42
+            ? static_cast<double>(layout.runs[i].source_begin)/den : 0.0;
+        const double lps = td_psola_pitch_scale_at(config, left_pos);
+        const double rps = td_psola_pitch_scale_at(config, right_pos);
         const int lp = right_hints[i - 1] > 0
             ? static_cast<int>(std::lround(right_hints[i - 1] / lps)) : 0;
         const int rp = left_hints[i] > 0

@@ -34,8 +34,13 @@ int main(int argc,char**argv){
    auto norm=nicolai::normalize_russian_legacy_text(text,&abbreviations,&exceptions);
    if(!norm.valid){std::cerr<<id<<" norm "<<norm.error<<"\n";continue;}
    nicolai::RussianFrontendOptions fo;fo.stress_dictionary=&stress;
+   if(const char* v=std::getenv("NICOLAI_M43_FIXED_IKA_STRESS")) fo.enable_fixed_ika_stress_m43=std::atoi(v)!=0;
    auto fr=nicolai::russian_text_to_nicolai_phones(norm.normalized_utf8,fo);
    if(!fr.valid){std::cerr<<id<<" front "<<fr.error<<"\n";continue;}
+   for(std::size_t wi=0;wi<fr.words.size();++wi) {
+       const auto& w=fr.words[wi];
+       std::cout<<"W\t"<<id<<"\t"<<wi<<"\t"<<w.stress_vowel_index<<"\t"<<w.stress_source<<"\n";
+   }
    const auto rh=nicolai::analyze_legacy_recovered_neighbor_rules(fr.phones);
    std::cout<<"R\t"<<id<<"\tR="<<rh.r_adjacent<<"\tJI="<<rh.j_to_i
             <<"\tUJU_L="<<rh.u_j_u_left_u<<"\tUJU_J="<<rh.u_j_u_center_j
@@ -65,6 +70,9 @@ int main(int argc,char**argv){
    if(const char* v=std::getenv("NICOLAI_M41_PRESERVE_RUNS")) policy.preserve_unvoiced_runs_m41=std::atoi(v)!=0;
    if(const char* v=std::getenv("NICOLAI_M41_PRESERVE_JOINS")) policy.preserve_unvoiced_joins_m41=std::atoi(v)!=0;
    if(const char* v=std::getenv("NICOLAI_M41_INTERPOLATE_UNCOVERED")) policy.interpolate_uncovered_m41=std::atoi(v)!=0;
+   if(const char* v=std::getenv("NICOLAI_M42_JOIN_PERIOD_CONTINUITY")) policy.join_period_continuity_m42=std::atof(v);
+   if(const char* v=std::getenv("NICOLAI_M42_LOCAL_JOIN_PITCH")) policy.local_join_pitch_m42=std::atoi(v)!=0;
+   if(const char* v=std::getenv("NICOLAI_M43_WORD_RHYTHM")) policy.word_rhythm_strength_m43=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_COMMA_BOUNDARY_SCALE")) policy.comma_boundary_scale=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_WORDSTR_CONTOUR_STRENGTH")) policy.wordstr_contour_strength=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_PHONE_SIDE_STRENGTH")) policy.phone_side_strength=std::atof(v);
@@ -112,10 +120,16 @@ int main(int argc,char**argv){
            <<"\t"<<a.m36_terminal_flushes<<"\t"<<a.m36_fallbacks<<"\n";
    nicolai::apply_pc_reference_output_gain(a.pcm);
    std::cout<<"M41\t"<<id<<"\t"<<a.protected_internal_m41<<"\t"<<a.protected_external_m41<<"\n";
+   if(policy.join_period_continuity_m42>0.0) std::cout<<"M42\t"<<id<<"\t"<<a.reconciled_pitch_joins_m42<<"\n";
+   for(const auto& w:a.word_budgets_m43) std::cout<<"WT\t"<<id<<"\t"<<w.first_phone<<"\t"<<w.last_phone
+       <<"\t"<<w.baseline_samples<<"\t"<<w.trial_samples<<"\t"<<w.effective_strength<<"\n";
    nicolai::append_legacy_pc_terminal_silence(a.pcm,wordstr,16000);
    nicolai::write_wav_pcm16_mono(std::filesystem::path(argv[5])/(id+".wav"),a.pcm);
    std::cout<<"P\t"<<id<<"\t"<<a.pcm.samples.size()<<"\t"<<fr.phones.size(); for(const auto&ph:fr.phones) std::cout<<"\t"<<ph; std::cout<<"\n"; for(const auto&t:a.timings) std::cout<<"D\t"<<id<<"\t"<<t.label<<"\t"<<t.source_ms<<"\t"<<t.target_ms<<"\t"<<t.duration_scale<<"\t"<<t.left_duration_scale<<"\t"<<t.right_duration_scale<<"\t"<<t.left_energy_gain<<"\t"<<t.right_energy_gain<<"\n";
    for(const auto&j:a.joins) std::cout<<"J\t"<<id<<"\t"<<j.shared_phone_index<<"\t"<<j.shared_phone<<"\t"<<j.center_sample<<"\t"<<j.overlap_samples<<"\t"<<j.left_trim<<"\t"<<j.right_trim<<"\t"<<j.normalized_correlation<<"\n";
+   if(std::getenv("NICOLAI_AUDIT_JOIN_PERIODS"))
+       for(const auto&j:a.joins) std::cout<<"JP\t"<<id<<"\t"<<j.shared_phone_index<<"\t"<<j.shared_phone
+           <<"\t"<<j.left_target_period_hint_m42<<"\t"<<j.right_target_period_hint_m42<<"\n";
    if(std::getenv("NICOLAI_AUDIT_TRANSIENTS"))
        for(const auto&u:a.unit_transients){
            std::cout<<"U\t"<<id<<"\t"<<u.label<<"\t"<<u.source_max_step<<"\t"<<u.source_max_step_at
