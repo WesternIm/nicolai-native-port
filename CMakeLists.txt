@@ -12,12 +12,15 @@ if(MSVC)
   add_compile_options(/utf-8)
 endif()
 add_library(nicolai_port STATIC
+    src/russian_lexicon_m44.cpp
     src/word_rhythm_m43.cpp
     src/voice_db.cpp src/edat.cpp src/address_space.cpp src/assets.cpp src/stateful_tds.cpp
     src/huffman.cpp src/ana_index.cpp src/cmp16.cpp src/cmp16_decode.cpp src/cmp16_codebook.cpp src/static_files.cpp src/legacy_tds.cpp src/legacy_phone_features.cpp src/legacy_runtime_state.cpp src/legacy_runtime_grain_m36.cpp src/legacy_runtime_cross_m36.cpp src/legacy_runtime_executor_m36.cpp src/legacy_window_m36.cpp
     src/resource_registry.cpp src/voice_catalog.cpp src/diphone_catalog.cpp src/g711.cpp src/psola_join.cpp src/td_psola.cpp src/seg_schedule.cpp src/hybrid_psola.cpp src/russian_stress.cpp src/russian_legacy.cpp src/russian_frontend.cpp src/legacy_prosody.cpp src/pc_parity.cpp src/engine.cpp src/wav_writer.cpp)
 target_include_directories(nicolai_port PUBLIC include)
 if(NOT ANDROID)
+  add_executable(nicolai_m44_lexicon_probe tools/nicolai_m44_lexicon_probe.cpp)
+  target_link_libraries(nicolai_m44_lexicon_probe PRIVATE nicolai_port)
   add_library(nicolai_talker_backend STATIC tools/talker_backend.cpp)
   target_include_directories(nicolai_talker_backend PUBLIC tools)
   target_link_libraries(nicolai_talker_backend PUBLIC nicolai_port)
@@ -50,6 +53,9 @@ if(ANDROID)
 endif()
 include(CTest)
 if(BUILD_TESTING AND NOT ANDROID)
+  add_executable(russian_lexicon_m44_test tests/russian_lexicon_m44_test.cpp)
+  target_link_libraries(russian_lexicon_m44_test PRIVATE nicolai_port)
+  add_test(NAME russian_lexicon_m44_test COMMAND russian_lexicon_m44_test)
   add_executable(word_rhythm_m43_test tests/word_rhythm_m43_test.cpp)
   target_link_libraries(word_rhythm_m43_test PRIVATE nicolai_port)
   add_test(NAME word_rhythm_m43_test COMMAND word_rhythm_m43_test)

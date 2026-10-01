@@ -6,6 +6,14 @@ the standalone test UI without proprietary voice data. Stable is the default;
 experimental modes are clearly labeled, and original SAPI requires a working
 installed Nicolai voice.
 
+The opt-in [M44 original-lexicon checkpoint](docs/M44_LEXICON_STRESS.md) reads
+63,294 original stem records plus suffix/stress tables from local EDAT inputs.
+`m44-lexicon` inherits M43 and adds a conservative stem-stress noun/main-verb
+subset: general forms such as `проверяем` and `делаем` no longer need individual
+patches. Exact exceptions still win; ambiguous/unsupported analyses fall back.
+Three of 22 saved-original comparisons improve in spectral shape, but pauses,
+full morphology and phrase intonation remain unfinished. Stable is unchanged.
+
 The opt-in [M43 word-rhythm/stress checkpoint](docs/M43_WORD_RHYTHM_STRESS.md)
 redistributes each word's existing pre-join spoken budget and adds a limited
 dictionary-backed fixed-stem `-ика` inflection fallback. `m43-word-rhythm`

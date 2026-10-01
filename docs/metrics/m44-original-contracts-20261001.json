@@ -1,0 +1,11 @@
+{
+  "schema": "nicolai-m44-local-contracts-v1",
+  "voice_sha256": "471bf1266c913784187dae25a2e5784a6ec309162e7dee2167ca9887c253e74d",
+  "controls": 20,
+  "accepted_controls": 10,
+  "declined_controls": 10,
+  "original_type_pointer_matches": 3680,
+  "original_stem_candidate_field_matches": 70,
+  "limits": "Original checks cover two synthetic intermediate primitives, not full text analysis, phonemes, prosody or PCM.",
+  "original_sha256": "f6b7e926c46a0259a866260cafb9d24d6ebed3dd7198829d16179348a186abc7"
+}

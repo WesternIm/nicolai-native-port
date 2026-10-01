@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nicolai/russian_stress.hpp"
+#include "nicolai/russian_lexicon_m44.hpp"
 
 #include <cstddef>
 #include <string>
@@ -12,7 +13,7 @@ struct FrontendWord {
     std::string source_utf8;
     std::vector<std::string> phones;
     int stress_vowel_index = -1;
-    std::string stress_source; // explicit / yo / dictionary / dictionary-ika-m43 / builtin / heuristic
+    std::string stress_source; // explicit / yo / dictionary / legacy-lexicon-m44 / dictionary-ika-m43 / builtin / heuristic
 };
 
 enum class FrontendBoundaryKind {
@@ -48,6 +49,7 @@ struct RussianFrontendOptions {
     bool enable_vowel_reduction = true;
     bool enable_consonant_assimilation = true;
     bool enable_fixed_ika_stress_m43 = false;
+    const RussianLexiconM44* lexicon_m44 = nullptr; // null keeps all old profiles unchanged
 };
 
 // M17 independent Russian grapheme-to-phone frontend. It now resolves lexical

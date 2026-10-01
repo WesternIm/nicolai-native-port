@@ -1,0 +1,107 @@
+{
+  "schema": "nicolai-rhythm-screen-m43-v1",
+  "caveat": "Low energy is not necessarily missing speech; DTW may align wrong phones. # gap grouping includes punctuation, not only plain word boundaries. Budget conservation is before waveform joins; none of these values prove listening superiority.",
+  "summary": {
+    "phrases": 3,
+    "baseline": {
+      "word_join_intervals": 8,
+      "word_join_mapped_intervals": 8,
+      "word_join_unmapped_intervals": 0,
+      "word_join_excess_quiet_ms": 453.6,
+      "quiet_total_ms": 1720.0,
+      "original_quiet_total_ms": 1500.0,
+      "duration_mae_ms": 127.3333333333331,
+      "mean_shape_cost": 43.78
+    },
+    "trial": {
+      "word_join_intervals": 8,
+      "word_join_mapped_intervals": 8,
+      "word_join_unmapped_intervals": 0,
+      "word_join_excess_quiet_ms": 453.6,
+      "quiet_total_ms": 1720.0,
+      "original_quiet_total_ms": 1500.0,
+      "duration_mae_ms": 126.7666666666665,
+      "mean_shape_cost": 43.446333333333335
+    },
+    "lower_shape_cost": 1,
+    "higher_shape_cost": 0
+  },
+  "word_budgets": {
+    "words": 9,
+    "phrases": 3,
+    "max_logged_budget_delta_samples": 0.0,
+    "minimum_effective_strength": 0.25,
+    "maximum_effective_strength": 0.25
+  },
+  "rows": [
+    {
+      "id": "startup",
+      "baseline": {
+        "word_join_intervals": 6,
+        "word_join_mapped_intervals": 6,
+        "word_join_unmapped_intervals": 0,
+        "word_join_excess_quiet_ms": 300.0,
+        "quiet_total_ms": 1310.0,
+        "original_quiet_total_ms": 1240.0,
+        "duration_error_ms": -118.29999999999927,
+        "shape_cost": 43.056
+      },
+      "trial": {
+        "word_join_intervals": 6,
+        "word_join_mapped_intervals": 6,
+        "word_join_unmapped_intervals": 0,
+        "word_join_excess_quiet_ms": 300.0,
+        "quiet_total_ms": 1310.0,
+        "original_quiet_total_ms": 1240.0,
+        "duration_error_ms": -116.59999999999945,
+        "shape_cost": 42.055
+      }
+    },
+    {
+      "id": "kurlyk",
+      "baseline": {
+        "word_join_intervals": 1,
+        "word_join_mapped_intervals": 1,
+        "word_join_unmapped_intervals": 0,
+        "word_join_excess_quiet_ms": 33.599999999999994,
+        "quiet_total_ms": 260.0,
+        "original_quiet_total_ms": 220.0,
+        "duration_error_ms": -165.0,
+        "shape_cost": 39.321
+      },
+      "trial": {
+        "word_join_intervals": 1,
+        "word_join_mapped_intervals": 1,
+        "word_join_unmapped_intervals": 0,
+        "word_join_excess_quiet_ms": 33.599999999999994,
+        "quiet_total_ms": 260.0,
+        "original_quiet_total_ms": 220.0,
+        "duration_error_ms": -165.0,
+        "shape_cost": 39.321
+      }
+    },
+    {
+      "id": "oh",
+      "baseline": {
+        "word_join_intervals": 1,
+        "word_join_mapped_intervals": 1,
+        "word_join_unmapped_intervals": 0,
+        "word_join_excess_quiet_ms": 120.0,
+        "quiet_total_ms": 150.0,
+        "original_quiet_total_ms": 40.0,
+        "duration_error_ms": 98.70000000000005,
+        "shape_cost": 48.963
+      },
+      "trial": {
+        "word_join_intervals": 1,
+        "word_join_mapped_intervals": 1,
+        "word_join_unmapped_intervals": 0,
+        "word_join_excess_quiet_ms": 120.0,
+        "quiet_total_ms": 150.0,
+        "original_quiet_total_ms": 40.0,
+        "duration_error_ms": 98.70000000000005,
+        "shape_cost": 48.963
+      }
+    }
+  ]
+}

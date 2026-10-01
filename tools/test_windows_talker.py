@@ -24,7 +24,13 @@ def main():
     parser.add_argument("--batch", type=Path)
     parser.add_argument("--zip", type=Path)
     parser.add_argument("--check-original", action="store_true")
+    parser.add_argument("--baseline-exe", type=Path,
+                        help="Optional previous M43 EXE for old-profile PCM isolation")
+    parser.add_argument("--report", type=Path, help="Fresh scalar-only local test report")
     args = parser.parse_args()
+    if args.baseline_exe and not args.voice:
+        parser.error("--baseline-exe requires --voice and --batch")
+    wrapper_pairs = old_profile_pairs = gui_jobs = 0
     subprocess.run([str(args.exe.resolve()), "--ui-smoke"], timeout=15, check=True)
     with tempfile.TemporaryDirectory(prefix="nicolai-talker-test-") as root:
         # Whitespace, Cyrillic paths, multi-line text and quote-safe argv.
@@ -64,6 +70,8 @@ def main():
                 "number": "2026 год",
                 "acoustic": "Акустика. Акустику. Физику. Логику.",
                 "acoustic-marked": "Аку\u0301стика. Аку\u0301стику. Фи\u0301зику. Ло\u0301гику.",
+                "verbs": "Проверяем. Проверяешь. Проверяют. Делаем.",
+                "verbs-marked": "Проверя\u0301ем. Проверя\u0301ешь. Проверя\u0301ют. Де\u0301лаем.",
             }
             corpus = temp / "corpus.tsv"
             corpus.write_text("".join(f"{name}\t{phrase}\n" for name, phrase in cases.items()), encoding="utf-8")
@@ -71,15 +79,17 @@ def main():
             single_word_hashes = {}
             punctuation_hashes = {}
             number_hashes = {}
-            for profile in ("stable", "m36-local", "m36-chain", "m38-boundary", "m40-transient", "m41-preserve", "m42-join-pitch", "m43-word-rhythm"):
+            profiles = ("stable", "m36-local", "m36-chain", "m38-boundary", "m40-transient", "m41-preserve", "m42-join-pitch", "m43-word-rhythm", "m44-lexicon")
+            for profile in profiles:
                 subprocess.run([str(args.exe.resolve()), "--ui-job-test", str(args.voice.resolve()), profile],
                                capture_output=True, timeout=70, check=True)
+                gui_jobs += 1
                 contaminated = dict(os.environ, NICOLAI_M36_TRANSITION_EXECUTOR="1",
                                     NICOLAI_M36_CHAIN_EXECUTOR="1", NICOLAI_M40_BLEND_UNCOVERED="1",
                                     NICOLAI_M41_PRESERVE_RUNS="1", NICOLAI_M41_PRESERVE_JOINS="1",
                                     NICOLAI_M41_INTERPOLATE_UNCOVERED="1",
                                     NICOLAI_M42_JOIN_PERIOD_CONTINUITY="1", NICOLAI_M42_LOCAL_JOIN_PITCH="1",
-                                    NICOLAI_M43_WORD_RHYTHM="1", NICOLAI_M43_FIXED_IKA_STRESS="1", NICOLAI_PC_SEG_TIMELINE="1")
+                                    NICOLAI_M43_WORD_RHYTHM="1", NICOLAI_M43_FIXED_IKA_STRESS="1", NICOLAI_M44_LEXICON_STRESS="1", NICOLAI_PC_SEG_TIMELINE="1")
                 env = dict(os.environ)
                 for name in list(env):
                     if name.startswith("NICOLAI_"):
@@ -88,16 +98,17 @@ def main():
                 if profile == "m36-chain": env["NICOLAI_M36_CHAIN_EXECUTOR"] = "1"
                 if profile == "m38-boundary": env["NICOLAI_M38_BOUNDARY_SPEECH_SHARE"] = "0.5"
                 if profile == "m40-transient": env["NICOLAI_M40_BLEND_UNCOVERED"] = "1"
-                if profile in ("m41-preserve", "m42-join-pitch", "m43-word-rhythm"):
+                if profile in ("m41-preserve", "m42-join-pitch", "m43-word-rhythm", "m44-lexicon"):
                     env["NICOLAI_M40_BLEND_UNCOVERED"] = "1"
                     env["NICOLAI_M41_PRESERVE_JOINS"] = "1"
                     env["NICOLAI_M41_INTERPOLATE_UNCOVERED"] = "1"
-                if profile in ("m42-join-pitch", "m43-word-rhythm"):
+                if profile in ("m42-join-pitch", "m43-word-rhythm", "m44-lexicon"):
                     env["NICOLAI_M42_JOIN_PERIOD_CONTINUITY"] = "0.5"
                     env["NICOLAI_M42_LOCAL_JOIN_PITCH"] = "1"
-                if profile == "m43-word-rhythm":
+                if profile in ("m43-word-rhythm", "m44-lexicon"):
                     env["NICOLAI_M43_WORD_RHYTHM"] = "0.25"
                     env["NICOLAI_M43_FIXED_IKA_STRESS"] = "1"
+                if profile == "m44-lexicon": env["NICOLAI_M44_LEXICON_STRESS"] = "1"
                 target = temp / f"batch-{profile}"
                 batch = subprocess.run([str(args.batch.resolve()), str(args.voice / "nicolai16.dat"),
                                         str(args.voice / "exc_rus.txt"), str(args.voice / "abb_rus.txt"),
@@ -118,7 +129,7 @@ def main():
                     joins = [line.removeprefix("join=").split(",") for line in
                              result.stdout.decode("utf-8", errors="replace").splitlines()
                              if line.startswith("join=")]
-                    if profile in ("stable", "m38-boundary", "m40-transient", "m41-preserve", "m42-join-pitch", "m43-word-rhythm"):
+                    if profile in ("stable", "m38-boundary", "m40-transient", "m41-preserve", "m42-join-pitch", "m43-word-rhythm", "m44-lexicon"):
                         assert joins and all(len(join) == 7 for join in joins), (profile, name)
                         assert all(0 <= int(join[2]) < frames for join in joins), (profile, name)
                         assert all(int(joins[i][2]) <= int(joins[i + 1][2])
@@ -126,6 +137,13 @@ def main():
                     else:
                         assert not joins, (profile, name)
                     assert output.read_bytes() == (target / f"{name}.wav").read_bytes(), (profile, name)
+                    wrapper_pairs += 1
+                    if args.baseline_exe and profile != "m44-lexicon":
+                        previous = temp / f"previous-{profile}-{name}.wav"
+                        old = invoke(args.baseline_exe, args.voice, text, profile, previous)
+                        assert old.returncode == 0, ("old profile failed", profile, name)
+                        assert previous.read_bytes() == output.read_bytes(), ("old profile changed", profile, name)
+                        old_profile_pairs += 1
                     stress_words = [line.removeprefix("stress_word=").split(",") for line in
                                     result.stdout.decode("utf-8", errors="replace").splitlines()
                                     if line.startswith("stress_word=")]
@@ -133,12 +151,13 @@ def main():
                                    if line.startswith(f"W\t{name}\t")]
                     assert stress_words and stress_words == batch_words, (profile, name, "stress diagnostics")
                     if name == "startup":
-                        assert stress_words[-1][1:] == (["1", "dictionary-ika-m43"] if profile == "m43-word-rhythm"
+                        assert stress_words[-1][1:] == (["1", "legacy-lexicon-m44"] if profile == "m44-lexicon" else ["1", "dictionary-ika-m43"] if profile == "m43-word-rhythm"
                                                        else ["3", "heuristic"]), (profile, stress_words[-1])
+                        assert stress_words[3][1:] == (["2", "legacy-lexicon-m44"] if profile == "m44-lexicon" else ["3", "heuristic"]), (profile, stress_words[3])
                     budgets = [line.removeprefix("word_budget=").split(",") for line in
                                result.stdout.decode("utf-8", errors="replace").splitlines()
                                if line.startswith("word_budget=")]
-                    if profile == "m43-word-rhythm":
+                    if profile in ("m43-word-rhythm", "m44-lexicon"):
                         assert budgets and all(len(word) == 5 for word in budgets), (profile, name)
                         assert all(abs(float(word[2]) - float(word[3])) < 0.02 for word in budgets)
                     else:
@@ -153,7 +172,8 @@ def main():
                         number_hashes[profile] = hashlib.sha256(output.read_bytes()).hexdigest()
                 plain = (target / "acoustic.wav").read_bytes()
                 marked = (target / "acoustic-marked.wav").read_bytes()
-                assert (plain == marked) == (profile == "m43-word-rhythm"), (profile, "stress family activation/isolation")
+                assert (plain == marked) == (profile in ("m43-word-rhythm", "m44-lexicon")), (profile, "stress family activation/isolation")
+                assert ((target / "verbs.wav").read_bytes() == (target / "verbs-marked.wav").read_bytes()) == (profile == "m44-lexicon"), (profile, "general verb lexicon activation/isolation")
             assert hashes["stable"] != hashes["m36-local"], "experimental mode is accidentally stable"
             assert hashes["stable"] != hashes["m38-boundary"], "boundary experiment is accidentally stable"
             assert single_word_hashes["stable"] == single_word_hashes["m38-boundary"], "single word changed"
@@ -162,7 +182,8 @@ def main():
             assert number_hashes["m40-transient"] != number_hashes["m41-preserve"], "preservation experiment is accidentally M40"
             assert hashes["m41-preserve"] != hashes["m42-join-pitch"], "join-pitch experiment is accidentally M41"
             assert hashes["m42-join-pitch"] != hashes["m43-word-rhythm"], "rhythm experiment is accidentally M42"
-            print(f"local voice: startup GUI jobs and {len(cases)} phrases x 8 profiles pass; child WAVs match batch byte-for-byte")
+            assert hashes["m43-word-rhythm"] != hashes["m44-lexicon"], "lexicon experiment is accidentally M43"
+            print(f"local voice: startup GUI jobs and {len(cases)} phrases x {len(profiles)} profiles pass; child WAVs match batch byte-for-byte")
     if args.zip:
         with zipfile.ZipFile(args.zip) as package:
             assert set(package.namelist()) == {"NicolaiTalker.exe", "README.txt", "build.json"}
@@ -170,13 +191,29 @@ def main():
             assert manifest["proprietary_inputs_included"] is False
             assert manifest["original_sapi_engine_included"] is False
             assert manifest["original_sapi_requires_installed_voice"] is True
-            assert manifest["profiles"] == ["stable", "m36-local", "m36-chain", "m38-boundary", "m40-transient", "m41-preserve", "m42-join-pitch", "m43-word-rhythm", "original-sapi"]
+            assert manifest["profiles"] == ["stable", "m36-local", "m36-chain", "m38-boundary", "m40-transient", "m41-preserve", "m42-join-pitch", "m43-word-rhythm", "m44-lexicon", "original-sapi"]
             image = package.read("NicolaiTalker.exe")
             nt = int.from_bytes(image[0x3c:0x40], "little")
             assert int.from_bytes(image[nt + 4:nt + 6], "little") == 0x14c
             assert manifest["exe_sha256"] == hashlib.sha256(package.read("NicolaiTalker.exe")).hexdigest()
             assert package.read("NicolaiTalker.exe") == args.exe.read_bytes()
         print("ZIP contents and executable hash verified")
+    if args.report:
+        report = {
+            "schema": "nicolai-m44-wrapper-isolation-v1",
+            "exe_sha256": hashlib.sha256(args.exe.read_bytes()).hexdigest(),
+            "gui_startup_jobs": gui_jobs,
+            "wrapper_batch_pcm_pairs": wrapper_pairs,
+            "unchanged_old_profile_pcm_pairs": old_profile_pairs,
+            "package_checked": bool(args.zip),
+            "limits": "Wrapper and old-profile PCM isolation, not listening superiority or full original NLP parity.",
+        }
+        if args.baseline_exe:
+            report["baseline_exe_sha256"] = hashlib.sha256(args.baseline_exe.read_bytes()).hexdigest()
+        args.report.parent.mkdir(parents=True, exist_ok=True)
+        with args.report.open("x", encoding="utf-8") as stream:
+            json.dump(report, stream, indent=2)
+            stream.write("\n")
     print("Windows test talker contracts passed")
 
 
