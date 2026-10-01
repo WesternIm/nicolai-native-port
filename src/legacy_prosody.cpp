@@ -1046,6 +1046,8 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
     const bool m36_chain=policy.use_stateful_tds_m34 && chain_flag && std::atoi(chain_flag)!=0;
     std::vector<StatefulTdsUnitM36> chain_units;
 
+    std::vector<WordRhythmUnitM43> duration_configs;
+    duration_configs.reserve(units.size());
     for(std::size_t i=0;i<units.size();++i){
         auto&u=units[i];
         double left_scale=u.base_scale, right_scale=u.base_scale;
@@ -1119,10 +1121,33 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
             left_scale=std::clamp(left_scale*lm,0.20,3.00);
             right_scale=std::clamp(right_scale*rm,0.20,3.00);
         }
+        duration_configs.push_back({L,R,left_scale,right_scale});
+    }
+    std::vector<bool> duration_changed_m43(units.size(),false);
+    if(!policy.use_stateful_tds_m34 && policy.word_rhythm_strength_m43>0.0) {
+        std::vector<double> weights(phones.size(),0.0);
+        for(std::size_t pi=0;pi<phones.size();++pi) {
+            const auto it=dur.milliseconds.find(phones[pi]);
+            if(phones[pi]!="#" && it!=dur.milliseconds.end()) weights[pi]=it->second;
+        }
+        const auto plan=plan_word_rhythm_m43(phones,duration_configs,weights,policy.word_rhythm_strength_m43);
+        if(plan.valid) {
+            for(std::size_t i=0;i<units.size();++i)
+                duration_changed_m43[i]=plan.units[i].left_scale!=duration_configs[i].left_scale ||
+                    plan.units[i].right_scale!=duration_configs[i].right_scale;
+            duration_configs=plan.units;
+            out.word_budgets_m43=plan.words;
+        }
+    }
+
+    for(std::size_t i=0;i<units.size();++i){
+        auto&u=units[i];
+        const double L=duration_configs[i].left_source_samples, R=duration_configs[i].right_source_samples;
+        const double left_scale=duration_configs[i].left_scale, right_scale=duration_configs[i].right_scale;
         // Preserve M31 bit-for-bit when the physical [l] layer is disabled.
         // Re-averaging two nominally equal side scales can change the last
         // floating-point bit and push llround across a sample boundary.
-        const double effective_scale=((physical_length_strength>0.0 || policy.use_stateful_tds_m34) && (L+R)>0.0)
+        const double effective_scale=((physical_length_strength>0.0 || policy.use_stateful_tds_m34 || duration_changed_m43[i]) && (L+R)>0.0)
             ? (L*left_scale+R*right_scale)/(L+R) : u.base_scale;
         u.target_ms=u.source_ms*effective_scale;
 

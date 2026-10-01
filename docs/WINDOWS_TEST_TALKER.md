@@ -6,10 +6,11 @@ playback/stop/replay, Save WAV and access to per-job logs. It is built as x86 so
 the original installed 32-bit Nicolai token is visible, and runs on x86/x64
 Windows. The static Release runtime avoids a separate VC++ runtime install.
 
-Eight selections are exposed: stable native port (default), experimental M36
+Nine selections are exposed: stable native port (default), experimental M36
 local, experimental M36 chain, experimental M38 connected-word timing,
 experimental M40 transient repair, experimental M41 short-feature protection
 and fractional fallback sampling, experimental M42 join-pitch reconciliation,
+experimental M43 word-budget timing/limited dictionary-form stress,
 and the installed original Nicolai via SAPI5.
 M41 keeps M40's coverage-edge repair, but does not enable the rejected internal
 run-protection ablation. See [M41 evidence and limits](M41_SOUND_PRESERVATION.md).
@@ -22,6 +23,12 @@ M42 inherits M41, uses local run contour coordinates for internal joins,
 and reconciles screened shared-phone endpoint periods at strength 0.5. It
 does not implement a shared phase clock or fix lexical stress. Evidence is
 mixed, so stable remains the default. See [M42 evidence and limits](M42_JOIN_PERIOD_CONTINUITY.md).
+
+M43 inherits M42, blends word-budget timing at 0.25 and enables limited
+fixed-stem `-ика` dictionary-form stress. Old modes do not enable either
+change. The isolated `акустика` already has correct lexical stress; the
+missing inflected `акустику` is corrected, without claiming that acoustic
+prominence on `с` is solved. See [M43 evidence and limits](M43_WORD_RHYTHM_STRESS.md).
 
 Every synthesis job is an owned child of the same EXE. User text travels in an
 explicit UTF-8 file, not interpolated shell commands; paths use wide Win32 APIs
@@ -65,17 +72,17 @@ python tools/test_windows_talker.py --exe build-talker/Release/NicolaiTalker.exe
   --check-original
 ```
 
-The GUI-job path synthesizes the actual startup phrase in each of the seven
-port modes. Child-render WAVs for six synthetic phrases (single word, simple,
-startup, initial-vowel, initial-u and number/transient regressions) are byte-identical to the
-established batch renderer for each port profile: forty-two WAV comparisons. Stable differs from M36 local, M38 and M40; M41 differs from M40 and M42 differs from M41,
+The GUI-job path synthesizes the actual startup phrase in each of the eight
+port modes. Child-render WAVs for eight synthetic phrases (single word, simple,
+startup, initial-vowel, initial-u, number/transient and plain/marked stress regressions) are byte-identical to the
+established batch renderer for each port profile: sixty-four WAV comparisons. Stable differs from M36 local, M38 and M40; M41 differs from M40, M42 differs from M41 and M43 differs from M42,
 so the profile selector is not comparing stable output against itself. This
 is wrapper/profile parity, not new acoustic progress or a 22-phrase oracle.
 Missing input, invalid profiles, Cyrillic/space-containing input/output paths,
 inherited flag isolation and refusal to overwrite old WAVs are also checked.
 
 Voice-free contracts inspect profile policies and GUI controls/Unicode input.
-The full local Win32 Release CTest run passed 31/31. The executable's imports
+The full local Win32 Release CTest run passed 32/32. The executable's imports
 are Windows system DLLs only (no VCRUNTIME/MSVCP DLL requirement). A screenshot
 rendered by the app's own UI smoke mode was inspected for clipped controls and
 readability. The test frontend adds no networking or registry mutations.
