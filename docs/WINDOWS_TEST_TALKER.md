@@ -6,6 +6,12 @@ playback/stop/replay, Save WAV and access to per-job logs. It is built as x86 so
 the original installed 32-bit Nicolai token is visible, and runs on x86/x64
 Windows. The static Release runtime avoids a separate VC++ runtime install.
 
+M46 adds an [optional original linguistic capture](M46_ORIGINAL_LINGUISTIC_CAPTURE.md),
+not a new acoustic profile. `Trace-Original.cmd` (when included) starts this same
+EXE with `--original-trace`; normal launch and audio defaults remain unchanged.
+Capture requires a fresh verified server child and is not yet live-validated
+on this host. It saves private records locally, never uploads them automatically.
+
 Ten selections are exposed: stable native port (default), experimental M36
 local, experimental M36 chain, experimental M38 connected-word timing,
 experimental M40 transient repair, experimental M41 short-feature protection
@@ -44,6 +50,9 @@ frontend, coefficients, output gain and terminal silence. Acoustic renderer
 defaults remain unchanged; the shared frontend correction below applies to all
 port callers. Cancellation/timeout kills only that owned child, never
 an existing original server. The window remains responsive when SAPI stalls.
+The opt-in M46 debugger additionally owns its newly created server and may
+terminate that verified child on exceptional detach or render-parent death;
+pre-existing/shared servers are refused and left untouched.
 
 Original SAPI is intermittent on this host. User-owned GUI jobs have produced
 original WAVs, while later independent bounded runs stalled at
@@ -65,8 +74,9 @@ python tools/test_windows_talker.py --exe build-talker/Release/NicolaiTalker.exe
 
 Existing NMake builds use a matching x86 developer environment without `-A`.
 Package output paths must be fresh. The package script checks Release, static
-runtime and PE x86 machine type. Only EXE, README and commit/hash metadata are
-included: no voice data, original DLLs, installer, WAVs or captured arrays.
+runtime and PE x86 machine type. EXE, README and commit/hash metadata are
+included, optionally with `Trace-Original.cmd` via `-IncludeOriginalTraceLauncher`:
+no voice data, original DLLs, installer, WAVs or captured arrays.
 The `windows-test-package` CI job uploads the tested ZIP as
 `Nicolai-Test-win32` (30-day Actions artifact retention). Sources remain in Git.
 
@@ -84,6 +94,8 @@ startup, initial-vowel, initial-u, number/transient and plain/marked noun/verb
 stress regressions) are byte-identical to the established batch renderer for
 each port profile: ninety WAV comparisons. The optional `--baseline-exe`
 compares eighty old-profile WAVs with the previous M43 EXE; all remain identical.
+For M46, `--baseline-includes-m44` compares all ninety pairs with the existing
+M44 EXE, as recorded in the M46 scalar report.
 Stable differs from M36 local, M38 and M40; M41 differs from M40, M42 differs
 from M41, M43 differs from M42 and M44 differs from M43,
 so the profile selector is not comparing stable output against itself. This
@@ -92,7 +104,8 @@ Missing input, invalid profiles, Cyrillic/space-containing input/output paths,
 inherited flag isolation and refusal to overwrite old WAVs are also checked.
 
 Voice-free contracts inspect profile policies and GUI controls/Unicode input.
-The full local Win32 Release CTest run passed 33/33. The executable's imports
+The M44 local Win32 Release CTest run passed 33/33; M46 adds two contracts and
+the fresh full run passes 35/35. The executable's imports
 are Windows system DLLs only (no VCRUNTIME/MSVCP DLL requirement). A screenshot
 rendered by the app's own UI smoke mode was inspected for clipped controls and
 readability. The test frontend adds no networking or registry mutations.

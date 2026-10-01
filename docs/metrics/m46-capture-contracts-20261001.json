@@ -1,0 +1,21 @@
+{
+  "schema": "nicolai-m46-capture-contracts-v1",
+  "full_win32_release_ctest_passed": 35,
+  "full_win32_release_ctest_failed": 0,
+  "fresh_exe_sha256": "b9ebcd59cdea2827360159fc105e24b9d07eeb3ccd8a4272874ab73442ab4709",
+  "final_owner_guard_embedded": true,
+  "final_stage_error_log_embedded": true,
+  "final_parent_watchdog_embedded": true,
+  "snapshot_negative_guards": 6,
+  "synthetic_owned_attach_remote_break_detach_passed": true,
+  "synthetic_owned_detach_repeats_passed": 20,
+  "audit_synthetic_positive_cases": 3,
+  "audit_synthetic_negative_cases": 6,
+  "audit_mismatch_accounting_cases": 1,
+  "m45_original_synthetic_matches_rechecked": 164,
+  "complete_real_original_linguistic_captures": 0,
+  "cold_original_gui_trial_stage": "set-rate",
+  "cold_original_gui_trial_completed": false,
+  "prior_successful_original_logs_inspected": 3,
+  "limits": "Synthetic snapshot/audit and PCM isolation only. No complete live original capture, original clock units, full morphology, intonation or audio parity established. Private source records and recordings are excluded."
+}

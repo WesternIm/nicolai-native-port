@@ -8,6 +8,18 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+# Explicit dependencies also cover localized MSVC/NMake installations whose
+# showIncludes prefix was not recognized during an older configure step.
+set(_capture_includes
+  "${CMAKE_CURRENT_SOURCE_DIR}/tools/m36_route_capture.inc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/tools/m46_linguistic_snapshot.inc"
+  "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_original_sha256.hpp")
+set_property(SOURCE tools/nicolai_m36_runtime_capture.cpp APPEND
+  PROPERTY OBJECT_DEPENDS "${_capture_includes}")
+set_property(SOURCE tests/m36_route_capture_test.cpp tests/m46_linguistic_snapshot_test.cpp APPEND
+  PROPERTY OBJECT_DEPENDS "${_capture_includes};${CMAKE_CURRENT_SOURCE_DIR}/tools/nicolai_m36_runtime_capture.cpp")
+set_property(SOURCE tools/nicolai_talker_win.cpp APPEND
+  PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tools/m46_talker_capture.inc")
 if(MSVC)
   add_compile_options(/utf-8)
 endif()
@@ -28,6 +40,10 @@ if(NOT ANDROID)
     add_executable(NicolaiTalker WIN32 tools/nicolai_talker_win.cpp)
     target_link_libraries(NicolaiTalker PRIVATE nicolai_talker_backend winmm comdlg32 shell32 ole32 uuid)
     target_compile_definitions(NicolaiTalker PRIVATE UNICODE _UNICODE NOMINMAX)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+      target_sources(NicolaiTalker PRIVATE tools/nicolai_m36_runtime_capture.cpp)
+      target_compile_definitions(NicolaiTalker PRIVATE NICOLAI_CAPTURE_EMBEDDED)
+    endif()
   endif()
   add_executable(nicolai_m33_probe tools/nicolai_m33_probe.cpp)
   target_link_libraries(nicolai_m33_probe PRIVATE nicolai_port)
@@ -68,6 +84,9 @@ if(BUILD_TESTING AND NOT ANDROID)
     add_test(NAME talker_ui_smoke COMMAND NicolaiTalker --ui-smoke)
   endif()
   if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 4)
+    add_executable(m46_linguistic_snapshot_test tests/m46_linguistic_snapshot_test.cpp)
+    add_test(NAME talker_original_trace_smoke COMMAND NicolaiTalker --original-trace-smoke)
+    add_test(NAME m46_linguistic_snapshot_test COMMAND m46_linguistic_snapshot_test)
     add_executable(m36_route_capture_test tests/m36_route_capture_test.cpp)
     add_test(NAME m36_route_capture_test COMMAND m36_route_capture_test)
     add_executable(legacy_startup_trace_fixture tests/legacy_startup_trace_fixture.cpp)
