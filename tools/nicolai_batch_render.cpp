@@ -62,6 +62,9 @@ int main(int argc,char**argv){
    if(const char* v=std::getenv("NICOLAI_M38_BOUNDARY_SPEECH_SHARE")) policy.word_boundary_speech_share_m38=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_M40_BLEND_UNCOVERED")) policy.blend_uncovered_edges_m40=std::atoi(v)!=0;
    policy.audit_transients_m40=std::getenv("NICOLAI_AUDIT_TRANSIENTS")!=nullptr;
+   if(const char* v=std::getenv("NICOLAI_M41_PRESERVE_RUNS")) policy.preserve_unvoiced_runs_m41=std::atoi(v)!=0;
+   if(const char* v=std::getenv("NICOLAI_M41_PRESERVE_JOINS")) policy.preserve_unvoiced_joins_m41=std::atoi(v)!=0;
+   if(const char* v=std::getenv("NICOLAI_M41_INTERPOLATE_UNCOVERED")) policy.interpolate_uncovered_m41=std::atoi(v)!=0;
    if(const char* v=std::getenv("NICOLAI_COMMA_BOUNDARY_SCALE")) policy.comma_boundary_scale=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_WORDSTR_CONTOUR_STRENGTH")) policy.wordstr_contour_strength=std::atof(v);
    if(const char* v=std::getenv("NICOLAI_PHONE_SIDE_STRENGTH")) policy.phone_side_strength=std::atof(v);
@@ -108,6 +111,7 @@ int main(int argc,char**argv){
        std::cout<<"M36\t"<<id<<"\t"<<a.m36_initial_paths<<"\t"<<a.m36_cross_paths
            <<"\t"<<a.m36_terminal_flushes<<"\t"<<a.m36_fallbacks<<"\n";
    nicolai::apply_pc_reference_output_gain(a.pcm);
+   std::cout<<"M41\t"<<id<<"\t"<<a.protected_internal_m41<<"\t"<<a.protected_external_m41<<"\n";
    nicolai::append_legacy_pc_terminal_silence(a.pcm,wordstr,16000);
    nicolai::write_wav_pcm16_mono(std::filesystem::path(argv[5])/(id+".wav"),a.pcm);
    std::cout<<"P\t"<<id<<"\t"<<a.pcm.samples.size()<<"\t"<<fr.phones.size(); for(const auto&ph:fr.phones) std::cout<<"\t"<<ph; std::cout<<"\n"; for(const auto&t:a.timings) std::cout<<"D\t"<<id<<"\t"<<t.label<<"\t"<<t.source_ms<<"\t"<<t.target_ms<<"\t"<<t.duration_scale<<"\t"<<t.left_duration_scale<<"\t"<<t.right_duration_scale<<"\t"<<t.left_energy_gain<<"\t"<<t.right_energy_gain<<"\n";

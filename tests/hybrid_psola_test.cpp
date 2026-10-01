@@ -4,8 +4,9 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <stdexcept>
 
-int main() {
+int main() try {
     nicolai::Pcm16Mono regular; regular.sample_rate=16000; regular.samples.resize(301);
     for(std::size_t i=0;i<regular.samples.size();++i) regular.samples[i]=static_cast<std::int16_t>(i*20-3000);
     nicolai::SegSourceTimelineM33 timeline;
@@ -120,5 +121,30 @@ int main() {
     auto pc_flat = nicolai::resynthesize_seg_m32_phone_sides(
         p,s,pc_layout,flat,0.85,1.20,0.5,1.0);
     assert(!pc_contour.samples.empty() && pc_contour.samples!=pc_flat.samples);
+    // Active in Release as well: M41 must reach the unequal-duration path,
+    // not just the uniform TD-PSOLA renderer. It must not resample noise runs.
+    auto require=[](bool ok) { if(!ok) throw std::runtime_error("M41 piecewise fallback contract failed"); };
+    nicolai::Pcm16Mono ramp; ramp.sample_rate=16000;
+    for(int i=0;i<256;++i) ramp.samples.push_back(static_cast<std::int16_t>(-12800+100*i));
+    nicolai::SegScheduleM15 one; one.valid=true; one.runs.resize(1);
+    nicolai::SegSpanLayout one_layout; one_layout.valid=true; one_layout.split_sample_estimate=128;
+    nicolai::SegRunSpan run; run.voiced=true; run.source_end=256; run.periods={40,40,40};
+    one_layout.runs.push_back(run);
+    nicolai::TdPsolaConfig fractional;
+    const auto old_tail=nicolai::resynthesize_seg_m32_phone_sides(ramp,one,one_layout,fractional,0.73,0.61,1,1);
+    fractional.interpolate_uncovered_m41=true;
+    const auto new_tail=nicolai::resynthesize_seg_m32_phone_sides(ramp,one,one_layout,fractional,0.73,0.61,1,1);
+    require(!old_tail.samples.empty() && new_tail.samples.size()==old_tail.samples.size());
+    // The rounded output's last source time exceeds 255, so both clamp to
+    // the endpoint. Two samples earlier it is fractional and uncovered.
+    require(new_tail.samples.back()==ramp.samples.back() && old_tail.samples.back()==ramp.samples.back());
+    require(new_tail.samples[new_tail.samples.size()-3]!=old_tail.samples[old_tail.samples.size()-3]);
+    one_layout.runs[0].voiced=false;
+    const auto old_noise=nicolai::resynthesize_seg_m32_phone_sides(ramp,one,one_layout,{},0.73,0.61,1,1);
+    const auto new_noise=nicolai::resynthesize_seg_m32_phone_sides(ramp,one,one_layout,fractional,0.73,0.61,1,1);
+    require(!old_noise.samples.empty() && old_noise.samples==new_noise.samples);
     std::cout << "hybrid_psola_test: PASSED output=" << q.samples.size() << "\n";
+} catch(const std::exception& error) {
+    std::cerr << error.what() << '\n';
+    return 1;
 }

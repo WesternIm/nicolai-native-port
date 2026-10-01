@@ -6,9 +6,12 @@ playback/stop/replay, Save WAV and access to per-job logs. It is built as x86 so
 the original installed 32-bit Nicolai token is visible, and runs on x86/x64
 Windows. The static Release runtime avoids a separate VC++ runtime install.
 
-Six selections are exposed: stable native port (default), experimental M36
+Seven selections are exposed: stable native port (default), experimental M36
 local, experimental M36 chain, experimental M38 connected-word timing,
-experimental M40 transient repair, and the installed original Nicolai via SAPI5.
+experimental M40 transient repair, experimental M41 short-feature protection
+and fractional fallback sampling, and the installed original Nicolai via SAPI5.
+M41 keeps M40's coverage-edge repair, but does not enable the rejected internal
+run-protection ablation. See [M41 evidence and limits](M41_SOUND_PRESERVATION.md).
 The port modes use three external voice files directly and do not load Elan
 DLLs. The original mode uses only a matching Nicolai/Elan Russian token; it
 never silently substitutes another installed voice or falls back to the port.
@@ -56,10 +59,10 @@ python tools/test_windows_talker.py --exe build-talker/Release/NicolaiTalker.exe
   --check-original
 ```
 
-The GUI-job path synthesizes the actual startup phrase in each of the five
+The GUI-job path synthesizes the actual startup phrase in each of the six
 port modes. Child-render WAVs for six synthetic phrases (single word, simple,
 startup, initial-vowel, initial-u and number/transient regressions) are byte-identical to the
-established batch renderer for each port profile: thirty WAV comparisons. Stable differs from M36 local, M38 and M40,
+established batch renderer for each port profile: thirty-six WAV comparisons. Stable differs from M36 local, M38 and M40; M41 differs from M40,
 so the profile selector is not comparing stable output against itself. This
 is wrapper/profile parity, not new acoustic progress or a 22-phrase oracle.
 Missing input, invalid profiles, Cyrillic/space-containing input/output paths,

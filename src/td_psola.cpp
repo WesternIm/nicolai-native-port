@@ -48,6 +48,15 @@ double grain_hann(long rel, int radius) {
 
 } // namespace
 
+std::int16_t sample_pcm16_linear(const Pcm16Mono& source, double position) {
+    if (source.samples.empty() || !std::isfinite(position)) return 0;
+    position = std::clamp(position, 0.0, static_cast<double>(source.samples.size()-1));
+    const auto lo = static_cast<std::size_t>(std::floor(position));
+    const auto hi = std::min(lo+1, source.samples.size()-1);
+    const double t = position-static_cast<double>(lo);
+    return clip16((1.0-t)*source.samples[lo]+t*source.samples[hi]);
+}
+
 void blend_uncovered_edges_m40(Pcm16Mono& pcm,
     const std::vector<std::int16_t>& mapped_source,
     const std::vector<double>& weights,
@@ -247,7 +256,8 @@ Pcm16Mono td_psola_resynthesize(
             const double src = static_cast<double>(i) / config.duration_scale;
             const auto j = std::min<std::size_t>(source.samples.size() - 1,
                 static_cast<std::size_t>(std::max(0.0, std::floor(src))));
-            out.samples[i] = source.samples[j];
+            out.samples[i] = config.interpolate_uncovered_m41
+                ? sample_pcm16_linear(source, src) : source.samples[j];
         }
     }
 
@@ -256,7 +266,9 @@ Pcm16Mono td_psola_resynthesize(
         for (std::size_t i = 0; i < target_len; ++i) {
             const auto j = std::min<std::size_t>(source.samples.size() - 1,
                 static_cast<std::size_t>(static_cast<double>(i) / config.duration_scale));
-            mapped[i] = source.samples[j];
+            mapped[i] = config.interpolate_uncovered_m41
+                ? sample_pcm16_linear(source, static_cast<double>(i) / config.duration_scale)
+                : source.samples[j];
         }
         blend_uncovered_edges_m40(out, mapped, wsum,
             std::min<std::size_t>(32, static_cast<std::size_t>(maxp)));

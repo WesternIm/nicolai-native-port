@@ -3,8 +3,10 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
+#include <stdexcept>
+#include <limits>
 
-int main() {
+int main() try {
     assert(nicolai::legacy_reciprocal_pitch_m34(100,100,200,0)==2684354);
     assert(nicolai::legacy_reciprocal_pitch_m34(100,100,200,50)==2013304);
     assert(nicolai::legacy_reciprocal_pitch_m34(0,100,200,50)==0);
@@ -91,7 +93,32 @@ int main() {
         largest_step = std::max(largest_step,
             std::abs(static_cast<int>(seam.samples[i]) - seam.samples[i - 1]));
     assert(largest_step < 22000);
+    auto require = [](bool ok) { if (!ok) throw std::runtime_error("M41 uncovered interpolation contract failed"); };
+    nicolai::Pcm16Mono ramp;
+    ramp.sample_rate=16000;
+    for(int i=0;i<256;++i) ramp.samples.push_back(static_cast<std::int16_t>(-12800+100*i));
+    require(nicolai::sample_pcm16_linear(ramp,10.5)==-11750);
+    require(nicolai::sample_pcm16_linear(ramp,-1)==ramp.samples.front());
+    require(nicolai::sample_pcm16_linear(ramp,300)==ramp.samples.back());
+    require(nicolai::sample_pcm16_linear({},0)==0);
+    require(nicolai::sample_pcm16_linear(ramp,std::numeric_limits<double>::quiet_NaN())==0);
+    nicolai::SegPitchSchedule short_schedule;
+    short_schedule.valid=true; short_schedule.marks={40,80}; short_schedule.periods={40};
+    nicolai::TdPsolaConfig mapping;
+    mapping.duration_scale=0.73;
+    const auto old_edge=nicolai::td_psola_resynthesize(ramp,short_schedule,mapping);
+    mapping.interpolate_uncovered_m41=true;
+    const auto fractional_edge=nicolai::td_psola_resynthesize(ramp,short_schedule,mapping);
+    require(old_edge.samples.size()==fractional_edge.samples.size());
+    const double tail=static_cast<double>(fractional_edge.samples.size()-1)/mapping.duration_scale;
+    require(old_edge.samples.back()==ramp.samples[static_cast<std::size_t>(tail)]);
+    require(fractional_edge.samples.back()==nicolai::sample_pcm16_linear(ramp,tail));
+    require(old_edge.samples[50]==fractional_edge.samples[50]);
+    require(old_edge.samples.back()!=fractional_edge.samples.back());
     std::cout << "td_psola_test: PASSED source_marks=" << d.source_marks
               << " synth_marks=" << d.synthesis_marks
               << " target_period=" << d.mean_target_period << "\n";
+} catch(const std::exception& error) {
+    std::cerr << error.what() << '\n';
+    return 1;
 }

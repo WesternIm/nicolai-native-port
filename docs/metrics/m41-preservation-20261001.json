@@ -1,0 +1,53 @@
+{
+  "checkpoint": "M41 opt-in preservation, not a stable promotion",
+  "corpus_phrases": 22,
+  "profiles": {
+    "m40-transient": {
+      "mean_mfcc_dtw": 52.0821755295769,
+      "mean_active_waveform_correlation": 0.192713067885933,
+      "active_duration_mae_percent": 5.70796015420629,
+      "total_duration_mae_percent": 3.61089077596731,
+      "f0_contour_mae_percent": 13.4196122076293,
+      "rms_ratio_mae_percent": 10.2816842371493,
+      "steps_over_12000": 33,
+      "steps_over_16000": 7
+    },
+    "m41-preserve": {
+      "mean_mfcc_dtw": 51.880601566976,
+      "mean_active_waveform_correlation": 0.194194144493727,
+      "active_duration_mae_percent": 5.71020987158181,
+      "total_duration_mae_percent": 3.61215426535499,
+      "f0_contour_mae_percent": 13.4689980941077,
+      "rms_ratio_mae_percent": 10.2932072607374,
+      "steps_over_12000": 33,
+      "steps_over_16000": 7,
+      "phrases_with_duration_change": 10,
+      "max_absolute_sample_delta": 110,
+      "phrases_with_higher_max_step": 2,
+      "internal_protection_enabled": false,
+      "external_protection_enabled": true,
+      "fractional_uncovered_enabled": true
+    }
+  },
+  "unit_015_l_a0_pre_gain": {
+    "source_max_step": 8512,
+    "m40_max_step": 12752,
+    "fractional_fallback_max_step": 9708
+  },
+  "additional_saved_text_cases": {
+    "phrases": 3,
+    "phrases_with_duration_change": 1,
+    "max_absolute_sample_delta": 94,
+    "phrases_with_higher_max_step": 0,
+    "m40_steps_over_12000": 11,
+    "m41_steps_over_12000": 12,
+    "m40_steps_over_16000": 0,
+    "m41_steps_over_16000": 0
+  },
+  "limitations": [
+    "Sample steps are screening statistics, not ground-truth clicks.",
+    "Synthetic release preservation does not prove real phone accuracy.",
+    "F0 metric is diagnostic only; stress/intonation unchanged.",
+    "No perceptual superiority claim; all private audio stays local."
+  ]
+}

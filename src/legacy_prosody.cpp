@@ -1128,6 +1128,8 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         cfg.search_join_phase=policy.search_join_phase;
         cfg.blend_uncovered_edges_m40=policy.blend_uncovered_edges_m40;
         cfg.audit_transients_m40=policy.audit_transients_m40;
+        cfg.preserve_unvoiced_runs_m41=policy.preserve_unvoiced_runs_m41;
+        cfg.interpolate_uncovered_m41=policy.interpolate_uncovered_m41;
         const bool side_duration=std::abs(left_scale-right_scale)>=1e-10;
         const bool side_energy=std::abs(left_energy_gain-1.0)>=1e-12 ||
                                std::abs(right_energy_gain-1.0)>=1e-12;
@@ -1152,6 +1154,8 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         }
         if(!m36_chain){
             if(pcm.samples.empty()){out.error="render_failed";return out;}
+            for(const auto&join:ud.internal_joins)
+                if(join.protected_transient_m41) ++out.protected_internal_m41;
             if(policy.audit_transients_m40){
                 const auto [source_step,source_at]=max_pcm_step(u.raw);
                 const auto [rendered_step,rendered_at]=max_pcm_step(pcm);
@@ -1208,8 +1212,10 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
             continue;
         }
         const auto before=out.pcm.samples.size();
-        out.pcm=hann_ola_join(out.pcm,rendered[i],lp,rp,&jd,policy.search_join_phase);
+        out.pcm=hann_ola_join(out.pcm,rendered[i],lp,rp,&jd,policy.search_join_phase,
+                             policy.preserve_unvoiced_joins_m41);
         if(!jd.valid){out.error="join_failed";return out;}
+        if(jd.protected_transient_m41) ++out.protected_external_m41;
         const auto center_offset=std::min(before,jd.left_trim+jd.overlap_samples/2);
         out.joins.push_back({i,phones[i],before-center_offset,jd.overlap_samples,
                              jd.left_trim,jd.right_trim,jd.normalized_correlation});

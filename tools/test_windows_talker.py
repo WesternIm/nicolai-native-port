@@ -69,11 +69,13 @@ def main():
             single_word_hashes = {}
             punctuation_hashes = {}
             number_hashes = {}
-            for profile in ("stable", "m36-local", "m36-chain", "m38-boundary", "m40-transient"):
+            for profile in ("stable", "m36-local", "m36-chain", "m38-boundary", "m40-transient", "m41-preserve"):
                 subprocess.run([str(args.exe.resolve()), "--ui-job-test", str(args.voice.resolve()), profile],
                                capture_output=True, timeout=70, check=True)
                 contaminated = dict(os.environ, NICOLAI_M36_TRANSITION_EXECUTOR="1",
-                                    NICOLAI_M36_CHAIN_EXECUTOR="1", NICOLAI_M40_BLEND_UNCOVERED="1")
+                                    NICOLAI_M36_CHAIN_EXECUTOR="1", NICOLAI_M40_BLEND_UNCOVERED="1",
+                                    NICOLAI_M41_PRESERVE_RUNS="1", NICOLAI_M41_PRESERVE_JOINS="1",
+                                    NICOLAI_M41_INTERPOLATE_UNCOVERED="1")
                 env = dict(os.environ)
                 for name in list(env):
                     if name.startswith("NICOLAI_"):
@@ -82,6 +84,10 @@ def main():
                 if profile == "m36-chain": env["NICOLAI_M36_CHAIN_EXECUTOR"] = "1"
                 if profile == "m38-boundary": env["NICOLAI_M38_BOUNDARY_SPEECH_SHARE"] = "0.5"
                 if profile == "m40-transient": env["NICOLAI_M40_BLEND_UNCOVERED"] = "1"
+                if profile == "m41-preserve":
+                    env["NICOLAI_M40_BLEND_UNCOVERED"] = "1"
+                    env["NICOLAI_M41_PRESERVE_JOINS"] = "1"
+                    env["NICOLAI_M41_INTERPOLATE_UNCOVERED"] = "1"
                 target = temp / f"batch-{profile}"
                 batch = subprocess.run([str(args.batch.resolve()), str(args.voice / "nicolai16.dat"),
                                         str(args.voice / "exc_rus.txt"), str(args.voice / "abb_rus.txt"),
@@ -102,7 +108,7 @@ def main():
                     joins = [line.removeprefix("join=").split(",") for line in
                              result.stdout.decode("utf-8", errors="replace").splitlines()
                              if line.startswith("join=")]
-                    if profile in ("stable", "m38-boundary", "m40-transient"):
+                    if profile in ("stable", "m38-boundary", "m40-transient", "m41-preserve"):
                         assert joins and all(len(join) == 7 for join in joins), (profile, name)
                         assert all(0 <= int(join[2]) < frames for join in joins), (profile, name)
                         assert all(int(joins[i][2]) <= int(joins[i + 1][2])
@@ -123,7 +129,8 @@ def main():
             assert single_word_hashes["stable"] == single_word_hashes["m38-boundary"], "single word changed"
             assert punctuation_hashes["stable"] == punctuation_hashes["m38-boundary"], "punctuation boundary changed"
             assert number_hashes["stable"] != number_hashes["m40-transient"], "transient experiment is accidentally stable"
-            print("local voice: startup GUI job and 6 phrases x 5 profiles pass; child WAVs match batch byte-for-byte")
+            assert number_hashes["m40-transient"] != number_hashes["m41-preserve"], "preservation experiment is accidentally M40"
+            print("local voice: startup GUI job and 6 phrases x 6 profiles pass; child WAVs match batch byte-for-byte")
     if args.zip:
         with zipfile.ZipFile(args.zip) as package:
             assert set(package.namelist()) == {"NicolaiTalker.exe", "README.txt", "build.json"}
@@ -131,7 +138,7 @@ def main():
             assert manifest["proprietary_inputs_included"] is False
             assert manifest["original_sapi_engine_included"] is False
             assert manifest["original_sapi_requires_installed_voice"] is True
-            assert manifest["profiles"] == ["stable", "m36-local", "m36-chain", "m38-boundary", "m40-transient", "original-sapi"]
+            assert manifest["profiles"] == ["stable", "m36-local", "m36-chain", "m38-boundary", "m40-transient", "m41-preserve", "original-sapi"]
             image = package.read("NicolaiTalker.exe")
             nt = int.from_bytes(image[0x3c:0x40], "little")
             assert int.from_bytes(image[nt + 4:nt + 6], "little") == 0x14c
