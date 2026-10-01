@@ -15,6 +15,7 @@ Profile parse_profile(const std::string& value) {
     if (value == "m36-chain") return Profile::M36Chain;
     if (value == "m38-boundary") return Profile::M38Boundary;
     if (value == "m40-transient") return Profile::M40Transient;
+    if (value == "m41-preserve") return Profile::M41Preserve;
     throw std::runtime_error("unknown test profile");
 }
 const char* profile_name(Profile profile) {
@@ -24,6 +25,7 @@ const char* profile_name(Profile profile) {
     case Profile::M36Chain: return "m36-chain";
     case Profile::M38Boundary: return "m38-boundary";
     case Profile::M40Transient: return "m40-transient";
+    case Profile::M41Preserve: return "m41-preserve";
     }
     throw std::runtime_error("unknown test profile");
 }
@@ -36,8 +38,14 @@ LegacyTimingPolicy timing_policy(Profile profile) {
     }
     if (profile == Profile::M38Boundary)
         policy.word_boundary_speech_share_m38 = 0.5;
-    if (profile == Profile::M40Transient)
+    if (profile == Profile::M40Transient || profile == Profile::M41Preserve)
         policy.blend_uncovered_edges_m40 = true;
+    if (profile == Profile::M41Preserve) {
+        policy.preserve_unvoiced_joins_m41 = true;
+        policy.interpolate_uncovered_m41 = true;
+        // Internal run protection remains an independent audit ablation:
+        // its duration/active-waveform regressions do not justify UI use.
+    }
     return policy;
 }
 void set_profile_environment(Profile profile) {

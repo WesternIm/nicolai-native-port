@@ -63,6 +63,43 @@ std::int16_t clip16(double v) {
     return static_cast<std::int16_t>(std::lrint(v));
 }
 
+bool threatened_unvoiced_burst(const std::vector<std::int16_t>& pcm,
+                              std::size_t begin, std::size_t count,
+                              std::size_t trim, std::size_t overlap,
+                              bool right_side, int sample_rate) {
+    if (count == 0 || begin+count > pcm.size()) return false;
+    const auto window = std::min(count, static_cast<std::size_t>(std::max(8, sample_rate/1000)));
+    double total=0.0, energy=0.0, best=0.0;
+    int peak=0;
+    std::size_t best_begin=0;
+    for (std::size_t i=0;i<count;++i) {
+        const double value=pcm[begin+i];
+        total+=value*value;
+        peak=std::max(peak,std::abs(static_cast<int>(pcm[begin+i])));
+        energy+=value*value;
+        if (i>=window) {
+            const double old=pcm[begin+i-window];
+            energy-=old*old;
+        }
+        if (i+1>=window && energy>best) { best=energy; best_begin=i+1-window; }
+    }
+    // A one-millisecond pulse dominates this edge; stationary fricative noise
+    // does not satisfy the concentration test. Only protect it if the old
+    // trim/window would attenuate the center by at least 25 percent.
+    if (peak<1500 || total<=0.0 || best<0.55*total) return false;
+    const double center=static_cast<double>(best_begin)+0.5*static_cast<double>(window-1);
+    double retained=0.0;
+    constexpr double kPi=3.14159265358979323846;
+    if (right_side && center>=static_cast<double>(trim)) {
+        const double t=std::clamp((center-static_cast<double>(trim))/std::max<std::size_t>(1,overlap-1),0.0,1.0);
+        retained=0.5-0.5*std::cos(kPi*t);
+    } else if (!right_side && center<static_cast<double>(overlap)) {
+        const double t=center/std::max<std::size_t>(1,overlap-1);
+        retained=0.5+0.5*std::cos(kPi*t);
+    }
+    return retained<0.75;
+}
+
 } // namespace
 
 PitchPeriodHint infer_pitch_period_hint(const DiphoneUnit& unit,
@@ -91,7 +128,8 @@ Pcm16Mono hann_ola_join(const Pcm16Mono& left,
                         const Pcm16Mono& right,
                         int left_period_hint,
                         int right_period_hint,
-                        OlaJoinDiagnostics* diagnostics, bool search_phase) {
+                        OlaJoinDiagnostics* diagnostics, bool search_phase,
+                        bool preserve_unvoiced_m41) {
     Pcm16Mono out;
     out.sample_rate = left.sample_rate;
     OlaJoinDiagnostics d;
@@ -142,6 +180,20 @@ Pcm16Mono hann_ola_join(const Pcm16Mono& left,
                 best_lt = lt;
                 best_rt = rt;
             }
+        }
+    }
+
+    if (preserve_unvoiced_m41) {
+        const bool left_burst=left_period_hint<=0 && threatened_unvoiced_burst(
+            left.samples,left.samples.size()-best_lt-overlap,best_lt+overlap,
+            best_lt,overlap,false,left.sample_rate);
+        const bool right_burst=right_period_hint<=0 && threatened_unvoiced_burst(
+            right.samples,0,best_rt+overlap,best_rt,overlap,true,right.sample_rate);
+        if (left_burst || right_burst) {
+            d.protected_transient_m41=true;
+            best_lt=best_rt=0;
+            overlap=std::min(overlap,static_cast<std::size_t>(std::max(8,left.sample_rate/1000)));
+            best=correlation(left.samples,left.samples.size()-overlap,right.samples,0,overlap);
         }
     }
 

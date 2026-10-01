@@ -3,7 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 
-int main() {
+int main() try {
     using namespace nicolai::test_talker;
     auto require = [](bool ok) { if (!ok) throw std::runtime_error("test talker contract failed"); };
     require(parse_profile("stable") == Profile::Stable);
@@ -11,6 +11,8 @@ int main() {
     require(parse_profile("m36-chain") == Profile::M36Chain);
     require(parse_profile("m38-boundary") == Profile::M38Boundary);
     require(parse_profile("m40-transient") == Profile::M40Transient);
+    require(parse_profile("m41-preserve") == Profile::M41Preserve);
+    require(std::string(profile_name(Profile::M41Preserve)) == "m41-preserve");
     const auto stable = timing_policy(Profile::Stable);
     require(!stable.use_stateful_tds_m34 && !stable.shared_phone_duration_m34);
     require(stable.word_boundary_speech_share_m38 == 0.0);
@@ -22,6 +24,14 @@ int main() {
     const auto m40 = timing_policy(Profile::M40Transient);
     require(m40.blend_uncovered_edges_m40 && !m40.use_stateful_tds_m34);
     require(m40.word_boundary_speech_share_m38 == 0.0);
+    for(auto profile : {Profile::Stable,Profile::M36Local,Profile::M36Chain,Profile::M38Boundary,Profile::M40Transient}) {
+        const auto policy=timing_policy(profile);
+        require(!policy.preserve_unvoiced_runs_m41 && !policy.preserve_unvoiced_joins_m41 && !policy.interpolate_uncovered_m41);
+    }
+    const auto m41=timing_policy(Profile::M41Preserve);
+    require(m41.blend_uncovered_edges_m40 && m41.preserve_unvoiced_joins_m41 && m41.interpolate_uncovered_m41);
+    require(!m41.preserve_unvoiced_runs_m41 && !m41.use_stateful_tds_m34);
+    require(m41.word_boundary_speech_share_m38==0.0);
     for (auto profile : {Profile::M36Local, Profile::M36Chain}) {
         const auto experimental = timing_policy(profile);
         require(experimental.use_stateful_tds_m34 && experimental.shared_phone_duration_m34);
@@ -46,4 +56,7 @@ int main() {
     catch (...) { rejected = true; }
     require(rejected);
     std::cout << "talker profile and missing-input contracts passed\n";
+} catch(const std::exception& error) {
+    std::cerr << error.what() << '\n';
+    return 1;
 }

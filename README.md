@@ -6,6 +6,13 @@ the standalone test UI without proprietary voice data. Stable is the default;
 experimental modes are clearly labeled, and original SAPI requires a working
 installed Nicolai voice.
 
+The new opt-in [M41 preservation checkpoint](docs/M41_SOUND_PRESERVATION.md)
+protects threatened short features at unknown/unvoiced external joins and
+uses fractional source sampling in uncovered PSOLA regions. Stable stays
+unchanged. Mean MFCC-DTW improves slightly versus M40 (52.082 -> 51.881),
+but corpus severe-step counts do not improve; listening validation is still
+required. The test EXE exposes `m41-preserve` alongside the older profiles.
+
 The corrected opt-in local M36 renderer reduces MFCC-DTW from 75.3109 to
 71.2582 against the same 22 original WAVs (19 phrase improvements). Caller
 step-slot rotation, dropped-source markers and cross source coordinates were

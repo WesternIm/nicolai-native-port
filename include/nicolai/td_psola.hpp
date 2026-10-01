@@ -61,7 +61,16 @@ struct TdPsolaConfig {
     // samples before PSOLA coverage ends. False preserves the old PCM exactly.
     bool blend_uncovered_edges_m40 = false;
     bool audit_transients_m40 = false;
+    // Audit-only ablation, not enabled by the M41 listening profile.
+    bool preserve_unvoiced_runs_m41 = false;
+    // Fractional source sampling only where grain coverage is absent (and
+    // in the M40 edge blend's source target). Covered grains stay unchanged.
+    bool interpolate_uncovered_m41 = false;
 };
+
+// Fractional time mapping for the opt-in uncovered-edge path. Source PCM
+// remains untouched; interpolation is bounded to its first/last sample.
+std::int16_t sample_pcm16_linear(const Pcm16Mono& source, double position);
 
 void blend_uncovered_edges_m40(Pcm16Mono& pcm,
     const std::vector<std::int16_t>& mapped_source,

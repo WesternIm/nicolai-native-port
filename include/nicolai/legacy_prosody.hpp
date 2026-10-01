@@ -174,6 +174,11 @@ struct LegacyTimingPolicy {
     // Opt-in only; neither source marks nor target duration are changed.
     bool blend_uncovered_edges_m40 = false;
     bool audit_transients_m40 = false;
+    // M41 opt-in: protect transient edges in nonperiodic joins. Independent
+    // switches permit internal/external ablations before exposing a profile.
+    bool preserve_unvoiced_runs_m41 = false;
+    bool preserve_unvoiced_joins_m41 = false;
+    bool interpolate_uncovered_m41 = false;
 
     // M21: relative utterance-position contour recovered from wordstr.par
     // indices 7/12/17.  The raw legacy contour is normalized over the words
@@ -390,6 +395,7 @@ struct DiphoneChainLegacyResult {
     std::vector<LegacyRenderedJoin> joins;
     // Read-only diagnostic; never used to select a synthesis path.
     std::vector<LegacyUnitTransient> unit_transients;
+    std::size_t protected_internal_m41 = 0, protected_external_m41 = 0;
     std::size_t tds_intervals_m34 = 0, tds_grains_m34 = 0, tds_dropped_m34 = 0;
     int tds_final_carry_m34 = 0;
     std::int64_t tds_target_samples_m35 = 0, tds_budget_samples_m35 = 0, tds_emitted_samples_m35 = 0;

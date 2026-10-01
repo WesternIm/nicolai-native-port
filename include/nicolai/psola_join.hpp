@@ -32,6 +32,7 @@ struct OlaJoinDiagnostics {
     double normalized_correlation = 0.0;
     int left_period_hint = 0;
     int right_period_hint = 0;
+    bool protected_transient_m41 = false;
 };
 
 // Pitch-guided, raised-cosine overlap/add boundary join. This is the first
@@ -41,7 +42,8 @@ Pcm16Mono hann_ola_join(const Pcm16Mono& left,
                         int left_period_hint,
                         int right_period_hint,
                         OlaJoinDiagnostics* diagnostics = nullptr,
-                        bool search_phase = true);
+                        bool search_phase = true,
+                        bool preserve_unvoiced_m41 = false);
 
 struct DiphoneChainResult {
     bool valid = false;

@@ -269,7 +269,9 @@ Pcm16Mono td_psola_piecewise_m23(
             ++d.uncovered_samples;
             const auto j = std::min<std::size_t>(source.samples.size() - 1,
                 static_cast<std::size_t>(std::floor(tm.inverse(static_cast<double>(i)))));
-            out.samples[i] = source.samples[j];
+            out.samples[i] = pitch_config.interpolate_uncovered_m41
+                ? sample_pcm16_linear(source, tm.inverse(static_cast<double>(i)))
+                : source.samples[j];
         }
     }
     if (pitch_config.blend_uncovered_edges_m40) {
@@ -277,7 +279,9 @@ Pcm16Mono td_psola_piecewise_m23(
         for (std::size_t i = 0; i < target_len; ++i) {
             const auto j = std::min<std::size_t>(source.samples.size() - 1,
                 static_cast<std::size_t>(std::floor(tm.inverse(static_cast<double>(i)))));
-            mapped[i] = source.samples[j];
+            mapped[i] = pitch_config.interpolate_uncovered_m41
+                ? sample_pcm16_linear(source, tm.inverse(static_cast<double>(i)))
+                : source.samples[j];
         }
         blend_uncovered_edges_m40(out, mapped, wsum,
             std::min<std::size_t>(32, static_cast<std::size_t>(maxp)));
@@ -452,7 +456,8 @@ Pcm16Mono resynthesize_seg_m15(
             ? static_cast<int>(std::lround(right_hints[i - 1] / lps)) : 0;
         const int rp = left_hints[i] > 0
             ? static_cast<int>(std::lround(left_hints[i] / rps)) : 0;
-        out = hann_ola_join(out, rendered[i], lp, rp, &jd, config.search_join_phase);
+        out = hann_ola_join(out, rendered[i], lp, rp, &jd, config.search_join_phase,
+                            config.preserve_unvoiced_runs_m41);
         if (!jd.valid) return {};
         if (diagnostics) {
             diagnostics->internal_joins.push_back(jd);
@@ -582,7 +587,8 @@ Pcm16Mono resynthesize_seg_m32_phone_sides(
             static_cast<int>(std::lround(right_hints[i - 1] / left_pitch)) : 0;
         const int rp = left_hints[i] > 0 ?
             static_cast<int>(std::lround(left_hints[i] / right_pitch)) : 0;
-        out = hann_ola_join(out, rendered[i], lp, rp, &jd, pitch_config.search_join_phase);
+        out = hann_ola_join(out, rendered[i], lp, rp, &jd, pitch_config.search_join_phase,
+                            pitch_config.preserve_unvoiced_runs_m41);
         if (!jd.valid) return {};
         if (diagnostics) {
             diagnostics->internal_joins.push_back(jd);
