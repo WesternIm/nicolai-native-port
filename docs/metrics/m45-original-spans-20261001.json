@@ -1,0 +1,12 @@
+{
+  "schema": "nicolai-m45-synthetic-spans-v1",
+  "model_cases": 164,
+  "original_matches": 164,
+  "original_sha256": "f6b7e926c46a0259a866260cafb9d24d6ebed3dd7198829d16179348a186abc7",
+  "uniform_controls": 144,
+  "punctuation_controls": 8,
+  "grammar_controls": 12,
+  "buffer_guards_passed": true,
+  "negative_invocations_passed": 2,
+  "limits": "Synthetic intermediate inputs only: no complete morphology, physical duration/pitch authoring, pause milliseconds or PCM parity."
+}
