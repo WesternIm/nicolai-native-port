@@ -16,6 +16,7 @@ Profile parse_profile(const std::string& value) {
     if (value == "m38-boundary") return Profile::M38Boundary;
     if (value == "m40-transient") return Profile::M40Transient;
     if (value == "m41-preserve") return Profile::M41Preserve;
+    if (value == "m42-join-pitch") return Profile::M42JoinPitch;
     throw std::runtime_error("unknown test profile");
 }
 const char* profile_name(Profile profile) {
@@ -26,6 +27,7 @@ const char* profile_name(Profile profile) {
     case Profile::M38Boundary: return "m38-boundary";
     case Profile::M40Transient: return "m40-transient";
     case Profile::M41Preserve: return "m41-preserve";
+    case Profile::M42JoinPitch: return "m42-join-pitch";
     }
     throw std::runtime_error("unknown test profile");
 }
@@ -38,13 +40,17 @@ LegacyTimingPolicy timing_policy(Profile profile) {
     }
     if (profile == Profile::M38Boundary)
         policy.word_boundary_speech_share_m38 = 0.5;
-    if (profile == Profile::M40Transient || profile == Profile::M41Preserve)
+    if (profile == Profile::M40Transient || profile == Profile::M41Preserve || profile == Profile::M42JoinPitch)
         policy.blend_uncovered_edges_m40 = true;
-    if (profile == Profile::M41Preserve) {
+    if (profile == Profile::M41Preserve || profile == Profile::M42JoinPitch) {
         policy.preserve_unvoiced_joins_m41 = true;
         policy.interpolate_uncovered_m41 = true;
         // Internal run protection remains an independent audit ablation:
         // its duration/active-waveform regressions do not justify UI use.
+    }
+    if (profile == Profile::M42JoinPitch) {
+        policy.join_period_continuity_m42 = 0.5;
+        policy.local_join_pitch_m42 = true;
     }
     return policy;
 }

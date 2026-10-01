@@ -95,6 +95,40 @@ void blend_uncovered_edges_m40(Pcm16Mono& pcm,
     }
 }
 
+bool reconcile_join_pitch_m42(TdPsolaConfig& left, TdPsolaConfig& right,
+    double left_source_period, double right_source_period, double strength) {
+    if(!std::isfinite(strength) || strength<=0.0 ||
+       !std::isfinite(left_source_period) || !std::isfinite(right_source_period) ||
+       left_source_period<=0.0 || right_source_period<=0.0) return false;
+    for(const auto* config : {&left,&right}) {
+        for(double position : {0.0,0.5,1.0}) {
+            const double scale=td_psola_pitch_scale_at(*config,position);
+            if(!std::isfinite(scale) || scale<=0.05 || scale>=8.0) return false;
+        }
+    }
+    const double ls=td_psola_pitch_scale_at(left,1.0);
+    const double rs=td_psola_pitch_scale_at(right,0.0);
+    if(!std::isfinite(ls) || !std::isfinite(rs) || ls<=0.05 || rs<=0.05) return false;
+    const double lp=left_source_period/ls, rp=right_source_period/rs;
+    const double gap=std::abs(1200.0*std::log2(lp/rp));
+    // Conservative hint screen: exclude very short/long or octave-like
+    // periods rather than forcing dubious SEG boundaries onto a common F0.
+    if(lp<80.0 || lp>400.0 || rp<80.0 || rp>400.0 || gap<80.0 || gap>700.0) return false;
+    const double target=std::sqrt(lp*rp);
+    const double amount=std::clamp(strength,0.0,1.0);
+    if(!left.use_three_point_pitch) {
+        left.pitch_scale_start=left.pitch_scale_mid=left.pitch_scale_end=left.pitch_scale;
+        left.use_three_point_pitch=true;
+    }
+    if(!right.use_three_point_pitch) {
+        right.pitch_scale_start=right.pitch_scale_mid=right.pitch_scale_end=right.pitch_scale;
+        right.use_three_point_pitch=true;
+    }
+    left.pitch_scale_end=ls*std::pow(lp/target,amount);
+    right.pitch_scale_start=rs*std::pow(rp/target,amount);
+    return true;
+}
+
 double td_psola_pitch_scale_at(const TdPsolaConfig& config, double position) {
     if (!config.use_three_point_pitch) return config.pitch_scale;
     const double x = std::clamp(position, 0.0, 1.0);

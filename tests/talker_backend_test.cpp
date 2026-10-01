@@ -13,6 +13,8 @@ int main() try {
     require(parse_profile("m40-transient") == Profile::M40Transient);
     require(parse_profile("m41-preserve") == Profile::M41Preserve);
     require(std::string(profile_name(Profile::M41Preserve)) == "m41-preserve");
+    require(parse_profile("m42-join-pitch") == Profile::M42JoinPitch);
+    require(std::string(profile_name(Profile::M42JoinPitch)) == "m42-join-pitch");
     const auto stable = timing_policy(Profile::Stable);
     require(!stable.use_stateful_tds_m34 && !stable.shared_phone_duration_m34);
     require(stable.word_boundary_speech_share_m38 == 0.0);
@@ -32,6 +34,14 @@ int main() try {
     require(m41.blend_uncovered_edges_m40 && m41.preserve_unvoiced_joins_m41 && m41.interpolate_uncovered_m41);
     require(!m41.preserve_unvoiced_runs_m41 && !m41.use_stateful_tds_m34);
     require(m41.word_boundary_speech_share_m38==0.0);
+    for(auto profile : {Profile::Stable,Profile::M36Local,Profile::M36Chain,Profile::M38Boundary,Profile::M40Transient,Profile::M41Preserve}) {
+        const auto policy=timing_policy(profile);
+        require(policy.join_period_continuity_m42==0 && !policy.local_join_pitch_m42);
+    }
+    const auto m42=timing_policy(Profile::M42JoinPitch);
+    require(m42.join_period_continuity_m42==0.5 && m42.local_join_pitch_m42);
+    require(m42.blend_uncovered_edges_m40 && m42.preserve_unvoiced_joins_m41 && m42.interpolate_uncovered_m41);
+    require(!m42.preserve_unvoiced_runs_m41 && !m42.use_stateful_tds_m34 && m42.word_boundary_speech_share_m38==0);
     for (auto profile : {Profile::M36Local, Profile::M36Chain}) {
         const auto experimental = timing_policy(profile);
         require(experimental.use_stateful_tds_m34 && experimental.shared_phone_duration_m34);

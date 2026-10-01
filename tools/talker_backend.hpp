@@ -5,7 +5,7 @@
 #include <string>
 
 namespace nicolai::test_talker {
-enum class Profile { Stable, M36Local, M36Chain, M38Boundary, M40Transient, M41Preserve };
+enum class Profile { Stable, M36Local, M36Chain, M38Boundary, M40Transient, M41Preserve, M42JoinPitch };
 Profile parse_profile(const std::string& value);
 const char* profile_name(Profile profile);
 LegacyTimingPolicy timing_policy(Profile profile);

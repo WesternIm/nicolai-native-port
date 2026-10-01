@@ -179,6 +179,9 @@ struct LegacyTimingPolicy {
     bool preserve_unvoiced_runs_m41 = false;
     bool preserve_unvoiced_joins_m41 = false;
     bool interpolate_uncovered_m41 = false;
+    // M42 opt-in endpoint-only period reconciliation; never enables M36.
+    double join_period_continuity_m42 = 0.0;
+    bool local_join_pitch_m42 = false;
 
     // M21: relative utterance-position contour recovered from wordstr.par
     // indices 7/12/17.  The raw legacy contour is normalized over the words
@@ -368,6 +371,10 @@ struct LegacyRenderedJoin {
     std::size_t left_trim = 0;
     std::size_t right_trim = 0;
     double normalized_correlation = 0.0;
+    // Source SEG edge periods divided by the authored endpoint pitch ratios.
+    // Diagnostic hints, not measured PCM F0 or original phone ground truth.
+    double left_target_period_hint_m42 = 0.0;
+    double right_target_period_hint_m42 = 0.0;
 };
 
 struct LegacyUnitTransient {
@@ -396,6 +403,7 @@ struct DiphoneChainLegacyResult {
     // Read-only diagnostic; never used to select a synthesis path.
     std::vector<LegacyUnitTransient> unit_transients;
     std::size_t protected_internal_m41 = 0, protected_external_m41 = 0;
+    std::size_t reconciled_pitch_joins_m42 = 0;
     std::size_t tds_intervals_m34 = 0, tds_grains_m34 = 0, tds_dropped_m34 = 0;
     int tds_final_carry_m34 = 0;
     std::int64_t tds_target_samples_m35 = 0, tds_budget_samples_m35 = 0, tds_emitted_samples_m35 = 0;

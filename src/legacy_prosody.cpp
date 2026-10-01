@@ -949,6 +949,98 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
     const auto phone_pitch_percent=m25_phone_pitch_percent_lattice(phones,word_count,policy);
     const auto physical_lattice=m27_physical_phone_pitch_lattice(phones,boundaries,physical,wordstr,policy,frontend);
     const auto& physical_pitch=physical_lattice.pitch;
+    // Author all old pitch triplets before rendering, so an opt-in boundary
+    // correction can see both owners of the shared phone. The zero-strength
+    // path preserves the original floating-point expressions and defaults.
+    auto author_pitch=[&](std::size_t i) {
+        // M23 carrier estimate plus M25 sparse PC-style anchor lattice.
+        // The recovered PC pipeline stores signed percent anchors, converts
+        // each around pitch.par base=83, then applies wordstr[28] centering.
+        // M25 reproduces that math and the sparse linear interpolation; only
+        // the upstream lexical rule choosing explicit anchors is reconstructed.
+        const auto& u=units[i];
+        double source_f0=0.0;
+        double unit_pitch_scale=pitch_scale;
+        const double period=robust_period_m23(u.layout);
+        if(period>0.0) source_f0=static_cast<double>(sample_rate)/period;
+        if(pitch_strength>0.0 && source_f0>0.0 && policy.legacy_pitch_base_hz>20.0){
+            const double target_f0=legacy_pitch_target_f0_m23(source_f0,wordstr,policy);
+            unit_pitch_scale*=std::clamp(target_f0/source_f0,0.70,1.35);
+        }
+
+        const double den_units=std::max<std::size_t>(1,units.size());
+        const double x0=static_cast<double>(i)/static_cast<double>(den_units);
+        const double x1=static_cast<double>(i+1)/static_cast<double>(den_units);
+        const double xm=0.5*(x0+x1);
+        const double stress_boost=std::clamp(policy.pitch_stressed_vowel_boost,0.75,1.35);
+        const double left_stress=m24_phone_is_stressed_vowel(phones[i])?stress_boost:1.0;
+        const double right_stress=m24_phone_is_stressed_vowel(phones[i+1])?stress_boost:1.0;
+
+        auto blended_scale=[&](double percent, double physical_percent, double local_physical_strength){
+            double s=unit_pitch_scale;
+            if(anchor_strength>0.0 && source_f0>1e-9){
+                const double af0=m25_anchor_f0(percent,wordstr,policy);
+                const double as=pitch_scale*std::clamp(af0/source_f0,0.65,1.45);
+                // Geometric blend is stable for multiplicative pitch ratios and
+                // gives anchor_strength=0 an exact M23 fallback.
+                s=std::exp((1.0-anchor_strength)*std::log(std::max(1e-9,s)) +
+                           anchor_strength*std::log(std::max(1e-9,as)));
+            }
+            if(local_physical_strength>0.0 && source_f0>1e-9 && physical && physical->valid){
+                const double pf0=m25_anchor_f0(physical_percent,wordstr,policy);
+                const double ps=pitch_scale*std::clamp(pf0/source_f0,0.60,1.55);
+                s=std::exp((1.0-local_physical_strength)*std::log(std::max(1e-9,s)) +
+                           local_physical_strength*std::log(std::max(1e-9,ps)));
+            }
+            return s;
+        };
+        const double pct0=phone_pitch_percent[i];
+        const double pct1=phone_pitch_percent[i+1];
+        const double pctm=0.5*(pct0+pct1);
+        const double phy0=physical_pitch[i][0];
+        const double phy1=physical_pitch[i+1][2];
+        const double phym=0.5*(physical_pitch[i][1]+physical_pitch[i+1][1]);
+        const double empty_strength=std::clamp(policy.physical_empty_marker_pitch_strength,0.0,1.0);
+        const double single_strength=std::clamp(policy.physical_single_marker_pitch_strength,0.0,1.0);
+        auto physical_local_strength=[&](std::size_t idx){
+            const bool exact_empty = idx<physical_lattice.empty_marker_exact.size() && physical_lattice.empty_marker_exact[idx];
+            const bool exact_single = idx<physical_lattice.single_marker_exact.size() && physical_lattice.single_marker_exact[idx];
+            const bool terminal_proxy = idx<physical_lattice.terminal_proxy.size() && physical_lattice.terminal_proxy[idx];
+            // Preserve the already-validated M27 terminal correction even when
+            // M28 experiments with non-terminal <> anchors.  The exact terminal
+            // empty-marker branch is the same recovered k4 triplet, so weakening
+            // it with the experimental strength would confound the comparison.
+            if(exact_empty && terminal_proxy) return physical_terminal_strength;
+            if(exact_empty && empty_strength>0.0) return empty_strength;
+            if(exact_single && single_strength>0.0) return single_strength;
+            if(terminal_proxy) return physical_terminal_strength;
+            return physical_strength;
+        };
+        const double phy_strength0=physical_local_strength(i);
+        const double phy_strength1=physical_local_strength(i+1);
+        const double phy_strengthm=0.5*(phy_strength0+phy_strength1);
+        const double ps0=blended_scale(pct0,phy0,phy_strength0)*m24_declination_multiplier(policy,x0)*left_stress;
+        const double ps1=blended_scale(pct1,phy1,phy_strength1)*m24_declination_multiplier(policy,x1)*right_stress;
+        const double psm=blended_scale(pctm,phym,phy_strengthm)*m24_declination_multiplier(policy,xm)*std::sqrt(left_stress*right_stress);
+
+        TdPsolaConfig cfg; cfg.pitch_scale=psm; cfg.duration_scale=1.0;
+        cfg.use_three_point_pitch=anchor_strength>0.0 || physical_strength>0.0 || physical_terminal_strength>0.0 || empty_strength>0.0 || single_strength>0.0 || policy.pitch_declination_strength>0.0 || std::abs(stress_boost-1.0)>1e-12;
+        cfg.pitch_scale_start=ps0; cfg.pitch_scale_mid=psm; cfg.pitch_scale_end=ps1;
+        return cfg;
+    };
+    std::vector<TdPsolaConfig> pitch_configs;
+    pitch_configs.reserve(units.size());
+    for(std::size_t i=0;i<units.size();++i) pitch_configs.push_back(author_pitch(i));
+    if(!policy.use_stateful_tds_m34 && policy.join_period_continuity_m42>0.0) {
+        for(std::size_t i=1;i<units.size();++i) {
+            if(phones[i]=="#" || units[i-1].layout.runs.empty() || units[i].layout.runs.empty()) continue;
+            const int left_period=last_period(units[i-1].layout.runs.back());
+            const int right_period=first_period(units[i].layout.runs.front());
+            if(reconcile_join_pitch_m42(pitch_configs[i-1],pitch_configs[i],
+                left_period,right_period,policy.join_period_continuity_m42))
+                ++out.reconciled_pitch_joins_m42;
+        }
+    }
     StatefulTdsM34 tds_state; // one carry owner per utterance, not per run/unit
     const char* chain_flag=std::getenv("NICOLAI_M36_CHAIN_EXECUTOR");
     const bool m36_chain=policy.use_stateful_tds_m34 && chain_flag && std::atoi(chain_flag)!=0;
@@ -1052,84 +1144,16 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
             ud.right_period_hint=last_period(u.layout.runs.back());
         }
 
-        // M23 carrier estimate plus M25 sparse PC-style anchor lattice.
-        // The recovered PC pipeline stores signed percent anchors, converts
-        // each around pitch.par base=83, then applies wordstr[28] centering.
-        // M25 reproduces that math and the sparse linear interpolation; only
-        // the upstream lexical rule choosing explicit anchors is reconstructed.
-        double source_f0=0.0;
-        double unit_pitch_scale=pitch_scale;
-        const double period=robust_period_m23(u.layout);
-        if(period>0.0) source_f0=static_cast<double>(sample_rate)/period;
-        if(pitch_strength>0.0 && source_f0>0.0 && policy.legacy_pitch_base_hz>20.0){
-            const double target_f0=legacy_pitch_target_f0_m23(source_f0,wordstr,policy);
-            unit_pitch_scale*=std::clamp(target_f0/source_f0,0.70,1.35);
-        }
-
-        const double den_units=std::max<std::size_t>(1,units.size());
-        const double x0=static_cast<double>(i)/static_cast<double>(den_units);
-        const double x1=static_cast<double>(i+1)/static_cast<double>(den_units);
-        const double xm=0.5*(x0+x1);
-        const double stress_boost=std::clamp(policy.pitch_stressed_vowel_boost,0.75,1.35);
-        const double left_stress=m24_phone_is_stressed_vowel(phones[i])?stress_boost:1.0;
-        const double right_stress=m24_phone_is_stressed_vowel(phones[i+1])?stress_boost:1.0;
-
-        auto blended_scale=[&](double percent, double physical_percent, double local_physical_strength){
-            double s=unit_pitch_scale;
-            if(anchor_strength>0.0 && source_f0>1e-9){
-                const double af0=m25_anchor_f0(percent,wordstr,policy);
-                const double as=pitch_scale*std::clamp(af0/source_f0,0.65,1.45);
-                // Geometric blend is stable for multiplicative pitch ratios and
-                // gives anchor_strength=0 an exact M23 fallback.
-                s=std::exp((1.0-anchor_strength)*std::log(std::max(1e-9,s)) +
-                           anchor_strength*std::log(std::max(1e-9,as)));
-            }
-            if(local_physical_strength>0.0 && source_f0>1e-9 && physical && physical->valid){
-                const double pf0=m25_anchor_f0(physical_percent,wordstr,policy);
-                const double ps=pitch_scale*std::clamp(pf0/source_f0,0.60,1.55);
-                s=std::exp((1.0-local_physical_strength)*std::log(std::max(1e-9,s)) +
-                           local_physical_strength*std::log(std::max(1e-9,ps)));
-            }
-            return s;
-        };
-        const double pct0=phone_pitch_percent[i];
-        const double pct1=phone_pitch_percent[i+1];
-        const double pctm=0.5*(pct0+pct1);
-        const double phy0=physical_pitch[i][0];
-        const double phy1=physical_pitch[i+1][2];
-        const double phym=0.5*(physical_pitch[i][1]+physical_pitch[i+1][1]);
-        const double empty_strength=std::clamp(policy.physical_empty_marker_pitch_strength,0.0,1.0);
-        const double single_strength=std::clamp(policy.physical_single_marker_pitch_strength,0.0,1.0);
-        auto physical_local_strength=[&](std::size_t idx){
-            const bool exact_empty = idx<physical_lattice.empty_marker_exact.size() && physical_lattice.empty_marker_exact[idx];
-            const bool exact_single = idx<physical_lattice.single_marker_exact.size() && physical_lattice.single_marker_exact[idx];
-            const bool terminal_proxy = idx<physical_lattice.terminal_proxy.size() && physical_lattice.terminal_proxy[idx];
-            // Preserve the already-validated M27 terminal correction even when
-            // M28 experiments with non-terminal <> anchors.  The exact terminal
-            // empty-marker branch is the same recovered k4 triplet, so weakening
-            // it with the experimental strength would confound the comparison.
-            if(exact_empty && terminal_proxy) return physical_terminal_strength;
-            if(exact_empty && empty_strength>0.0) return empty_strength;
-            if(exact_single && single_strength>0.0) return single_strength;
-            if(terminal_proxy) return physical_terminal_strength;
-            return physical_strength;
-        };
-        const double phy_strength0=physical_local_strength(i);
-        const double phy_strength1=physical_local_strength(i+1);
-        const double phy_strengthm=0.5*(phy_strength0+phy_strength1);
-        const double ps0=blended_scale(pct0,phy0,phy_strength0)*m24_declination_multiplier(policy,x0)*left_stress;
-        const double ps1=blended_scale(pct1,phy1,phy_strength1)*m24_declination_multiplier(policy,x1)*right_stress;
-        const double psm=blended_scale(pctm,phym,phy_strengthm)*m24_declination_multiplier(policy,xm)*std::sqrt(left_stress*right_stress);
-
         Pcm16Mono pcm;
-        TdPsolaConfig cfg; cfg.pitch_scale=psm; cfg.duration_scale=effective_scale;
-        cfg.use_three_point_pitch=anchor_strength>0.0 || physical_strength>0.0 || physical_terminal_strength>0.0 || empty_strength>0.0 || single_strength>0.0 || policy.pitch_declination_strength>0.0 || std::abs(stress_boost-1.0)>1e-12;
-        cfg.pitch_scale_start=ps0; cfg.pitch_scale_mid=psm; cfg.pitch_scale_end=ps1;
+        auto cfg=pitch_configs[i];
+        cfg.duration_scale=effective_scale;
+        const double ps0=cfg.pitch_scale_start, psm=cfg.pitch_scale_mid, ps1=cfg.pitch_scale_end;
         cfg.search_join_phase=policy.search_join_phase;
         cfg.blend_uncovered_edges_m40=policy.blend_uncovered_edges_m40;
         cfg.audit_transients_m40=policy.audit_transients_m40;
         cfg.preserve_unvoiced_runs_m41=policy.preserve_unvoiced_runs_m41;
         cfg.interpolate_uncovered_m41=policy.interpolate_uncovered_m41;
+        cfg.local_join_pitch_m42=policy.local_join_pitch_m42;
         const bool side_duration=std::abs(left_scale-right_scale)>=1e-10;
         const bool side_energy=std::abs(left_energy_gain-1.0)>=1e-12 ||
                                std::abs(right_energy_gain-1.0)>=1e-12;
@@ -1218,7 +1242,9 @@ DiphoneChainLegacyResult synthesize_diphone_chain_legacy_duration(
         if(jd.protected_transient_m41) ++out.protected_external_m41;
         const auto center_offset=std::min(before,jd.left_trim+jd.overlap_samples/2);
         out.joins.push_back({i,phones[i],before-center_offset,jd.overlap_samples,
-                             jd.left_trim,jd.right_trim,jd.normalized_correlation});
+                             jd.left_trim,jd.right_trim,jd.normalized_correlation,
+                             rh[i-1]>0 ? rh[i-1]/lps : 0.0,
+                             lh[i]>0 ? lh[i]/rps : 0.0});
     }
     out.valid=true;
     return out;

@@ -66,6 +66,9 @@ struct TdPsolaConfig {
     // Fractional source sampling only where grain coverage is absent (and
     // in the M40 edge blend's source target). Covered grains stay unchanged.
     bool interpolate_uncovered_m41 = false;
+    // Use the actual internal run boundary's contour position for OLA hints,
+    // not the complete diphone's unrelated 0/1 endpoint positions.
+    bool local_join_pitch_m42 = false;
 };
 
 // Fractional time mapping for the opt-in uncovered-edge path. Source PCM
@@ -80,6 +83,13 @@ void blend_uncovered_edges_m40(Pcm16Mono& pcm,
 // Evaluate the M24 three-point contour at normalized source position [0,1].
 // With use_three_point_pitch=false this is exactly config.pitch_scale.
 double td_psola_pitch_scale_at(const TdPsolaConfig& config, double position);
+
+// Opt-in endpoint reconciliation for two owners of a shared voiced phone.
+// Geometric period target; preserves both middle pitch values and opposite
+// endpoints. Returns false without mutation for invalid/unknown/small or
+// octave-like gaps. It does not provide phase-clock continuity.
+bool reconcile_join_pitch_m42(TdPsolaConfig& left, TdPsolaConfig& right,
+    double left_source_period, double right_source_period, double strength);
 
 struct TdPsolaDiagnostics {
     bool valid = false;
