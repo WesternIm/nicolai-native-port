@@ -17,6 +17,10 @@ int main() try {
     require(std::string(profile_name(Profile::M42JoinPitch)) == "m42-join-pitch");
     require(parse_profile("m43-word-rhythm") == Profile::M43WordRhythm);
     require(std::string(profile_name(Profile::M43WordRhythm)) == "m43-word-rhythm");
+    require(parse_profile("m44-lexicon") == Profile::M44Lexicon);
+    require(std::string(profile_name(Profile::M44Lexicon)) == "m44-lexicon");
+    require(timing_policy(Profile::M44Lexicon).word_rhythm_strength_m43 == 0.25);
+    require(timing_policy(Profile::M44Lexicon).join_period_continuity_m42 == 0.5);
     const auto stable = timing_policy(Profile::Stable);
     require(!stable.use_stateful_tds_m34 && !stable.shared_phone_duration_m34);
     require(stable.word_boundary_speech_share_m38 == 0.0);

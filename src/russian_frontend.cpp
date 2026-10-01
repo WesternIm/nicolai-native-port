@@ -170,6 +170,12 @@ std::pair<std::size_t,std::string> resolve_stress(
     if (options.stress_dictionary && options.stress_dictionary->valid) {
         if (auto s = lookup_stress_vowel(*options.stress_dictionary, source); s && *s < nv)
             return {*s,"dictionary"};
+    }
+    if(options.lexicon_m44) {
+        const auto query=lookup_russian_lexicon_stress_m44(*options.lexicon_m44,source);
+        if(query.stress_vowel && *query.stress_vowel<nv) return {*query.stress_vowel,"legacy-lexicon-m44"};
+    }
+    if (options.stress_dictionary && options.stress_dictionary->valid) {
         if (options.enable_fixed_ika_stress_m43) {
             if (auto s = lookup_fixed_ika_stress_m43(*options.stress_dictionary, source); s && *s < nv)
                 return {*s,"dictionary-ika-m43"};

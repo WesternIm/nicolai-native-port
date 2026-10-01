@@ -1,0 +1,19 @@
+{
+  "schema": "nicolai-m44-lexicon-resource-agreement-v1",
+  "voice_sha256": "471bf1266c913784187dae25a2e5784a6ec309162e7dee2167ca9887c253e74d",
+  "exceptions_sha256": "6c9ce14e4c0fd07889a1db2f3d8584e610f3a651e7f7a88a2d22137d28942260",
+  "blocks": 68,
+  "records": 63294,
+  "folded_stems": 55585,
+  "exception_words": 88771,
+  "status_counts": {
+    "accepted": 24595,
+    "no-match": 44234,
+    "unsupported-candidate": 19661,
+    "ambiguous": 281
+  },
+  "accepted_agree": 24239,
+  "accepted_disagree": 356,
+  "accepted_agreement_percent": 98.55255133157145,
+  "limits": "Partial stem-stress subset; exception dictionary wins in rendering. Resource agreement is not full original NLP or perceptual parity."
+}

@@ -6,11 +6,12 @@ playback/stop/replay, Save WAV and access to per-job logs. It is built as x86 so
 the original installed 32-bit Nicolai token is visible, and runs on x86/x64
 Windows. The static Release runtime avoids a separate VC++ runtime install.
 
-Nine selections are exposed: stable native port (default), experimental M36
+Ten selections are exposed: stable native port (default), experimental M36
 local, experimental M36 chain, experimental M38 connected-word timing,
 experimental M40 transient repair, experimental M41 short-feature protection
 and fractional fallback sampling, experimental M42 join-pitch reconciliation,
 experimental M43 word-budget timing/limited dictionary-form stress,
+experimental M44 original-lexicon stem-stress forms,
 and the installed original Nicolai via SAPI5.
 M41 keeps M40's coverage-edge repair, but does not enable the rejected internal
 run-protection ablation. See [M41 evidence and limits](M41_SOUND_PRESERVATION.md).
@@ -29,6 +30,11 @@ fixed-stem `-ика` dictionary-form stress. Old modes do not enable either
 change. The isolated `акустика` already has correct lexical stress; the
 missing inflected `акустику` is corrected, without claiming that acoustic
 prominence on `с` is solved. See [M43 evidence and limits](M43_WORD_RHYTHM_STRESS.md).
+
+M44 inherits M43 and reads original stem/suffix/stress resources directly from
+EDAT. It accepts only the implemented unambiguous stem-stress subset, with exact
+exceptions and explicit acute taking precedence. Ending-stress, full grammatical
+selectors and phrase prosody remain open. See [M44 evidence and limits](M44_LEXICON_STRESS.md).
 
 Every synthesis job is an owned child of the same EXE. User text travels in an
 explicit UTF-8 file, not interpolated shell commands; paths use wide Win32 APIs
@@ -72,17 +78,21 @@ python tools/test_windows_talker.py --exe build-talker/Release/NicolaiTalker.exe
   --check-original
 ```
 
-The GUI-job path synthesizes the actual startup phrase in each of the eight
-port modes. Child-render WAVs for eight synthetic phrases (single word, simple,
-startup, initial-vowel, initial-u, number/transient and plain/marked stress regressions) are byte-identical to the
-established batch renderer for each port profile: sixty-four WAV comparisons. Stable differs from M36 local, M38 and M40; M41 differs from M40, M42 differs from M41 and M43 differs from M42,
+The GUI-job path synthesizes the actual startup phrase in each of the nine
+port modes. Child-render WAVs for ten synthetic phrases (single word, simple,
+startup, initial-vowel, initial-u, number/transient and plain/marked noun/verb
+stress regressions) are byte-identical to the established batch renderer for
+each port profile: ninety WAV comparisons. The optional `--baseline-exe`
+compares eighty old-profile WAVs with the previous M43 EXE; all remain identical.
+Stable differs from M36 local, M38 and M40; M41 differs from M40, M42 differs
+from M41, M43 differs from M42 and M44 differs from M43,
 so the profile selector is not comparing stable output against itself. This
 is wrapper/profile parity, not new acoustic progress or a 22-phrase oracle.
 Missing input, invalid profiles, Cyrillic/space-containing input/output paths,
 inherited flag isolation and refusal to overwrite old WAVs are also checked.
 
 Voice-free contracts inspect profile policies and GUI controls/Unicode input.
-The full local Win32 Release CTest run passed 32/32. The executable's imports
+The full local Win32 Release CTest run passed 33/33. The executable's imports
 are Windows system DLLs only (no VCRUNTIME/MSVCP DLL requirement). A screenshot
 rendered by the app's own UI smoke mode was inspected for clipped controls and
 readability. The test frontend adds no networking or registry mutations.

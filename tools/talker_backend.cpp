@@ -18,6 +18,7 @@ Profile parse_profile(const std::string& value) {
     if (value == "m41-preserve") return Profile::M41Preserve;
     if (value == "m42-join-pitch") return Profile::M42JoinPitch;
     if (value == "m43-word-rhythm") return Profile::M43WordRhythm;
+    if (value == "m44-lexicon") return Profile::M44Lexicon;
     throw std::runtime_error("unknown test profile");
 }
 const char* profile_name(Profile profile) {
@@ -30,11 +31,13 @@ const char* profile_name(Profile profile) {
     case Profile::M41Preserve: return "m41-preserve";
     case Profile::M42JoinPitch: return "m42-join-pitch";
     case Profile::M43WordRhythm: return "m43-word-rhythm";
+    case Profile::M44Lexicon: return "m44-lexicon";
     }
     throw std::runtime_error("unknown test profile");
 }
 LegacyTimingPolicy timing_policy(Profile profile) {
     profile_name(profile); // Reject invalid enum values, never default silently.
+    if(profile==Profile::M44Lexicon) return timing_policy(Profile::M43WordRhythm);
     if(profile==Profile::M43WordRhythm) {
         auto policy=timing_policy(Profile::M42JoinPitch);
         policy.word_rhythm_strength_m43=0.25;
@@ -100,7 +103,13 @@ DiphoneChainLegacyResult render(const std::filesystem::path& directory,
     if (!normalized.valid) throw std::runtime_error(normalized.error);
     RussianFrontendOptions options;
     options.stress_dictionary = &stress;
-    options.enable_fixed_ika_stress_m43 = profile == Profile::M43WordRhythm;
+    options.enable_fixed_ika_stress_m43 = profile == Profile::M43WordRhythm || profile == Profile::M44Lexicon;
+    RussianLexiconM44 lexicon;
+    if(profile==Profile::M44Lexicon) {
+        lexicon=parse_russian_lexicon_m44(db.bytes(),db.metadata().edat);
+        if(!lexicon.valid) throw std::runtime_error(lexicon.error);
+        options.lexicon_m44=&lexicon;
+    }
     const auto front = russian_text_to_nicolai_phones(normalized.normalized_utf8, options);
     if (!front.valid) throw std::runtime_error(front.error);
     auto result = synthesize_diphone_chain_legacy_duration(db.bytes(), catalog,
