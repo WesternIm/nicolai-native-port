@@ -11,6 +11,7 @@ namespace nicolai {
 
 struct FrontendWord {
     std::string source_utf8;
+    std::string pronunciation_utf8; // M49 may recover ё; source spelling is preserved
     std::vector<std::string> phones;
     int stress_vowel_index = -1;
     std::string stress_source; // explicit / yo / dictionary / legacy-lexicon-m44/m47/m48 / dictionary-ika-m43 / builtin / heuristic
@@ -52,6 +53,8 @@ struct RussianFrontendOptions {
     const RussianLexiconM44* lexicon_m44 = nullptr; // null keeps all old profiles unchanged
     bool enable_lexicon_stress_m47 = false;
     bool enable_lexicon_stress_m48 = false;
+    bool enable_lexicon_stress_m49 = false;
+    const RussianYoPolicyM49* yo_policy_m49 = nullptr;
 };
 
 // M17 independent Russian grapheme-to-phone frontend. It now resolves lexical

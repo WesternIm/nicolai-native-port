@@ -5,6 +5,7 @@
 # Proprietary/local reference inputs and rendered corpora
 /voice-data/
 /Elan/
+nicolai-yo-m49.bin
 /reference_pack*/
 /portable_corpus*/
 *.wav

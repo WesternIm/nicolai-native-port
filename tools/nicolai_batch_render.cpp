@@ -24,12 +24,19 @@ int main(int argc,char**argv){
   auto wordstr=nicolai::parse_legacy_russian_wordstr(db.bytes(),db.metadata().edat);
   auto physical=nicolai::parse_legacy_russian_physical(db.bytes(),db.metadata().edat);
   nicolai::RussianLexiconM44 lexicon;
+  nicolai::RussianYoPolicyM49 yo_policy;
+  const char* yo=std::getenv("NICOLAI_M49_LEXICON_STRESS");
+  const bool m49=yo && std::atoi(yo)!=0;
+  if(m49) {
+      yo_policy=nicolai::load_russian_yo_policy_m49(std::filesystem::path(argv[1]).parent_path()/"nicolai-yo-m49.bin");
+      if(!yo_policy.valid) throw std::runtime_error(yo_policy.error);
+  }
   const char* ending=std::getenv("NICOLAI_M48_LEXICON_STRESS");
   const char* newer=std::getenv("NICOLAI_M47_LEXICON_STRESS");
   const char* older=std::getenv("NICOLAI_M44_LEXICON_STRESS");
   const bool m47=newer && std::atoi(newer)!=0;
   const bool m48=ending && std::atoi(ending)!=0;
-  if(m48 || m47 || (older && std::atoi(older)!=0)) {
+  if(m49 || m48 || m47 || (older && std::atoi(older)!=0)) {
       lexicon=nicolai::parse_russian_lexicon_m44(db.bytes(),db.metadata().edat);
       if(!lexicon.valid) throw std::runtime_error(lexicon.error);
       std::cerr<<"LEXICON\t"<<lexicon.blocks<<"\t"<<lexicon.records<<"\n";
@@ -48,6 +55,8 @@ int main(int argc,char**argv){
    if(lexicon.valid) fo.lexicon_m44=&lexicon;
    fo.enable_lexicon_stress_m47=m47;
    fo.enable_lexicon_stress_m48=m48;
+   fo.enable_lexicon_stress_m49=m49;
+   if(m49) fo.yo_policy_m49=&yo_policy;
    if(const char* v=std::getenv("NICOLAI_M43_FIXED_IKA_STRESS")) fo.enable_fixed_ika_stress_m43=std::atoi(v)!=0;
    auto fr=nicolai::russian_text_to_nicolai_phones(norm.normalized_utf8,fo);
    if(!fr.valid){std::cerr<<id<<" front "<<fr.error<<"\n";continue;}

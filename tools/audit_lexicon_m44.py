@@ -21,9 +21,13 @@ def main():
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--dual-m47', action='store_true', help='Use the M47 probe and compare both lookup lanes')
     parser.add_argument('--dual-m48', action='store_true', help='Use the M48 probe and compare M47/M48 lookup lanes')
+    parser.add_argument('--dual-m49', action='store_true', help='Use the M49 probe and compare M48/M49 lookup lanes')
+    parser.add_argument('--policy', type=Path, help='PRIVATE selector data for M49')
     args = parser.parse_args()
-    if args.dual_m47 and args.dual_m48:
+    if sum((args.dual_m47,args.dual_m48,args.dual_m49))>1:
         parser.error('Choose only one dual comparison')
+    if args.dual_m49 and not args.policy:
+        parser.error('--dual-m49 requires --policy')
     labels = {}
     for line in args.exceptions.read_bytes().decode('cp1251').splitlines():
         if ':' not in line or line.lstrip().startswith('//'):
@@ -43,16 +47,23 @@ def main():
     with tempfile.TemporaryDirectory(prefix='nicolai-lexicon-m44-') as root:
         corpus = Path(root) / 'words.tsv'
         corpus.write_text(''.join(f'{i}\t{word}\n' for i, word in enumerate(words)), encoding='utf-8')
-        result = subprocess.run([str(args.probe.resolve()), str(args.voice.resolve()), str(corpus)],
+        command=[str(args.probe.resolve()),str(args.voice.resolve()),str(corpus)]
+        if args.dual_m49:
+            command.append(str(args.policy.resolve()))
+        result = subprocess.run(command,
                                 capture_output=True, timeout=60, check=True)
     counts = Counter()
     agree = disagree = 0
     old_agree = old_disagree = added = lost = 0
     changed = 0
+    yo_accepted = 0
     seen = set()
     for line in result.stdout.decode('utf-8').splitlines():
         fields = line.split('\t')
-        if args.dual_m47 or args.dual_m48:
+        if args.dual_m49:
+            fields,yo=fields[:7],fields[7]
+            yo_accepted += fields[4]=='accepted' and yo!='-'
+        if args.dual_m47 or args.dual_m48 or args.dual_m49:
             index, old_status, old_stress, _, status, stress, candidates = fields
             if old_status == 'accepted':
                 old_agree += int(old_stress) == labels[words[int(index)]]
@@ -95,6 +106,13 @@ def main():
                        m48_additional_accepted=added, m48_declined_previous_accepted=lost,
                        m48_changed_previous_accepted=changed,
                        limits='Partial ending-stress subset; selected е and ambiguous analyses are declined. Exception dictionary wins in rendering. Resource agreement is not full NLP/perceptual parity.')
+    if args.dual_m49:
+        summary.update(schema='nicolai-m49-lexicon-resource-agreement-v1',
+                       m48_accepted_agree=old_agree,m48_accepted_disagree=old_disagree,
+                       m49_additional_accepted=added,m49_declined_previous_accepted=lost,
+                       m49_changed_previous_accepted=changed,m49_accepted_yo_choices=yo_accepted,
+                       policy_sha256=hashlib.sha256(args.policy.read_bytes()).hexdigest(),
+                       limits='Ending selector subset only; unknown noun-positive filters are refused. Exact exception entries win rendering. Resource stress agreement is not yo correctness, full NLP or acoustic parity.')
     args.out.write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(summary))
 

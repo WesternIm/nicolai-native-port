@@ -25,6 +25,7 @@ if(MSVC)
   add_compile_options(/utf-8)
 endif()
 add_library(nicolai_port STATIC
+    src/russian_yo_m49.cpp
     src/russian_lexicon_m44.cpp
     src/word_rhythm_m43.cpp
     src/voice_db.cpp src/edat.cpp src/address_space.cpp src/assets.cpp src/stateful_tds.cpp
@@ -32,6 +33,11 @@ add_library(nicolai_port STATIC
     src/resource_registry.cpp src/voice_catalog.cpp src/diphone_catalog.cpp src/g711.cpp src/psola_join.cpp src/td_psola.cpp src/seg_schedule.cpp src/hybrid_psola.cpp src/russian_stress.cpp src/russian_legacy.cpp src/russian_frontend.cpp src/legacy_prosody.cpp src/pc_parity.cpp src/engine.cpp src/wav_writer.cpp)
 target_include_directories(nicolai_port PUBLIC include)
 if(NOT ANDROID)
+  add_executable(nicolai_m49_lexicon_probe tools/nicolai_m49_lexicon_probe.cpp)
+  target_link_libraries(nicolai_m49_lexicon_probe PRIVATE nicolai_port)
+  if(WIN32)
+    target_link_libraries(nicolai_m49_lexicon_probe PRIVATE advapi32)
+  endif()
   add_executable(nicolai_m48_lexicon_probe tools/nicolai_m48_lexicon_probe.cpp)
   target_link_libraries(nicolai_m48_lexicon_probe PRIVATE nicolai_port)
   if(WIN32)
@@ -82,6 +88,9 @@ if(ANDROID)
 endif()
 include(CTest)
 if(BUILD_TESTING AND NOT ANDROID)
+  add_executable(russian_yo_m49_test tests/russian_yo_m49_test.cpp)
+  target_link_libraries(russian_yo_m49_test PRIVATE nicolai_port)
+  add_test(NAME russian_yo_m49_test COMMAND russian_yo_m49_test)
   add_executable(russian_lexicon_m48_test tests/russian_lexicon_m48_test.cpp)
   target_link_libraries(russian_lexicon_m48_test PRIVATE nicolai_port)
   add_test(NAME russian_lexicon_m48_test COMMAND russian_lexicon_m48_test)
