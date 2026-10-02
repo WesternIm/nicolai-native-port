@@ -1,0 +1,14 @@
+{
+  "schema": "nicolai-m48-clean-build-verification-v1",
+  "code_commit": "d7162ae426d3fd7df25b2710c1bf4391968d2c3b",
+  "configuration": "Windows x86 Release static MSVC runtime, fresh clean build",
+  "ctest_passed": 38,
+  "ctest_failed": 0,
+  "exe_sha256": "873c6ea363f99f2c8c7de4a49016e977db9a7432f7b94a28d38fb48fca546e0d",
+  "default_unchanged": true,
+  "previous_port_profiles_preserved": 10,
+  "actual_gui_startup_jobs": 11,
+  "wrapper_batch_identical_pcm_pairs": 154,
+  "old_profile_identical_pcm_pairs": 140,
+  "scope": "Local clean build and runtime isolation; not full original NLP or acoustic/listening superiority."
+}

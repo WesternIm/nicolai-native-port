@@ -55,4 +55,19 @@ std::optional<RussianExactCandidateM47> decode_russian_exact_candidate_m47(
 RussianLexiconStressM44 lookup_russian_lexicon_stress_m47(
     const RussianLexiconM44&, const std::string& lowercase_utf8_word);
 
+struct RussianEndingStressM48 {
+    std::size_t stress_vowel = 0; // zero-based in stem + unmarked suffix
+    bool needs_yo_selection = false;
+};
+// Pure ordinal authoring for a single lowercase CP866 suffix variant.
+// The first '<' includes its following vowel; no marker selects the last
+// ending vowel. Malformed input / vowel-free endings are conservatively refused.
+// A selected 'е' still needs the original's unported е/ё selector tables.
+std::optional<RussianEndingStressM48> decode_russian_ending_stress_m48(
+    const std::string& stem_cp866, const std::string& suffix_variant_cp866);
+// Opt-in M47 extension: proven '-' ending ordinals except unresolved е/ё,
+// using the same competing-candidate veto. No context or first-candidate rule.
+RussianLexiconStressM44 lookup_russian_lexicon_stress_m48(
+    const RussianLexiconM44&, const std::string& lowercase_utf8_word);
+
 } // namespace nicolai

@@ -191,9 +191,30 @@ std::optional<RussianExactCandidateM47> decode_russian_exact_candidate_m47(
     else return std::nullopt;
     return c;
 }
+std::optional<RussianEndingStressM48> decode_russian_ending_stress_m48(
+    const std::string& stem,const std::string& suffix) {
+    const auto letter=[](unsigned char c) {
+        return (c>=0xa0 && c<=0xaf) || (c>=0xe0 && c<=0xef) || c==0xf1;
+    };
+    if(stem.empty() || suffix.empty() || stem.size()+suffix.size()>81 ||
+       !std::all_of(stem.begin(),stem.end(),letter)) return std::nullopt;
+    const auto marker=suffix.find('<');
+    if(marker!=std::string::npos && (marker+1>=suffix.size() ||
+       !vowel(static_cast<unsigned char>(suffix[marker+1])) ||
+       suffix.find('<',marker+1)!=std::string::npos)) return std::nullopt;
+    for(unsigned char c:suffix) if(c!='<' && !letter(c)) return std::nullopt;
+    const auto end=marker==std::string::npos?suffix.size():marker+2;
+    auto count=vowels(stem);
+    bool found=false,needs_yo=false;
+    for(std::size_t i=0;i<end;++i) if(vowel(static_cast<unsigned char>(suffix[i]))) {
+        ++count;found=true;needs_yo=static_cast<unsigned char>(suffix[i])==0xa5;
+    }
+    if(!found) return std::nullopt;
+    return RussianEndingStressM48{count-1,needs_yo};
+}
 namespace {
 RussianLexiconStressM44 lookup_stress(
-    const RussianLexiconM44& l,const std::string& word,bool m47) {
+    const RussianLexiconM44& l,const std::string& word,bool m47,bool m48=false) {
     RussianLexiconStressM44 out;
     if(!l.valid) {out.status="invalid-lexicon";return out;}
     const auto encoded=cp866_word(word);
@@ -223,10 +244,16 @@ RussianLexiconStressM44 lookup_stress(
                             const std::size_t slot=kind==3 || kind==5 ? 1 : kind==7 ?
                                 (f<26?1:f<52?2:f<78?3:f<104?4:f<108?5:f<112?6:8):f+1;
                             const auto row=23*(20*kind+type);
-                            const bool plus=kind<8 && type<20 && slot<23 && slot<=l.types[row] && l.types[row+slot]=='+';
+                            const bool valid_type=kind<8 && type<20 && slot<23 && slot<=l.types[row];
+                            const bool plus=valid_type && l.types[row+slot]=='+';
+                            const bool minus=valid_type && l.types[row+slot]=='-';
                             // The original '+' lane copies stem stress without
                             // consulting '<'. Keep the older M44 refusal intact.
-                            if(!plus || (!m47 && variant.find('<')!=std::string::npos) ||
+                            if(m48 && minus && !(kind==1 && paradigm<=2)) {
+                                const auto ending=decode_russian_ending_stress_m48(stem,variant);
+                                if(!ending || ending->needs_yo_selection) unresolved=true;
+                                else {stresses.insert(ending->stress_vowel);eligible|=supported;}
+                            } else if(!plus || (!m47 && variant.find('<')!=std::string::npos) ||
                                !stress || stress>vowels(stem))
                                 unresolved=true;
                             else {stresses.insert(stress-1);eligible|=supported;}
@@ -277,4 +304,6 @@ RussianLexiconStressM44 lookup_russian_lexicon_stress_m44(
     const RussianLexiconM44& l,const std::string& word) {return lookup_stress(l,word,false);}
 RussianLexiconStressM44 lookup_russian_lexicon_stress_m47(
     const RussianLexiconM44& l,const std::string& word) {return lookup_stress(l,word,true);}
+RussianLexiconStressM44 lookup_russian_lexicon_stress_m48(
+    const RussianLexiconM44& l,const std::string& word) {return lookup_stress(l,word,true,true);}
 } // namespace nicolai

@@ -1,0 +1,321 @@
+{
+  "schema": "nicolai-m47-frontend-delta-v1",
+  "cases": 36,
+  "aligned_cases": 31,
+  "rows": [
+    {
+      "group": 0,
+      "case_id": "001",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 1
+    },
+    {
+      "group": 0,
+      "case_id": "002",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 1
+    },
+    {
+      "group": 0,
+      "case_id": "003",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 1
+    },
+    {
+      "group": 0,
+      "case_id": "004",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 1
+    },
+    {
+      "group": 0,
+      "case_id": "005",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 1
+    },
+    {
+      "group": 0,
+      "case_id": "006",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 1
+    },
+    {
+      "group": 0,
+      "case_id": "007",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 1
+    },
+    {
+      "group": 0,
+      "case_id": "008",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 1
+    },
+    {
+      "group": 0,
+      "case_id": "009",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 1
+    },
+    {
+      "group": 0,
+      "case_id": "010",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 1
+    },
+    {
+      "group": 0,
+      "case_id": "011",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 1
+    },
+    {
+      "group": 0,
+      "case_id": "012",
+      "aligned": true,
+      "fixed": 1,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 2
+    },
+    {
+      "group": 0,
+      "case_id": "013",
+      "aligned": false,
+      "reason": "non_orthographic_or_expanded_word_alignment"
+    },
+    {
+      "group": 0,
+      "case_id": "014",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 3
+    },
+    {
+      "group": 0,
+      "case_id": "015",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 2
+    },
+    {
+      "group": 0,
+      "case_id": "016",
+      "aligned": false,
+      "reason": "non_orthographic_or_expanded_word_alignment"
+    },
+    {
+      "group": 0,
+      "case_id": "017",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 3
+    },
+    {
+      "group": 0,
+      "case_id": "018",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 4
+    },
+    {
+      "group": 0,
+      "case_id": "019",
+      "aligned": false,
+      "reason": "non_orthographic_or_expanded_word_alignment"
+    },
+    {
+      "group": 0,
+      "case_id": "020",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 5
+    },
+    {
+      "group": 0,
+      "case_id": "021",
+      "aligned": false,
+      "reason": "non_orthographic_or_expanded_word_alignment"
+    },
+    {
+      "group": 0,
+      "case_id": "022",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 2
+    },
+    {
+      "group": 1,
+      "case_id": "acoustic",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 4
+    },
+    {
+      "group": 1,
+      "case_id": "colon",
+      "aligned": false,
+      "reason": "non_orthographic_or_expanded_word_alignment"
+    },
+    {
+      "group": 1,
+      "case_id": "comma",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 6
+    },
+    {
+      "group": 1,
+      "case_id": "long",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 1,
+      "unchanged_right": 9
+    },
+    {
+      "group": 1,
+      "case_id": "parentheses",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 5
+    },
+    {
+      "group": 1,
+      "case_id": "question",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 6
+    },
+    {
+      "group": 1,
+      "case_id": "startup",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 6
+    },
+    {
+      "group": 1,
+      "case_id": "verbs",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 4
+    },
+    {
+      "group": 2,
+      "case_id": "adjective-cases",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 8
+    },
+    {
+      "group": 2,
+      "case_id": "adjective-inflections",
+      "aligned": true,
+      "fixed": 1,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 5
+    },
+    {
+      "group": 2,
+      "case_id": "adverbs",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 8
+    },
+    {
+      "group": 2,
+      "case_id": "ambiguous",
+      "aligned": true,
+      "fixed": 1,
+      "regressed": 0,
+      "unchanged_wrong": 2,
+      "unchanged_right": 7
+    },
+    {
+      "group": 2,
+      "case_id": "exact-inflections",
+      "aligned": true,
+      "fixed": 3,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 9
+    },
+    {
+      "group": 2,
+      "case_id": "full-adjectives",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 8
+    }
+  ],
+  "scope": "Same captured original words and private render logs; lexical positions only, not listening/PCM superiority.",
+  "fixed": 6,
+  "regressed": 0,
+  "unchanged_wrong": 3,
+  "unchanged_right": 117
+}

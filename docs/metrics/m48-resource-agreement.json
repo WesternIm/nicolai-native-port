@@ -1,0 +1,24 @@
+{
+  "schema": "nicolai-m48-lexicon-resource-agreement-v1",
+  "voice_sha256": "471bf1266c913784187dae25a2e5784a6ec309162e7dee2167ca9887c253e74d",
+  "exceptions_sha256": "6c9ce14e4c0fd07889a1db2f3d8584e610f3a651e7f7a88a2d22137d28942260",
+  "blocks": 68,
+  "records": 63294,
+  "folded_stems": 55585,
+  "exception_words": 88771,
+  "status_counts": {
+    "accepted": 40056,
+    "no-match": 43632,
+    "unsupported-candidate": 4419,
+    "ambiguous": 664
+  },
+  "accepted_agree": 39368,
+  "accepted_disagree": 688,
+  "accepted_agreement_percent": 98.28240463351308,
+  "limits": "Partial ending-stress subset; selected \u0435 and ambiguous analyses are declined. Exception dictionary wins in rendering. Resource agreement is not full NLP/perceptual parity.",
+  "m47_accepted_agree": 34933,
+  "m47_accepted_disagree": 516,
+  "m48_additional_accepted": 4607,
+  "m48_declined_previous_accepted": 0,
+  "m48_changed_previous_accepted": 0
+}

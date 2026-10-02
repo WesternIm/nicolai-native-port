@@ -172,11 +172,14 @@ std::pair<std::size_t,std::string> resolve_stress(
             return {*s,"dictionary"};
     }
     if(options.lexicon_m44) {
-        const auto query=options.enable_lexicon_stress_m47 ?
+        const auto query=options.enable_lexicon_stress_m48 ?
+            lookup_russian_lexicon_stress_m48(*options.lexicon_m44,source) :
+            options.enable_lexicon_stress_m47 ?
             lookup_russian_lexicon_stress_m47(*options.lexicon_m44,source) :
             lookup_russian_lexicon_stress_m44(*options.lexicon_m44,source);
         if(query.stress_vowel && *query.stress_vowel<nv)
-            return {*query.stress_vowel,options.enable_lexicon_stress_m47?"legacy-lexicon-m47":"legacy-lexicon-m44"};
+            return {*query.stress_vowel,options.enable_lexicon_stress_m48?"legacy-lexicon-m48":
+                options.enable_lexicon_stress_m47?"legacy-lexicon-m47":"legacy-lexicon-m44"};
     }
     if (options.stress_dictionary && options.stress_dictionary->valid) {
         if (options.enable_fixed_ika_stress_m43) {

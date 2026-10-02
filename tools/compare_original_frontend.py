@@ -88,7 +88,7 @@ def main():
     parser.add_argument('--capture-root', type=Path)
     parser.add_argument('--output', type=Path)
     parser.add_argument('--report', type=Path)
-    parser.add_argument('--profile', choices=('m44-lexicon', 'm47-lexicon'), default='m44-lexicon')
+    parser.add_argument('--profile', choices=('m44-lexicon', 'm47-lexicon', 'm48-lexicon'), default='m44-lexicon')
     args = parser.parse_args()
     if args.self_test: self_test()
     if not args.exe:

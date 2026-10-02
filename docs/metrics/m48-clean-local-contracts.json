@@ -1,0 +1,12 @@
+{
+  "schema": "nicolai-m48-local-contracts-v1",
+  "controls": 36,
+  "accepted_controls": 29,
+  "declined_controls": 7,
+  "original_ending_ordinal_matches": 10320,
+  "original_complete_candidate_matches": 9460,
+  "selected_e_ordinal_only_cases": 860,
+  "voice_sha256": "471bf1266c913784187dae25a2e5784a6ec309162e7dee2167ca9887c253e74d",
+  "scope": "Synthetic authoring primitive and ordinary controls; selected \u0435 requires unported \u0451 selection and is declined in integration. No full NLP/perceptual claim.",
+  "original_sha256": "f6b7e926c46a0259a866260cafb9d24d6ebed3dd7198829d16179348a186abc7"
+}
