@@ -1,0 +1,26 @@
+{
+  "schema": "nicolai-m49-lexicon-resource-agreement-v1",
+  "voice_sha256": "471bf1266c913784187dae25a2e5784a6ec309162e7dee2167ca9887c253e74d",
+  "exceptions_sha256": "6c9ce14e4c0fd07889a1db2f3d8584e610f3a651e7f7a88a2d22137d28942260",
+  "blocks": 68,
+  "records": 63294,
+  "folded_stems": 55585,
+  "exception_words": 88771,
+  "status_counts": {
+    "accepted": 40336,
+    "no-match": 43632,
+    "unsupported-candidate": 4083,
+    "ambiguous": 720
+  },
+  "accepted_agree": 39623,
+  "accepted_disagree": 713,
+  "accepted_agreement_percent": 98.23234827449424,
+  "limits": "Ending selector subset only; unknown noun-positive filters are refused. Exact exception entries win rendering. Resource stress agreement is not yo correctness, full NLP or acoustic parity.",
+  "m48_accepted_agree": 39368,
+  "m48_accepted_disagree": 688,
+  "m49_additional_accepted": 280,
+  "m49_declined_previous_accepted": 0,
+  "m49_changed_previous_accepted": 0,
+  "m49_accepted_yo_choices": 27,
+  "policy_sha256": "8bf14233689f3273802f95d5021cb2595c2e753ce82c34cbbdd968373cb4e62f"
+}

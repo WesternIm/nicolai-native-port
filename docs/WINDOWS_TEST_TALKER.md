@@ -13,13 +13,14 @@ M46b attaches only the render's verified fresh original server child, after SAPI
 output binding and before Speak. Real captures have been validated with unchanged
 original PCM. It saves private records locally, never uploads them automatically.
 
-Eleven selections are exposed: stable native port (default), experimental M36
+Thirteen selections are exposed: stable native port (default), experimental M36
 local, experimental M36 chain, experimental M38 connected-word timing,
 experimental M40 transient repair, experimental M41 short-feature protection
 and fractional fallback sampling, experimental M42 join-pitch reconciliation,
 experimental M43 word-budget timing/limited dictionary-form stress,
 experimental M44 original-lexicon stem-stress forms,
 experimental M47 exact-entry/adjective/short-form stress,
+experimental M48 ending-stress authoring, experimental M49 ending е/ё selection,
 and the installed original Nicolai via SAPI5.
 M41 keeps M40's coverage-edge repair, but does not enable the rejected internal
 run-protection ablation. See [M41 evidence and limits](M41_SOUND_PRESERVATION.md).
@@ -50,6 +51,18 @@ per-word corrections. Select M47 explicitly and click Speak again. A useful
 activation check is `Хорошая. Спокойно. Длинное. Быстро.` versus the explicitly
 stressed equivalent. The original route and old profile names remain available.
 See [M47 evidence, limitations and continuation](M47_LEXICAL_CANDIDATES.md).
+
+M48 adds bounded ending-stress authoring; M49 also recovers supported е/ё
+selector paths and applies the chosen letter before phone mapping. Both inherit
+M47 timing/acoustics. M49 requires a private `nicolai-yo-m49.bin` beside
+`nicolai16.dat`; export it once from your matching local original with
+`tools/export_yo_policy_m49.py`. It reads but never executes the DLL; neither
+policy nor DLL is packaged. Missing/corrupt policy gives an error only in M49.
+Select "M49 окончания и е/ё", then Speak again. The unmarked phrase
+`Живете. Найдете. Пьете. Льете. Вернете. Вернет. Поете. Споет.` produces the
+same WAV as its literal-ё equivalent. This is general morphology, not per-word
+rewrites, and does not settle all contextual ambiguity or phrase intonation.
+See [M48 evidence](M48_ENDING_STRESS.md) and [M49 evidence/continuation](M49_ENDING_YO.md).
 
 Every synthesis job is an owned child of the same EXE. User text travels in an
 explicit UTF-8 file, not interpolated shell commands; paths use wide Win32 APIs
@@ -114,6 +127,11 @@ Missing input, invalid profiles, Cyrillic/space-containing input/output paths,
 inherited flag isolation and refusal to overwrite old WAVs are also checked.
 
 Voice-free contracts inspect profile policies and GUI controls/Unicode input.
+The M49 fresh x86 Release run passes 39/39 CTest, 12 hidden startup jobs,
+192 EXE/batch WAV pairs and 176 old-profile comparisons against preserved M48.
+For this current profile set use `--baseline-includes-m48`; older counts below
+describe their historical checkpoints. Original/port stress and е/ё accuracy
+are measured separately, not inferred from wrapper equality.
 The M44 local Win32 Release CTest run passed 33/33; M46 adds two contracts and
 the original fresh full run passed 35/35. M46a adds a lazy-load/stop/reject/cancel
 contract (36 tests total); see the capture notes for current validation. The executable's imports

@@ -6,6 +6,11 @@ the standalone test UI without proprietary voice data. Stable is the default;
 experimental modes are clearly labeled, and original SAPI requires a working
 installed Nicolai voice.
 
+The opt-in [M49 ending е/ё selector](docs/M49_ENDING_YO.md) extends M48 with
+data-driven pronunciation choices, verified through the actual audio route.
+Six new original phrases show 6 stress fixes and 9 е/ё fixes without observed
+regressions; previous modes retain identical PCM. A small private policy export
+from the user's matching original is required, never bundled or executed.
 The opt-in [M48 ending-stress extension](docs/M48_ENDING_STRESS.md) adds bounded
 ending vowel ordinals to M47, refusing unresolved е/ё and competing analyses.
 The opt-in [M47 general lexical stress extension](docs/M47_LEXICAL_CANDIDATES.md)

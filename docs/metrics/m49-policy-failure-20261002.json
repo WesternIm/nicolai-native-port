@@ -1,0 +1,7 @@
+{
+  "schema": "nicolai-m49-policy-failure-v1",
+  "runtime_refusals": 6,
+  "previous_profile_without_policy": true,
+  "caller_files_modified": false,
+  "exe_sha256": "1fccfbcc223877c934dab3607bafa72c14f7e2bb6d1bf7403354e258d6b45174"
+}

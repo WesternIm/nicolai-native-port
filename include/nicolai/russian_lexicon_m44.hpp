@@ -1,6 +1,7 @@
 #pragma once
 
 #include "nicolai/edat.hpp"
+#include "nicolai/russian_yo_m49.hpp"
 #include <array>
 #include <optional>
 #include <string>
@@ -28,6 +29,7 @@ struct RussianLexiconM44 {
 };
 struct RussianLexiconStressM44 {
     std::optional<std::size_t> stress_vowel;
+    std::optional<std::size_t> yo_letter_index; // M49 only, original spelling stays separate
     std::size_t candidates = 0;
     std::string status = "no-match";
 };
@@ -69,5 +71,7 @@ std::optional<RussianEndingStressM48> decode_russian_ending_stress_m48(
 // using the same competing-candidate veto. No context or first-candidate rule.
 RussianLexiconStressM44 lookup_russian_lexicon_stress_m48(
     const RussianLexiconM44&, const std::string& lowercase_utf8_word);
+RussianLexiconStressM44 lookup_russian_lexicon_stress_m49(
+    const RussianLexiconM44&, const RussianYoPolicyM49&, const std::string& lowercase_utf8_word);
 
 } // namespace nicolai

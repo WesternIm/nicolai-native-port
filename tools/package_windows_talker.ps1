@@ -43,11 +43,12 @@ try {
         architecture = 'Windows x86 (also runs on x64)'
         configuration = 'Release, static MSVC runtime'
         exe_sha256 = $hash
-        profiles = @('stable', 'm36-local', 'm36-chain', 'm38-boundary', 'm40-transient', 'm41-preserve', 'm42-join-pitch', 'm43-word-rhythm', 'm44-lexicon', 'm47-lexicon', 'm48-lexicon', 'original-sapi')
+        profiles = @('stable', 'm36-local', 'm36-chain', 'm38-boundary', 'm40-transient', 'm41-preserve', 'm42-join-pitch', 'm43-word-rhythm', 'm44-lexicon', 'm47-lexicon', 'm48-lexicon', 'm49-lexicon', 'original-sapi')
         proprietary_inputs_included = $false
         original_sapi_engine_included = $false
         original_sapi_requires_installed_voice = $true
         original_trace_launcher_included = [bool]$IncludeOriginalTraceLauncher
+        m49_requires_private_yo_policy = $true
     } | ConvertTo-Json
     [IO.File]::WriteAllText((Join-Path $output 'build.json'), $manifest + "`n", [Text.UTF8Encoding]::new($false))
     $zipParent = Split-Path -Parent $zip

@@ -154,7 +154,8 @@ const std::unordered_map<std::string,std::size_t>& builtin_stress() {
 }
 
 std::pair<std::size_t,std::string> resolve_stress(
-    const InputWord& w, const std::string& source, const RussianFrontendOptions& options) {
+    const InputWord& w, const std::string& source, const RussianFrontendOptions& options,
+    std::optional<std::size_t>& recovered_yo) {
     const auto nv = count_vowels(w.cps);
     if (nv == 0) return {0,"none"};
     if (w.explicit_stress_vowel && *w.explicit_stress_vowel < nv)
@@ -172,14 +173,20 @@ std::pair<std::size_t,std::string> resolve_stress(
             return {*s,"dictionary"};
     }
     if(options.lexicon_m44) {
-        const auto query=options.enable_lexicon_stress_m48 ?
+        const auto query=options.enable_lexicon_stress_m49 ?
+            (options.yo_policy_m49 ? lookup_russian_lexicon_stress_m49(*options.lexicon_m44,*options.yo_policy_m49,source) : RussianLexiconStressM44{}) :
+            options.enable_lexicon_stress_m48 ?
             lookup_russian_lexicon_stress_m48(*options.lexicon_m44,source) :
             options.enable_lexicon_stress_m47 ?
             lookup_russian_lexicon_stress_m47(*options.lexicon_m44,source) :
             lookup_russian_lexicon_stress_m44(*options.lexicon_m44,source);
-        if(query.stress_vowel && *query.stress_vowel<nv)
-            return {*query.stress_vowel,options.enable_lexicon_stress_m48?"legacy-lexicon-m48":
+        if(query.stress_vowel && *query.stress_vowel<nv &&
+           (!query.yo_letter_index || (*query.yo_letter_index<w.cps.size() && w.cps[*query.yo_letter_index]==U'е'))) {
+            recovered_yo=query.yo_letter_index;
+            return {*query.stress_vowel,options.enable_lexicon_stress_m49?"legacy-lexicon-m49":
+                options.enable_lexicon_stress_m48?"legacy-lexicon-m48":
                 options.enable_lexicon_stress_m47?"legacy-lexicon-m47":"legacy-lexicon-m44"};
+        }
     }
     if (options.stress_dictionary && options.stress_dictionary->valid) {
         if (options.enable_fixed_ika_stress_m43) {
@@ -394,10 +401,14 @@ RussianFrontendResult russian_text_to_nicolai_phones(
     for (const auto& w : words) {
         FrontendWord fw;
         fw.source_utf8 = word_utf8(w.cps);
-        const auto stress = resolve_stress(w, fw.source_utf8, options);
+        std::optional<std::size_t> recovered_yo;
+        const auto stress = resolve_stress(w, fw.source_utf8, options, recovered_yo);
         fw.stress_vowel_index = static_cast<int>(stress.first);
         fw.stress_source = stress.second;
-        fw.phones = word_to_phones(w.cps, stress.first, options.enable_vowel_reduction);
+        auto pronounced=w.cps;
+        if(recovered_yo) pronounced[*recovered_yo]=U'ё';
+        fw.pronunciation_utf8=word_utf8(pronounced);
+        fw.phones = word_to_phones(pronounced, stress.first, options.enable_vowel_reduction);
         if (fw.phones.empty()) { r.error = "word produced no phones: " + fw.source_utf8; return r; }
         if (options.enable_consonant_assimilation) assimilate_obstruents(fw.phones);
 

@@ -90,6 +90,8 @@ jobs:
           python tools/audit_m46_linguistics.py --self-test
           python tools/compare_original_frontend.py --self-test
           python tools/compare_frontend_delta.py --self-test
+          python tools/compare_yo_frontend_m49.py --self-test
+          python tools/export_yo_policy_m49.py --self-test
 
   windows-test-package:
     runs-on: windows-latest
@@ -98,9 +100,9 @@ jobs:
       - name: Configure standalone Release
         run: cmake -S . -B build-talker -A Win32 -DNICOLAI_STATIC_RUNTIME=ON -DBUILD_TESTING=ON
       - name: Build test talker
-        run: cmake --build build-talker --config Release --target NicolaiTalker talker_backend_test russian_frontend_test russian_stress_test word_rhythm_m43_test russian_lexicon_m44_test russian_lexicon_m47_test russian_lexicon_m48_test nicolai_m48_lexicon_probe --parallel
+        run: cmake --build build-talker --config Release --target NicolaiTalker talker_backend_test russian_frontend_test russian_stress_test word_rhythm_m43_test russian_lexicon_m44_test russian_lexicon_m47_test russian_lexicon_m48_test russian_yo_m49_test nicolai_m48_lexicon_probe nicolai_m49_lexicon_probe --parallel
       - name: Run voice-free UI and profile contracts
-        run: ctest --test-dir build-talker -C Release --output-on-failure -R "talker_(backend_test|ui_smoke|original_trace_smoke)|russian_(frontend|stress)_test|word_rhythm_m43_test|russian_lexicon_m4[478]_test"
+        run: ctest --test-dir build-talker -C Release --output-on-failure -R "talker_(backend_test|ui_smoke|original_trace_smoke)|russian_(frontend|stress)_test|word_rhythm_m43_test|russian_lexicon_m4[478]_test|russian_yo_m49_test"
       - name: Package without proprietary inputs
         shell: pwsh
         run: ./tools/package_windows_talker.ps1 -BuildDir build-talker -IncludeOriginalTraceLauncher

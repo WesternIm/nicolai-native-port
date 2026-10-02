@@ -214,13 +214,18 @@ std::optional<RussianEndingStressM48> decode_russian_ending_stress_m48(
 }
 namespace {
 RussianLexiconStressM44 lookup_stress(
-    const RussianLexiconM44& l,const std::string& word,bool m47,bool m48=false) {
+    const RussianLexiconM44& l,const std::string& word,bool m47,bool m48=false,
+    const RussianYoPolicyM49* m49=nullptr) {
     RussianLexiconStressM44 out;
     if(!l.valid) {out.status="invalid-lexicon";return out;}
     const auto encoded=cp866_word(word);
     if(!encoded) {out.status="invalid-word";return out;}
     bool unresolved=false,eligible=false;
     std::set<std::size_t> stresses;
+    std::set<std::pair<std::size_t,std::optional<std::size_t>>> pronunciations;
+    const auto record=[&](std::size_t stress,std::optional<std::size_t> yo=std::nullopt) {
+        stresses.insert(stress);pronunciations.insert({stress,yo});
+    };
     for(std::size_t split=1;split<=encoded->size();++split) {
         const auto stem=encoded->substr(0,split),suffix=encoded->substr(split);
         const auto entries=l.stems.find(stem);
@@ -250,13 +255,19 @@ RussianLexiconStressM44 lookup_stress(
                             // The original '+' lane copies stem stress without
                             // consulting '<'. Keep the older M44 refusal intact.
                             if(m48 && minus && !(kind==1 && paradigm<=2)) {
-                                const auto ending=decode_russian_ending_stress_m48(stem,variant);
-                                if(!ending || ending->needs_yo_selection) unresolved=true;
-                                else {stresses.insert(ending->stress_vowel);eligible|=supported;}
+                                if(m49) {
+                                    const auto ending=decode_russian_ending_choice_m49(stem,variant,*m49,kind,paradigm,type,f+1);
+                                    if(!ending) unresolved=true;
+                                    else {record(ending->stress_vowel,ending->yo_letter_index);eligible|=supported;}
+                                } else {
+                                    const auto ending=decode_russian_ending_stress_m48(stem,variant);
+                                    if(!ending || ending->needs_yo_selection) unresolved=true;
+                                    else {record(ending->stress_vowel);eligible|=supported;}
+                                }
                             } else if(!plus || (!m47 && variant.find('<')!=std::string::npos) ||
                                !stress || stress>vowels(stem))
                                 unresolved=true;
-                            else {stresses.insert(stress-1);eligible|=supported;}
+                            else {record(stress-1);eligible|=supported;}
                         }
                         if(end==form.size()) break;cursor=end+1;
                     }
@@ -288,14 +299,17 @@ RussianLexiconStressM44 lookup_stress(
                 if(exact) {
                     ++out.candidates;
                     if(!exact->stress || exact->stress>vowels(stem)) unresolved=true;
-                    else {stresses.insert(exact->stress-1);eligible=true;}
+                    else {record(exact->stress-1);eligible=true;}
                 } else unresolved=true;
             }
         }
     }
     if(unresolved && out.candidates) out.status="unsupported-candidate";
-    else if(stresses.size()>1) out.status="ambiguous";
-    else if(eligible && stresses.size()==1) {out.stress_vowel=*stresses.begin();out.status="accepted";}
+    else if(stresses.size()>1 || (m49 && pronunciations.size()>1)) out.status="ambiguous";
+    else if(eligible && stresses.size()==1) {
+        out.stress_vowel=*stresses.begin();out.status="accepted";
+        if(m49) out.yo_letter_index=pronunciations.begin()->second;
+    }
     else if(out.candidates) out.status="unsupported-candidate";
     return out;
 }
@@ -306,4 +320,9 @@ RussianLexiconStressM44 lookup_russian_lexicon_stress_m47(
     const RussianLexiconM44& l,const std::string& word) {return lookup_stress(l,word,true);}
 RussianLexiconStressM44 lookup_russian_lexicon_stress_m48(
     const RussianLexiconM44& l,const std::string& word) {return lookup_stress(l,word,true,true);}
+RussianLexiconStressM44 lookup_russian_lexicon_stress_m49(
+    const RussianLexiconM44& l,const RussianYoPolicyM49& p,const std::string& word) {
+    if(!p.valid) {RussianLexiconStressM44 out;out.status="invalid-yo-policy";return out;}
+    return lookup_stress(l,word,true,true,&p);
+}
 } // namespace nicolai
