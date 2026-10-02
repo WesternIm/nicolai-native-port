@@ -67,6 +67,18 @@ exception dictionary still have priority.
 - Combined paired audit: **12 fixes / 0 regressions / 5 remaining wrong /
   145 unchanged correct** on 162 marked positions. Five differently expanded
   cases are excluded. This small corpus is not a universal accuracy estimate.
+- **11** real hidden UI startup jobs and **154/154 EXE/batch WAV pairs** pass.
+  **140/140** old-profile WAVs (all ten old port profiles, including M47) are
+  byte-identical to the preserved M47 EXE. The unmarked phrase
+  "Будет. Будут. Было. Словами. Закрыты. Говорим. Звонит." is byte-identical
+  to its explicitly stressed counterpart in M48; M47 does not match. This
+  verifies the actual frontend-to-audio route, not just standalone lookup.
+
+The final clean local EXE SHA256 is
+`873c6ea363f99f2c8c7de4a49016e977db9a7432f7b94a28d38fb48fca546e0d`.
+Runtime reports bind to that exact artifact. The five remaining marked-position
+differences in these controls concern ambiguous "голоса"/"воды" analyses;
+M48 does not silently resolve them by candidate order.
 
 Reports contain scalars/hashes only under `docs/metrics/m48-*.json`.
 Original snapshots, voice files, per-word audit records and WAVs stay private.
