@@ -6,6 +6,12 @@ the standalone test UI without proprietary voice data. Stable is the default;
 experimental modes are clearly labeled, and original SAPI requires a working
 installed Nicolai voice.
 
+The opt-in [M50 noun е/ё filters](docs/M50_NOUN_YO.md) extend M49 with recovered
+initialized noun-form membership, not per-word overrides. Six pronunciation
+fixes are confirmed against fresh original traces, with no observed regression
+on the previous aligned corpus. Full context/intonation remain unfinished;
+M50 needs a second private data export and keeps older profiles unchanged.
+
 The opt-in [M49 ending е/ё selector](docs/M49_ENDING_YO.md) extends M48 with
 data-driven pronunciation choices, verified through the actual audio route.
 Six new original phrases show 6 stress fixes and 9 е/ё fixes without observed

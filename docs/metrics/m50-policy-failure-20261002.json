@@ -1,0 +1,8 @@
+{
+  "schema": "nicolai-yo-policy-failure-v2",
+  "profile": "m50-lexicon",
+  "runtime_refusals": 6,
+  "previous_profile_without_policy": true,
+  "caller_files_modified": false,
+  "exe_sha256": "d8c0453fd0df32e44d85b47a19ef5fdd4cbade84db4ade1002ccf23460fa04fa"
+}

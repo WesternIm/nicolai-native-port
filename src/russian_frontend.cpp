@@ -173,7 +173,9 @@ std::pair<std::size_t,std::string> resolve_stress(
             return {*s,"dictionary"};
     }
     if(options.lexicon_m44) {
-        const auto query=options.enable_lexicon_stress_m49 ?
+        const auto query=options.enable_lexicon_stress_m50 ?
+            (options.yo_policy_m49 && options.noun_yo_policy_m50 ? lookup_russian_lexicon_stress_m50(*options.lexicon_m44,*options.yo_policy_m49,*options.noun_yo_policy_m50,source) : RussianLexiconStressM44{}) :
+            options.enable_lexicon_stress_m49 ?
             (options.yo_policy_m49 ? lookup_russian_lexicon_stress_m49(*options.lexicon_m44,*options.yo_policy_m49,source) : RussianLexiconStressM44{}) :
             options.enable_lexicon_stress_m48 ?
             lookup_russian_lexicon_stress_m48(*options.lexicon_m44,source) :
@@ -183,7 +185,8 @@ std::pair<std::size_t,std::string> resolve_stress(
         if(query.stress_vowel && *query.stress_vowel<nv &&
            (!query.yo_letter_index || (*query.yo_letter_index<w.cps.size() && w.cps[*query.yo_letter_index]==U'е'))) {
             recovered_yo=query.yo_letter_index;
-            return {*query.stress_vowel,options.enable_lexicon_stress_m49?"legacy-lexicon-m49":
+            return {*query.stress_vowel,options.enable_lexicon_stress_m50?"legacy-lexicon-m50":
+                options.enable_lexicon_stress_m49?"legacy-lexicon-m49":
                 options.enable_lexicon_stress_m48?"legacy-lexicon-m48":
                 options.enable_lexicon_stress_m47?"legacy-lexicon-m47":"legacy-lexicon-m44"};
         }

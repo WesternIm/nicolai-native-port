@@ -22,6 +22,7 @@ Profile parse_profile(const std::string& value) {
     if (value == "m47-lexicon") return Profile::M47Lexicon;
     if (value == "m48-lexicon") return Profile::M48Lexicon;
     if (value == "m49-lexicon") return Profile::M49Lexicon;
+    if (value == "m50-lexicon") return Profile::M50Lexicon;
     throw std::runtime_error("unknown test profile");
 }
 const char* profile_name(Profile profile) {
@@ -38,12 +39,13 @@ const char* profile_name(Profile profile) {
     case Profile::M47Lexicon: return "m47-lexicon";
     case Profile::M48Lexicon: return "m48-lexicon";
     case Profile::M49Lexicon: return "m49-lexicon";
+    case Profile::M50Lexicon: return "m50-lexicon";
     }
     throw std::runtime_error("unknown test profile");
 }
 LegacyTimingPolicy timing_policy(Profile profile) {
     profile_name(profile); // Reject invalid enum values, never default silently.
-    if(profile==Profile::M44Lexicon || profile==Profile::M47Lexicon || profile==Profile::M48Lexicon || profile==Profile::M49Lexicon) return timing_policy(Profile::M43WordRhythm);
+    if(profile==Profile::M44Lexicon || profile==Profile::M47Lexicon || profile==Profile::M48Lexicon || profile==Profile::M49Lexicon || profile==Profile::M50Lexicon) return timing_policy(Profile::M43WordRhythm);
     if(profile==Profile::M43WordRhythm) {
         auto policy=timing_policy(Profile::M42JoinPitch);
         policy.word_rhythm_strength_m43=0.25;
@@ -109,18 +111,25 @@ DiphoneChainLegacyResult render(const std::filesystem::path& directory,
     if (!normalized.valid) throw std::runtime_error(normalized.error);
     RussianFrontendOptions options;
     options.stress_dictionary = &stress;
-    options.enable_fixed_ika_stress_m43 = profile == Profile::M43WordRhythm || profile == Profile::M44Lexicon || profile == Profile::M47Lexicon || profile == Profile::M48Lexicon || profile == Profile::M49Lexicon;
+    options.enable_fixed_ika_stress_m43 = profile == Profile::M43WordRhythm || profile == Profile::M44Lexicon || profile == Profile::M47Lexicon || profile == Profile::M48Lexicon || profile == Profile::M49Lexicon || profile == Profile::M50Lexicon;
     options.enable_lexicon_stress_m47 = profile == Profile::M47Lexicon;
     options.enable_lexicon_stress_m48 = profile == Profile::M48Lexicon;
-    options.enable_lexicon_stress_m49 = profile == Profile::M49Lexicon;
+    options.enable_lexicon_stress_m49 = profile == Profile::M49Lexicon || profile == Profile::M50Lexicon;
+    options.enable_lexicon_stress_m50 = profile == Profile::M50Lexicon;
     RussianYoPolicyM49 yo_policy;
     if(options.enable_lexicon_stress_m49) {
         yo_policy=load_russian_yo_policy_m49(directory/"nicolai-yo-m49.bin");
         if(!yo_policy.valid) throw std::runtime_error(yo_policy.error);
         options.yo_policy_m49=&yo_policy;
     }
+    RussianNounYoPolicyM50 noun_yo_policy;
+    if(options.enable_lexicon_stress_m50) {
+        noun_yo_policy=load_russian_noun_yo_policy_m50(directory/"nicolai-noun-yo-m50.bin");
+        if(!noun_yo_policy.valid) throw std::runtime_error(noun_yo_policy.error);
+        options.noun_yo_policy_m50=&noun_yo_policy;
+    }
     RussianLexiconM44 lexicon;
-    if(profile==Profile::M44Lexicon || profile==Profile::M47Lexicon || profile==Profile::M48Lexicon || profile==Profile::M49Lexicon) {
+    if(profile==Profile::M44Lexicon || profile==Profile::M47Lexicon || profile==Profile::M48Lexicon || profile==Profile::M49Lexicon || profile==Profile::M50Lexicon) {
         lexicon=parse_russian_lexicon_m44(db.bytes(),db.metadata().edat);
         if(!lexicon.valid) throw std::runtime_error(lexicon.error);
         options.lexicon_m44=&lexicon;

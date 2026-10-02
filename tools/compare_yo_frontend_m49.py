@@ -80,6 +80,8 @@ def main():
     p.add_argument('--self-test',action='store_true')
     p.add_argument('--exe',type=Path)
     p.add_argument('--baseline-exe',type=Path)
+    p.add_argument('--baseline-profile',choices=('m48-lexicon','m49-lexicon'),default='m48-lexicon')
+    p.add_argument('--candidate-profile',choices=('m49-lexicon','m50-lexicon'),default='m49-lexicon')
     p.add_argument('--voice',type=Path)
     p.add_argument('--capture-root',type=Path)
     p.add_argument('--output',type=Path)
@@ -112,7 +114,7 @@ def main():
         snapshots=[json.loads(s) for s in (capture/'linguistics-m46.jsonl').read_text(encoding='utf-8').splitlines()]
         audit(snapshots)
         logs=[]
-        for label,exe,profile in (('baseline',args.baseline_exe,'m48-lexicon'),('candidate',args.exe,'m49-lexicon')):
+        for label,exe,profile in (('baseline',args.baseline_exe,args.baseline_profile),('candidate',args.exe,args.candidate_profile)):
             if baseline_logs is not None:
                 root=baseline_logs if label=='baseline' else candidate_logs
                 logs.append((root/identity/'render.log').read_text(encoding='utf-8'))
@@ -141,6 +143,7 @@ def main():
         aligned_cases=sum(r['aligned'] for r in rows),rows=rows,
         exe_sha256=hashlib.sha256(args.exe.read_bytes()).hexdigest(),
         baseline_exe_sha256=hashlib.sha256(args.baseline_exe.read_bytes()).hexdigest(),
+        baseline_profile=args.baseline_profile,candidate_profile=args.candidate_profile,
         scope='Exact source-word alignment allowing only е/ё spelling variants; actual pronunciation letters and marked lexical positions. Not full phoneme/acoustic/prominence parity.')
     report.update({field:sum(row.get(field,0) for row in rows) for field in fields})
     with args.report.open('x',encoding='utf-8') as out:

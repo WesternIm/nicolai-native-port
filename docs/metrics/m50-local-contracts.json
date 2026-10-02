@@ -1,0 +1,15 @@
+{
+  "schema": "nicolai-m50-local-contracts-v1",
+  "controls": 30,
+  "accepted_controls": 16,
+  "additional_accepted_controls": 8,
+  "accepted_yo_controls": 9,
+  "original_initialized_list_matches": 200,
+  "original_complete_candidate_matches": 111520,
+  "original_positive_yo_cases": 1070,
+  "scope": "Actual import-free initializer lane on owned buffers plus synthetic noun authoring and ordinary controls; not full contextual morphology or audio parity.",
+  "voice_sha256": "471bf1266c913784187dae25a2e5784a6ec309162e7dee2167ca9887c253e74d",
+  "policy_sha256": "8bf14233689f3273802f95d5021cb2595c2e753ce82c34cbbdd968373cb4e62f",
+  "noun_policy_sha256": "2b282c4fd68966fb55e0a41be369040304c095c3f973ae812f57e0ecdeb02119",
+  "original_sha256": "f6b7e926c46a0259a866260cafb9d24d6ebed3dd7198829d16179348a186abc7"
+}

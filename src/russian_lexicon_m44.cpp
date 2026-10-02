@@ -215,7 +215,7 @@ std::optional<RussianEndingStressM48> decode_russian_ending_stress_m48(
 namespace {
 RussianLexiconStressM44 lookup_stress(
     const RussianLexiconM44& l,const std::string& word,bool m47,bool m48=false,
-    const RussianYoPolicyM49* m49=nullptr) {
+    const RussianYoPolicyM49* m49=nullptr,const RussianNounYoPolicyM50* m50=nullptr) {
     RussianLexiconStressM44 out;
     if(!l.valid) {out.status="invalid-lexicon";return out;}
     const auto encoded=cp866_word(word);
@@ -256,7 +256,8 @@ RussianLexiconStressM44 lookup_stress(
                             // consulting '<'. Keep the older M44 refusal intact.
                             if(m48 && minus && !(kind==1 && paradigm<=2)) {
                                 if(m49) {
-                                    const auto ending=decode_russian_ending_choice_m49(stem,variant,*m49,kind,paradigm,type,f+1);
+                                    const auto member=m50?noun_yo_form_member_m50(*m50,kind,paradigm,f+1):std::nullopt;
+                                    const auto ending=decode_russian_ending_choice_m49(stem,variant,*m49,kind,paradigm,type,f+1,member);
                                     if(!ending) unresolved=true;
                                     else {record(ending->stress_vowel,ending->yo_letter_index);eligible|=supported;}
                                 } else {
@@ -324,5 +325,11 @@ RussianLexiconStressM44 lookup_russian_lexicon_stress_m49(
     const RussianLexiconM44& l,const RussianYoPolicyM49& p,const std::string& word) {
     if(!p.valid) {RussianLexiconStressM44 out;out.status="invalid-yo-policy";return out;}
     return lookup_stress(l,word,true,true,&p);
+}
+RussianLexiconStressM44 lookup_russian_lexicon_stress_m50(
+    const RussianLexiconM44& l,const RussianYoPolicyM49& p,const RussianNounYoPolicyM50& n,
+    const std::string& word) {
+    if(!p.valid || !n.valid) {RussianLexiconStressM44 out;out.status="invalid-yo-policy";return out;}
+    return lookup_stress(l,word,true,true,&p,&n);
 }
 } // namespace nicolai
