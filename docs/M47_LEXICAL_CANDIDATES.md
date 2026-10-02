@@ -71,6 +71,11 @@ unimplemented ending-stress candidates retain conservative fallback behavior.
 Scalar reports are under `docs/metrics/m47-*.json` and the M44 controls baseline
 is `docs/metrics/m44-frontend-m47-controls-20261002.json`. Raw original snapshots,
 words from the resource audit, per-word logs and WAVs remain private/ignored.
+The `m47-clean-*` reports repeat runtime checks on the final clean rebuild,
+whose EXE SHA256 is
+`62d7ea04fed873e7da72bf363e16e00c699a9272b4313da580ad33bcb48786ab`.
+Earlier reports retain their own tested executable hashes instead of being
+relabeled as results from the final artifact.
 
 No improved pauses, global speaking speed, phrase intonation, pitch contour,
 clicks or perceptual acoustic superiority are claimed. Original unmarked words

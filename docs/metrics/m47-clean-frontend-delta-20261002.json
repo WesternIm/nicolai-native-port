@@ -1,0 +1,66 @@
+{
+  "schema": "nicolai-m47-frontend-delta-v1",
+  "cases": 6,
+  "aligned_cases": 6,
+  "rows": [
+    {
+      "group": 0,
+      "case_id": "adjective-cases",
+      "aligned": true,
+      "fixed": 3,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 5
+    },
+    {
+      "group": 0,
+      "case_id": "adjective-inflections",
+      "aligned": true,
+      "fixed": 3,
+      "regressed": 0,
+      "unchanged_wrong": 1,
+      "unchanged_right": 2
+    },
+    {
+      "group": 0,
+      "case_id": "adverbs",
+      "aligned": true,
+      "fixed": 2,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 6
+    },
+    {
+      "group": 0,
+      "case_id": "ambiguous",
+      "aligned": true,
+      "fixed": 0,
+      "regressed": 0,
+      "unchanged_wrong": 3,
+      "unchanged_right": 7
+    },
+    {
+      "group": 0,
+      "case_id": "exact-inflections",
+      "aligned": true,
+      "fixed": 3,
+      "regressed": 0,
+      "unchanged_wrong": 3,
+      "unchanged_right": 6
+    },
+    {
+      "group": 0,
+      "case_id": "full-adjectives",
+      "aligned": true,
+      "fixed": 3,
+      "regressed": 0,
+      "unchanged_wrong": 0,
+      "unchanged_right": 5
+    }
+  ],
+  "scope": "Same captured original words and private render logs; lexical positions only, not listening/PCM superiority.",
+  "fixed": 14,
+  "regressed": 0,
+  "unchanged_wrong": 7,
+  "unchanged_right": 31
+}
