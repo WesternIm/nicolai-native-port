@@ -53,13 +53,20 @@ EBP holds the same linguistic state. RVA addresses relocate with its module base
 | after_markers | 0x101a17ff | After fallback markers, before phonetic records 0x1019e350 |
 | after_authoring | 0x101a1811 | After physical authoring 0x10214f40, before runtime prosody 0x10212df0 |
 
-The state reader captures one-based words, 20-byte morphology candidate records,
+The state reader captures one-based words, historical 20-byte candidate windows,
 punctuation, raw separator bytes and four-byte separator slots. Annotated words
 and punctuation are hex-encoded CP866, avoiding locale-dependent conversion.
 The last stage also captures each word's 32-byte source-phone records. Pitch,
 energy and duration bytes retain their original raw representations: this
 checkpoint does **not** guess floating/integer units or assert a PCM clock.
 It does not capture grammatical selector tables at state +0x3a34 and beyond.
+
+M51 corrects a four-byte layout offset: legacy `candidates_hex` remains an
+unchanged window starting at block+20*c. Actual payloads start at block+20*c+4,
+and are now added separately as `candidate_payloads_hex` with an explicit
+layout tag. The legacy leading DWORD is the preceding record ID, not a
+context score. Old captures/audits remain readable. Opt-in seven-stage
+analysis capture has its own schema/audit; see [M51](M51_ANALYSIS_SELECTION.md).
 
 Limits: 0–256 words; at most 70 candidates per word; null-terminated word strings
 within 4096 bytes, punctuation within 12 bytes and codes within four bytes;

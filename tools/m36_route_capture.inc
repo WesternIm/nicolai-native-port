@@ -48,7 +48,8 @@ void json_runtime_descriptor(std::ostream& out, HANDLE process, std::uintptr_t p
 }
 
 int run_route_capture(DWORD pid, const std::string& output, const std::string& stop,
-                      bool linguistic = false, DWORD parent_pid = 0, bool render_host = false) {
+                      bool linguistic = false, DWORD parent_pid = 0, bool render_host = false,
+                      bool analysis = false) {
     HANDLE process = nullptr;
     HANDLE owner = nullptr;
     struct OwnerGuard { HANDLE& h; ~OwnerGuard() { if (h) CloseHandle(h); } } owner_guard{owner};
@@ -113,7 +114,7 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
         }
         // Instruction starts verified against the pinned 2004 image. Actual
         // writer call sites, not inferred voicing, identify the observed route.
-        const std::map<std::uintptr_t, std::string> points = linguistic ?
+        auto points = linguistic ?
             std::map<std::uintptr_t, std::string>{
                 {0x1a17ed, "before_split"}, {0x1a17f3, "after_split"},
                 {0x1a17ff, "after_markers"}, {0x1a1811, "after_authoring"}} :
@@ -123,6 +124,16 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
             {0x107ebe, "ordinary"}, {0x108004, "interval_end"},
             {0x10801b, "post_loop"}, {0x108076, "terminal_flush"},
             {0x10808b, "failure_return"}, {0x10820d, "return"}};
+        if (analysis) {
+            if (!linguistic) throw std::runtime_error("analysis requires linguistic capture");
+            points.emplace(0x1a17b6, "before_normalization");
+            points.emplace(0x1a17bc, "before_context");
+            points.emplace(0x1a17c2, "after_context");
+        }
+        const std::vector<std::string> stages = analysis ?
+            std::vector<std::string>{"before_normalization", "before_context", "after_context",
+                "before_split", "after_split", "after_markers", "after_authoring"} :
+            std::vector<std::string>{"before_split", "after_split", "after_markers", "after_authoring"};
         auto arm = [&](const std::filesystem::path& loaded_path) {
             // At attach, or a LOAD_DLL event, ALL target threads are stopped.
             // Validate the entire image/point set before changing any byte.
@@ -134,7 +145,9 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
             std::map<std::uintptr_t, BYTE> verified;
             for (const auto& point : points) {
                 const auto byte = read_byte(process, base + point.first);
-                if (linguistic && byte != 0x55)
+                if (linguistic && (point.first == 0x1a17c2 ?
+                    (read_vector<BYTE>(process, base + point.first, 6) !=
+                        std::vector<BYTE>{0x8b, 0x8d, 0x34, 0x01, 0x00, 0x00}) : byte != 0x55))
                     throw std::runtime_error("linguistic instruction fingerprint mismatch");
                 verified.emplace(base + point.first, byte);
             }
@@ -222,7 +235,7 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
                         const auto rva = address - base;
                         const auto& name = points.at(rva);
                         try {
-                            if (linguistic && name == "before_split") {
+                            if (linguistic && name == stages.front()) {
                                 if (pending.count(ev.dwThreadId)) throw std::runtime_error("nested linguistic call");
                                 pending[ev.dwThreadId] = RouteCall{++sequence, ctx.Ebp, 0, 0};
                             } else if (rva == kRouteEntry) {
@@ -237,17 +250,17 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
                             if (it != pending.end()) {
                                 // Stage the whole row to prevent partial JSON on read failure.
                                 std::ostringstream row;
-                                row << "{\"schema\":\"" << (linguistic ? "nicolai-m46-linguistic-v1" : "nicolai-m36-route-v1")
+                                row << "{\"schema\":\"" << (analysis ? "nicolai-m51-analysis-v1" :
+                                    linguistic ? "nicolai-m46-linguistic-v1" : "nicolai-m36-route-v1")
                                     << "\",\"call\":"
                                     << it->second.sequence << ",\"thread_id\":" << ev.dwThreadId
                                     << ",\"event\":\"" << name << "\",\"state\":";
                                 if (linguistic) {
                                     if (ctx.Ebp != it->second.state) throw std::runtime_error("linguistic state changed");
-                                    const unsigned stage = name == "before_split" ? 0 :
-                                        name == "after_split" ? 1 : name == "after_markers" ? 2 : 3;
-                                    if (it->second.stages != stage)
+                                    if (it->second.stages >= stages.size() || stages[it->second.stages] != name)
                                         throw std::runtime_error("linguistic stage out of order");
-                                    json_linguistic_state_m46(row, process, it->second.state, name == "after_authoring");
+                                    json_linguistic_state_m46(row, process, it->second.state,
+                                        name == "after_authoring", analysis && it->second.stages < 3);
                                 } else json_runtime_state(row, process, it->second.state);
                                 if (!linguistic && rva == kRouteEntry) {
                                     const auto context = read_value<std::uint32_t>(process, ctx.Esp + 4);
@@ -272,7 +285,7 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
                                 out << row.str() << std::flush;
                                 if (!out) throw std::runtime_error("route write failed");
                                 ++records;
-                                if (linguistic && ++it->second.stages == 4) ++completed;
+                                if (linguistic && ++it->second.stages == stages.size()) ++completed;
                             } else if (linguistic) {
                                 throw std::runtime_error("linguistic stage without its entry");
                             }
@@ -318,7 +331,7 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
         if (linguistic && !hooks_ready) std::cerr << "original module not loaded in owned capture target\n";
         return records && !skipped && pending.empty() &&
             (!linguistic || (!owner_gone && !exited && hooks_ready &&
-                            completed && records == completed * 4)) ? 0 : 3;
+                            completed && records == completed * stages.size())) ? 0 : 3;
     } catch (const std::exception& e) {
         if (linguistic && attached && mutated && !exited) {
             // Exceptional detach cannot safely restore into a running target.

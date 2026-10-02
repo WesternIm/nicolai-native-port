@@ -28,9 +28,12 @@ Static inspection and synthetic import-free calls establish:
   the isolated oracle and is not implemented in M47.
 
 The exact-entry author writes fields starting at block+24, including provenance
-at +36/+40. This is not yet the later score-prefixed 20-byte view saved by M46.
-The probe compares authored bytes in their own layout; it does not conflate
-those stages or call full NLP in a DLL mapped without initialized imports.
+at +36/+40. M51 corrected the earlier interpretation: the actual payload is
+20 bytes at block+24; M46's historical window at block+20 starts with the
+previous record's dictionary ID, NOT a priority score. Context score is at
+payload+8. The M47 oracle's 24-byte comparison covers the complete authored
+payload and is still valid. See [M51](M51_ANALYSIS_SELECTION.md).
+The probe does not call full NLP in a DLL mapped without initialized imports.
 
 Lookup accepts only one distinct stress with an eligible supported lane and no
 unresolved matching candidate. Exact entries are not given blind priority over

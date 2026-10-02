@@ -21,10 +21,14 @@ set_property(SOURCE tests/m36_route_capture_test.cpp tests/m46_linguistic_snapsh
   PROPERTY OBJECT_DEPENDS "${_capture_includes};${CMAKE_CURRENT_SOURCE_DIR}/tools/nicolai_m36_runtime_capture.cpp")
 set_property(SOURCE tools/nicolai_talker_win.cpp APPEND
   PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tools/m46_talker_capture.inc")
+set_property(SOURCE src/russian_candidate_selection_m51.cpp tools/nicolai_m51_candidate_probe.cpp
+  tests/russian_candidate_selection_m51_test.cpp APPEND
+  PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/include/nicolai/russian_candidate_selection_m51.hpp")
 if(MSVC)
   add_compile_options(/utf-8)
 endif()
 add_library(nicolai_port STATIC
+    src/russian_candidate_selection_m51.cpp
     src/russian_noun_yo_m50.cpp
     src/russian_yo_m49.cpp
     src/russian_lexicon_m44.cpp
@@ -34,6 +38,11 @@ add_library(nicolai_port STATIC
     src/resource_registry.cpp src/voice_catalog.cpp src/diphone_catalog.cpp src/g711.cpp src/psola_join.cpp src/td_psola.cpp src/seg_schedule.cpp src/hybrid_psola.cpp src/russian_stress.cpp src/russian_legacy.cpp src/russian_frontend.cpp src/legacy_prosody.cpp src/pc_parity.cpp src/engine.cpp src/wav_writer.cpp)
 target_include_directories(nicolai_port PUBLIC include)
 if(NOT ANDROID)
+  add_executable(nicolai_m51_candidate_probe tools/nicolai_m51_candidate_probe.cpp)
+  target_link_libraries(nicolai_m51_candidate_probe PRIVATE nicolai_port)
+  if(WIN32)
+    target_link_libraries(nicolai_m51_candidate_probe PRIVATE advapi32)
+  endif()
   add_executable(nicolai_m50_lexicon_probe tools/nicolai_m50_lexicon_probe.cpp)
   target_link_libraries(nicolai_m50_lexicon_probe PRIVATE nicolai_port)
   if(WIN32)
@@ -94,6 +103,9 @@ if(ANDROID)
 endif()
 include(CTest)
 if(BUILD_TESTING AND NOT ANDROID)
+  add_executable(russian_candidate_selection_m51_test tests/russian_candidate_selection_m51_test.cpp)
+  target_link_libraries(russian_candidate_selection_m51_test PRIVATE nicolai_port)
+  add_test(NAME russian_candidate_selection_m51_test COMMAND russian_candidate_selection_m51_test)
   add_executable(russian_noun_yo_m50_test tests/russian_noun_yo_m50_test.cpp)
   target_link_libraries(russian_noun_yo_m50_test PRIVATE nicolai_port)
   add_test(NAME russian_noun_yo_m50_test COMMAND russian_noun_yo_m50_test)

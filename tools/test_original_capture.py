@@ -32,6 +32,7 @@ def main():
     parser.add_argument('--output', type=Path, required=True, help='Fresh PRIVATE artifact directory')
     parser.add_argument('--report', type=Path, required=True, help='Fresh scalar-only report')
     parser.add_argument('--windows-managed-launch', action='store_true')
+    parser.add_argument('--analysis', action='store_true', help='Opt-in M51 seven-stage capture')
     args = parser.parse_args()
     require(not args.output.exists() and not args.report.exists(), 'outputs_must_be_fresh')
     args.output.mkdir(parents=True)
@@ -51,6 +52,8 @@ def main():
                        '-TextFile', str(source.resolve()), '-OutputDir', str(directory.resolve())]
             if trace:
                 command.append('-Trace')
+                if args.analysis:
+                    command.append('-Analysis')
             if args.windows_managed_launch:
                 command.append('-WindowsManagedLaunch')
             result = subprocess.run(command, capture_output=True, timeout=65)
@@ -59,20 +62,25 @@ def main():
             require(report['success'] and report['exit_code'] == 0, 'owned_exit')
             dirs.append(directory)
         with (dirs[1] / 'linguistics-m46.jsonl').open(encoding='utf-8') as stream:
-            validation = audit(json.loads(line) for line in stream if line.strip())
+            if args.analysis:
+                from audit_m51_analysis import audit as analysis_audit
+                validation = analysis_audit(json.loads(line) for line in stream if line.strip())
+            else:
+                validation = audit(json.loads(line) for line in stream if line.strip())
         worker = (dirs[1] / 'linguistics-m46-worker.log').read_text(encoding='utf-8')
         final = json.loads(worker.strip().splitlines()[-1])
         require('M46_HOOKS_READY pinned_original=1' in worker and
                 final['skipped'] == 0 and
                 final['completed_calls'] == validation['complete_calls'] and
-                final['records'] == 4 * validation['complete_calls'], 'complete_worker_capture')
+                final['records'] == (7 if args.analysis else 4) * validation['complete_calls'], 'complete_worker_capture')
         normal, traced = (pcm(directory / 'result.wav') for directory in dirs)
         row = dict(validation, case_id=identity, records=final['records'], skipped=final['skipped'],
                    normal_samples=normal[0], traced_samples=traced[0], pcm_equal=normal == traced)
         rows.append(row)
         print(json.dumps({key: row[key] for key in ('case_id', 'linguistic_calls',
             'zero_word_calls', 'scan_model_mismatches', 'pcm_equal')}), flush=True)
-    report = {'schema': 'nicolai-m46b-original-corpus-v1', 'cases': len(rows),
+    report = {'schema': 'nicolai-m51-original-corpus-v1' if args.analysis else
+              'nicolai-m46b-original-corpus-v1', 'cases': len(rows),
               'exe_sha256': hashlib.sha256(args.exe.read_bytes()).hexdigest(),
               'baseline_exe_sha256': hashlib.sha256(args.baseline_exe.read_bytes()).hexdigest(),
               'corpus_sha256': hashlib.sha256(args.corpus.read_bytes()).hexdigest(),
