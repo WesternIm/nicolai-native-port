@@ -160,9 +160,9 @@ void start_job(App& app) {
         throw std::runtime_error("Введите текст для произнесения.");
     const fs::path voice(text_of(app.voice));
     const LRESULT selected = SendMessageW(app.profile, CB_GETCURSEL, 0, 0);
-    const wchar_t* profiles[]{L"stable", L"m36-local", L"m36-chain", L"m38-boundary", L"m40-transient", L"m41-preserve", L"m42-join-pitch", L"m43-word-rhythm", L"m44-lexicon", L"m47-lexicon", L"m48-lexicon", L"m49-lexicon", L"original-sapi"};
-    if (selected < 0 || selected > 12) throw std::runtime_error("Выберите движок и акустику.");
-    if (selected != 12) nicolai::test_talker::validate_voice_directory(voice);
+    const wchar_t* profiles[]{L"stable", L"m36-local", L"m36-chain", L"m38-boundary", L"m40-transient", L"m41-preserve", L"m42-join-pitch", L"m43-word-rhythm", L"m44-lexicon", L"m47-lexicon", L"m48-lexicon", L"m49-lexicon", L"m50-lexicon", L"original-sapi"};
+    if (selected < 0 || selected > 13) throw std::runtime_error("Выберите движок и акустику.");
+    if (selected != 13) nicolai::test_talker::validate_voice_directory(voice);
     stop_job(app);
     app.wav.clear();
     const auto root = local_jobs();
@@ -244,9 +244,9 @@ void save(App& app) {
     wchar_t destination[32768]{};
     const wchar_t* suggested[]{L"nicolai-stable.wav", L"nicolai-m36-local.wav",
                                L"nicolai-m36-chain.wav", L"nicolai-m38-boundary.wav",
-                               L"nicolai-m40-transient.wav", L"nicolai-m41-preserve.wav", L"nicolai-m42-join-pitch.wav", L"nicolai-m43-word-rhythm.wav", L"nicolai-m44-lexicon.wav", L"nicolai-m47-lexicon.wav", L"nicolai-m48-lexicon.wav", L"nicolai-m49-lexicon.wav", L"nicolai-original-sapi.wav"};
+                               L"nicolai-m40-transient.wav", L"nicolai-m41-preserve.wav", L"nicolai-m42-join-pitch.wav", L"nicolai-m43-word-rhythm.wav", L"nicolai-m44-lexicon.wav", L"nicolai-m47-lexicon.wav", L"nicolai-m48-lexicon.wav", L"nicolai-m49-lexicon.wav", L"nicolai-m50-lexicon.wav", L"nicolai-original-sapi.wav"};
     const LRESULT selected = SendMessageW(app.profile, CB_GETCURSEL, 0, 0);
-    if (selected < 0 || selected > 12) throw std::runtime_error("Choose a synthesis profile before saving.");
+    if (selected < 0 || selected > 13) throw std::runtime_error("Choose a synthesis profile before saving.");
     const std::wstring filename(suggested[selected]);
     std::copy(filename.begin(), filename.end(), destination);
     OPENFILENAMEW dialog{}; dialog.lStructSize = sizeof(dialog);
@@ -333,12 +333,12 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wparam, LPARAM lp
             app->browse = control(*app, L"BUTTON", L"Папка…", WS_TABSTOP, kBrowse);
             control(*app, L"STATIC", L"Движок:", 0, 202);
             app->profile = control(*app, L"COMBOBOX", L"", CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP, kProfile);
-            for (const auto* name : {L"Порт — обычная акустика", L"Порт — M36 local (эксперимент)", L"Порт — M36 chain (эксперимент)", L"Порт — M38 связная речь (эксперимент)", L"Порт — M40 меньше щелчков (эксперимент)", L"Порт — M41 сохранение звуков (эксперимент)", L"Порт — M42 тон на стыках (эксперимент)", L"Порт — M43 ритм слова (эксперимент)", L"Порт — M44 словарь форм (эксперимент)", L"Порт — M47 прилагательные и ударения (эксперимент)", L"Порт — M48 ударения в окончаниях (эксперимент)", L"Порт — M49 окончания и е/ё (эксперимент)", L"Оригинал ПК — Nicolai через SAPI"})
+            for (const auto* name : {L"Порт — обычная акустика", L"Порт — M36 local (эксперимент)", L"Порт — M36 chain (эксперимент)", L"Порт — M38 связная речь (эксперимент)", L"Порт — M40 меньше щелчков (эксперимент)", L"Порт — M41 сохранение звуков (эксперимент)", L"Порт — M42 тон на стыках (эксперимент)", L"Порт — M43 ритм слова (эксперимент)", L"Порт — M44 словарь форм (эксперимент)", L"Порт — M47 прилагательные и ударения (эксперимент)", L"Порт — M48 ударения в окончаниях (эксперимент)", L"Порт — M49 окончания и е/ё (эксперимент)", L"Порт — M50 существительные и е/ё (эксперимент)", L"Оригинал ПК — Nicolai через SAPI"})
                 SendMessageW(app->profile, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(name));
             SendMessageW(app->profile, CB_SETCURSEL, app->initial_profile, 0);
             control(*app, L"STATIC", original_trace_enabled() ?
                 L"M46b: захват собственного сервера оригинала. Данные сохраняются локально; это не новая акустика." :
-                L"Оригинал требует 32-битный SAPI-голос Elan. Режимы M36–M49 — эксперименты.", 0, 203);
+                L"Оригинал требует 32-битный SAPI-голос Elan. Режимы M36–M50 — эксперименты.", 0, 203);
             app->text = control(*app, L"EDIT", L"Привет! Это Николай. Проверяем голос и акустику.",
                 ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP, kText);
             SendMessageW(app->text, EM_SETLIMITTEXT, 16000, 0);
@@ -395,7 +395,7 @@ int ui(HINSTANCE instance, bool smoke, const fs::path& test_voice = {}, int test
     type.lpszClassName = L"NicolaiNativePortTestTalker";
     if (!RegisterClassW(&type)) return 1;
     HWND window = CreateWindowExW(0, type.lpszClassName, original_trace_enabled() ?
-        L"Николай — M49 захват оригинала" : L"Николай — оригинал ПК и порт (M49)",
+        L"Николай — M50 захват оригинала" : L"Николай — оригинал ПК и порт (M50)",
         WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 920, 610,
         nullptr, nullptr, instance, &app);
     if (!window) return 1;
@@ -417,7 +417,7 @@ int ui(HINSTANCE instance, bool smoke, const fs::path& test_voice = {}, int test
             }
             const bool rendered = !app.child && !app.wav.empty() &&
                 IsWindowEnabled(app.save) && IsWindowEnabled(app.replay) && IsWindowEnabled(app.speak);
-            SendMessageW(app.profile, CB_SETCURSEL, (static_cast<int>(test_profile) + 1) % 13, 0);
+            SendMessageW(app.profile, CB_SETCURSEL, (static_cast<int>(test_profile) + 1) % 14, 0);
             SendMessageW(window, WM_COMMAND, MAKEWPARAM(kProfile, CBN_SELCHANGE),
                          reinterpret_cast<LPARAM>(app.profile));
             const bool reset = app.wav.empty() && !IsWindowEnabled(app.save) &&
@@ -428,7 +428,7 @@ int ui(HINSTANCE instance, bool smoke, const fs::path& test_voice = {}, int test
         const std::wstring sample = L"Проверка: ёжик, кавычки «текст» и путь C:\\Голос\\";
         SetWindowTextW(app.text, sample.c_str());
         const bool ok = text_of(app.text) == sample &&
-            wide(utf8(sample)) == sample && SendMessageW(app.profile, CB_GETCOUNT, 0, 0) == 13 &&
+            wide(utf8(sample)) == sample && SendMessageW(app.profile, CB_GETCOUNT, 0, 0) == 14 &&
             SendMessageW(app.profile, CB_GETCURSEL, 0, 0) == test_profile &&
             !IsWindowEnabled(app.save) && !IsWindowEnabled(app.stop) && IsWindowEnabled(app.speak);
         DestroyWindow(window);
@@ -444,7 +444,7 @@ int ui(HINSTANCE instance, bool smoke, const fs::path& test_voice = {}, int test
     return static_cast<int>(message.wParam);
 }
 int render_job(int count, wchar_t** arguments) {
-    if (count != 6) throw std::runtime_error("usage: --render <voice-directory> <UTF-8-text-file> <stable|m36-local|m36-chain|m38-boundary|m40-transient|m41-preserve|m42-join-pitch|m43-word-rhythm|m44-lexicon|m47-lexicon|m48-lexicon|m49-lexicon|original-sapi> <fresh-output.wav>");
+    if (count != 6) throw std::runtime_error("usage: --render <voice-directory> <UTF-8-text-file> <stable|m36-local|m36-chain|m38-boundary|m40-transient|m41-preserve|m42-join-pitch|m43-word-rhythm|m44-lexicon|m47-lexicon|m48-lexicon|m49-lexicon|m50-lexicon|original-sapi> <fresh-output.wav>");
     const fs::path output(arguments[5]);
     if (fs::exists(output)) throw std::runtime_error("output WAV must be fresh");
     if (std::wstring(arguments[1]) == L"--render-trace") {
@@ -606,11 +606,11 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
             const auto profile = utf8(arguments[3]);
             // Original SAPI is a GUI selection, not a portable backend profile.
             // Keep the hidden job test on the same startup route as a user click.
-            const int index = profile == "original-sapi" ? 12 :
+            const int index = profile == "original-sapi" ? 13 :
                 static_cast<int>(nicolai::test_talker::parse_profile(profile));
             return ui(instance, true, fs::path(arguments[2]), index);
         }
-        return ui(instance, smoke || trace_smoke, {}, (trace_ui || trace_smoke) ? 12 : 0,
+        return ui(instance, smoke || trace_smoke, {}, (trace_ui || trace_smoke) ? 13 : 0,
                   smoke && count == 3 ? fs::path(arguments[2]) : fs::path{});
     } catch (const std::exception& error) {
         std::cerr << "error=" << error.what() << '\n';

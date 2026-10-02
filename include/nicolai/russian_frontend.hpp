@@ -55,6 +55,8 @@ struct RussianFrontendOptions {
     bool enable_lexicon_stress_m48 = false;
     bool enable_lexicon_stress_m49 = false;
     const RussianYoPolicyM49* yo_policy_m49 = nullptr;
+    bool enable_lexicon_stress_m50 = false;
+    const RussianNounYoPolicyM50* noun_yo_policy_m50 = nullptr;
 };
 
 // M17 independent Russian grapheme-to-phone frontend. It now resolves lexical

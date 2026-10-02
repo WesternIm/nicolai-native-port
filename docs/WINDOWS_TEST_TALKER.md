@@ -13,7 +13,7 @@ M46b attaches only the render's verified fresh original server child, after SAPI
 output binding and before Speak. Real captures have been validated with unchanged
 original PCM. It saves private records locally, never uploads them automatically.
 
-Thirteen selections are exposed: stable native port (default), experimental M36
+Fourteen selections are exposed: stable native port (default), experimental M36
 local, experimental M36 chain, experimental M38 connected-word timing,
 experimental M40 transient repair, experimental M41 short-feature protection
 and fractional fallback sampling, experimental M42 join-pitch reconciliation,
@@ -21,6 +21,7 @@ experimental M43 word-budget timing/limited dictionary-form stress,
 experimental M44 original-lexicon stem-stress forms,
 experimental M47 exact-entry/adjective/short-form stress,
 experimental M48 ending-stress authoring, experimental M49 ending е/ё selection,
+experimental M50 initialized noun е/ё filters,
 and the installed original Nicolai via SAPI5.
 M41 keeps M40's coverage-edge repair, but does not enable the rejected internal
 run-protection ablation. See [M41 evidence and limits](M41_SOUND_PRESERVATION.md).
@@ -63,6 +64,12 @@ Select "M49 окончания и е/ё", then Speak again. The unmarked phrase
 same WAV as its literal-ё equivalent. This is general morphology, not per-word
 rewrites, and does not settle all contextual ambiguity or phrase intonation.
 See [M48 evidence](M48_ENDING_STRESS.md) and [M49 evidence/continuation](M49_ENDING_YO.md).
+M50 adds known per-paradigm noun-form memberships. It requires both the M49
+file and `nicolai-noun-yo-m50.bin`; neither is packaged. Export from your own
+matching original with `tools/export_noun_yo_policy_m50.py` (standard Python,
+no DLL execution). It corrects six noun ё controls in fresh original traces,
+without changing prior stress results or M49 acoustics. Contextually ambiguous
+forms remain unresolved. See [M50 evidence/continuation](M50_NOUN_YO.md).
 
 Every synthesis job is an owned child of the same EXE. User text travels in an
 explicit UTF-8 file, not interpolated shell commands; paths use wide Win32 APIs
@@ -127,9 +134,9 @@ Missing input, invalid profiles, Cyrillic/space-containing input/output paths,
 inherited flag isolation and refusal to overwrite old WAVs are also checked.
 
 Voice-free contracts inspect profile policies and GUI controls/Unicode input.
-The M49 fresh x86 Release run passes 39/39 CTest, 12 hidden startup jobs,
-192 EXE/batch WAV pairs and 176 old-profile comparisons against preserved M48.
-For this current profile set use `--baseline-includes-m48`; older counts below
+The M50 fresh x86 Release run passes 40/40 CTest, 13 hidden startup jobs,
+234 EXE/batch WAV pairs and 216 old-profile comparisons against preserved M49.
+For this current profile set use `--baseline-includes-m49`; older counts below
 describe their historical checkpoints. Original/port stress and е/ё accuracy
 are measured separately, not inferred from wrapper equality.
 The M44 local Win32 Release CTest run passed 33/33; M46 adds two contracts and

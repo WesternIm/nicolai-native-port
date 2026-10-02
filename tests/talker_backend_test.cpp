@@ -21,6 +21,10 @@ int main() try {
     require(parse_profile("m47-lexicon") == Profile::M47Lexicon);
     require(parse_profile("m48-lexicon") == Profile::M48Lexicon);
     require(parse_profile("m49-lexicon") == Profile::M49Lexicon);
+    require(parse_profile("m50-lexicon") == Profile::M50Lexicon);
+    require(std::string(profile_name(Profile::M50Lexicon)) == "m50-lexicon");
+    require(timing_policy(Profile::M50Lexicon).word_rhythm_strength_m43 == 0.25);
+    require(timing_policy(Profile::M50Lexicon).join_period_continuity_m42 == 0.5);
     require(std::string(profile_name(Profile::M49Lexicon)) == "m49-lexicon");
     require(timing_policy(Profile::M49Lexicon).word_rhythm_strength_m43 == 0.25);
     require(std::string(profile_name(Profile::M48Lexicon)) == "m48-lexicon");

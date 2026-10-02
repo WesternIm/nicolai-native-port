@@ -23,11 +23,15 @@ def main():
     parser.add_argument('--dual-m48', action='store_true', help='Use the M48 probe and compare M47/M48 lookup lanes')
     parser.add_argument('--dual-m49', action='store_true', help='Use the M49 probe and compare M48/M49 lookup lanes')
     parser.add_argument('--policy', type=Path, help='PRIVATE selector data for M49')
+    parser.add_argument('--dual-m50', action='store_true', help='Compare M49/M50 noun filters')
+    parser.add_argument('--noun-policy', type=Path, help='PRIVATE initialized noun filters for M50')
     args = parser.parse_args()
-    if sum((args.dual_m47,args.dual_m48,args.dual_m49))>1:
+    if sum((args.dual_m47,args.dual_m48,args.dual_m49,args.dual_m50))>1:
         parser.error('Choose only one dual comparison')
-    if args.dual_m49 and not args.policy:
+    if (args.dual_m49 or args.dual_m50) and not args.policy:
         parser.error('--dual-m49 requires --policy')
+    if args.dual_m50 and not args.noun_policy:
+        parser.error('--dual-m50 requires --noun-policy')
     labels = {}
     for line in args.exceptions.read_bytes().decode('cp1251').splitlines():
         if ':' not in line or line.lstrip().startswith('//'):
@@ -48,8 +52,10 @@ def main():
         corpus = Path(root) / 'words.tsv'
         corpus.write_text(''.join(f'{i}\t{word}\n' for i, word in enumerate(words)), encoding='utf-8')
         command=[str(args.probe.resolve()),str(args.voice.resolve()),str(corpus)]
-        if args.dual_m49:
+        if args.dual_m49 or args.dual_m50:
             command.append(str(args.policy.resolve()))
+        if args.dual_m50:
+            command.append(str(args.noun_policy.resolve()))
         result = subprocess.run(command,
                                 capture_output=True, timeout=60, check=True)
     counts = Counter()
@@ -57,13 +63,19 @@ def main():
     old_agree = old_disagree = added = lost = 0
     changed = 0
     yo_accepted = 0
+    pronunciation_changed = 0
     seen = set()
     for line in result.stdout.decode('utf-8').splitlines():
         fields = line.split('\t')
+        if args.dual_m50:
+            index,old_status,old_stress,old_count,old_yo,status,stress,candidates,yo=fields
+            pronunciation_changed += old_status==status=='accepted' and old_yo!=yo
+            yo_accepted += status=='accepted' and yo!='-'
+            fields=[index,old_status,old_stress,old_count,status,stress,candidates]
         if args.dual_m49:
             fields,yo=fields[:7],fields[7]
             yo_accepted += fields[4]=='accepted' and yo!='-'
-        if args.dual_m47 or args.dual_m48 or args.dual_m49:
+        if args.dual_m47 or args.dual_m48 or args.dual_m49 or args.dual_m50:
             index, old_status, old_stress, _, status, stress, candidates = fields
             if old_status == 'accepted':
                 old_agree += int(old_stress) == labels[words[int(index)]]
@@ -113,7 +125,17 @@ def main():
                        m49_changed_previous_accepted=changed,m49_accepted_yo_choices=yo_accepted,
                        policy_sha256=hashlib.sha256(args.policy.read_bytes()).hexdigest(),
                        limits='Ending selector subset only; unknown noun-positive filters are refused. Exact exception entries win rendering. Resource stress agreement is not yo correctness, full NLP or acoustic parity.')
-    args.out.write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
+    if args.dual_m50:
+        summary.update(schema='nicolai-m50-lexicon-resource-agreement-v1',
+            m49_accepted_agree=old_agree,m49_accepted_disagree=old_disagree,
+            m50_additional_accepted=added,m50_declined_previous_accepted=lost,
+            m50_changed_previous_accepted=changed,m50_changed_previous_pronunciation=pronunciation_changed,
+            m50_accepted_yo_choices=yo_accepted,
+            policy_sha256=hashlib.sha256(args.policy.read_bytes()).hexdigest(),
+            noun_policy_sha256=hashlib.sha256(args.noun_policy.read_bytes()).hexdigest(),
+            limits='Initialized noun filter subset; consensus/exception precedence retained. Resource stress agreement is not spelling accuracy or full NLP/acoustic parity.')
+    with args.out.open('x',encoding='utf-8') as output:
+        output.write(json.dumps(summary, indent=2) + '\n')
     print(json.dumps(summary))
 
 

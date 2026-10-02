@@ -1,0 +1,28 @@
+{
+  "schema": "nicolai-m50-lexicon-resource-agreement-v1",
+  "voice_sha256": "471bf1266c913784187dae25a2e5784a6ec309162e7dee2167ca9887c253e74d",
+  "exceptions_sha256": "6c9ce14e4c0fd07889a1db2f3d8584e610f3a651e7f7a88a2d22137d28942260",
+  "blocks": 68,
+  "records": 63294,
+  "folded_stems": 55585,
+  "exception_words": 88771,
+  "status_counts": {
+    "accepted": 40344,
+    "no-match": 43632,
+    "unsupported-candidate": 4073,
+    "ambiguous": 722
+  },
+  "accepted_agree": 39629,
+  "accepted_disagree": 715,
+  "accepted_agreement_percent": 98.2277414237557,
+  "limits": "Initialized noun filter subset; consensus/exception precedence retained. Resource stress agreement is not spelling accuracy or full NLP/acoustic parity.",
+  "m49_accepted_agree": 39623,
+  "m49_accepted_disagree": 713,
+  "m50_additional_accepted": 8,
+  "m50_declined_previous_accepted": 0,
+  "m50_changed_previous_accepted": 0,
+  "m50_changed_previous_pronunciation": 0,
+  "m50_accepted_yo_choices": 29,
+  "policy_sha256": "8bf14233689f3273802f95d5021cb2595c2e753ce82c34cbbdd968373cb4e62f",
+  "noun_policy_sha256": "2b282c4fd68966fb55e0a41be369040304c095c3f973ae812f57e0ecdeb02119"
+}

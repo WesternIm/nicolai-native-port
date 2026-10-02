@@ -139,8 +139,9 @@ Ordinary exact-word stress comparisons also remain independently reproducible.
 
 ## Still open / continuation
 
-Recover real noun-positive form-filter ownership and validate it with captures;
-then recover the earlier normalization/analysis paths and contextual selection.
+The [M50 successor](M50_NOUN_YO.md) now recovers real noun-form ownership for
+paradigms 3..202 and validates initialized filters plus actual pronunciation.
+Earlier normalization/analysis paths and contextual selection remain open.
 `поешь`/`поем`, `голоса` and `воды` must not become hand-written overrides.
 Common forms such as `несет`/`ведет` can still miss the currently read stem lane.
 Reflexive classes and full morphology are incomplete. Phrase pauses, prominence,

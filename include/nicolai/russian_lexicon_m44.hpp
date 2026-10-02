@@ -2,6 +2,7 @@
 
 #include "nicolai/edat.hpp"
 #include "nicolai/russian_yo_m49.hpp"
+#include "nicolai/russian_noun_yo_m50.hpp"
 #include <array>
 #include <optional>
 #include <string>
@@ -73,5 +74,8 @@ RussianLexiconStressM44 lookup_russian_lexicon_stress_m48(
     const RussianLexiconM44&, const std::string& lowercase_utf8_word);
 RussianLexiconStressM44 lookup_russian_lexicon_stress_m49(
     const RussianLexiconM44&, const RussianYoPolicyM49&, const std::string& lowercase_utf8_word);
+RussianLexiconStressM44 lookup_russian_lexicon_stress_m50(
+    const RussianLexiconM44&, const RussianYoPolicyM49&,const RussianNounYoPolicyM50&,
+    const std::string& lowercase_utf8_word);
 
 } // namespace nicolai
