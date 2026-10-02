@@ -6,6 +6,8 @@ the standalone test UI without proprietary voice data. Stable is the default;
 experimental modes are clearly labeled, and original SAPI requires a working
 installed Nicolai voice.
 
+The opt-in [M48 ending-stress extension](docs/M48_ENDING_STRESS.md) adds bounded
+ending vowel ordinals to M47, refusing unresolved е/ё and competing analyses.
 The opt-in [M47 general lexical stress extension](docs/M47_LEXICAL_CANDIDATES.md)
 adds the original exact-entry lane and supported stem-stressed adjective/short
 forms, without per-word overrides. Captured original stress mismatches fall
