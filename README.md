@@ -6,6 +6,13 @@ the standalone test UI without proprietary voice data. Stable is the default;
 experimental modes are clearly labeled, and original SAPI requires a working
 installed Nicolai voice.
 
+The opt-in [M47 general lexical stress extension](docs/M47_LEXICAL_CANDIDATES.md)
+adds the original exact-entry lane and supported stem-stressed adjective/short
+forms, without per-word overrides. Captured original stress mismatches fall
+from 5 to 2 on the previous aligned set (74 marked words), and from 21 to 7
+on 52 marked words in new morphology controls. No pauses/F0/acoustic-parity
+claim is made; stable and all previous profiles remain unchanged.
+
 The optional [M46 original linguistic capture](docs/M46_ORIGINAL_LINGUISTIC_CAPTURE.md)
 uses the same x86 EXE as its hidden debugger worker. `--original-trace` selects
 original SAPI and requests four bounded, private intermediate snapshots.

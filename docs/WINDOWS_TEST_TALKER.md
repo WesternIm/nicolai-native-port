@@ -9,16 +9,17 @@ Windows. The static Release runtime avoids a separate VC++ runtime install.
 M46 adds an [optional original linguistic capture](M46_ORIGINAL_LINGUISTIC_CAPTURE.md),
 not a new acoustic profile. `Trace-Original.cmd` (when included) starts this same
 EXE with `--original-trace`; normal launch and audio defaults remain unchanged.
-M46a can wait for a lazy original DLL in the verified render itself, or capture
-its fresh verified server child. Capture is not yet live-validated
-on this host. It saves private records locally, never uploads them automatically.
+M46b attaches only the render's verified fresh original server child, after SAPI
+output binding and before Speak. Real captures have been validated with unchanged
+original PCM. It saves private records locally, never uploads them automatically.
 
-Ten selections are exposed: stable native port (default), experimental M36
+Eleven selections are exposed: stable native port (default), experimental M36
 local, experimental M36 chain, experimental M38 connected-word timing,
 experimental M40 transient repair, experimental M41 short-feature protection
 and fractional fallback sampling, experimental M42 join-pitch reconciliation,
 experimental M43 word-budget timing/limited dictionary-form stress,
 experimental M44 original-lexicon stem-stress forms,
+experimental M47 exact-entry/adjective/short-form stress,
 and the installed original Nicolai via SAPI5.
 M41 keeps M40's coverage-edge repair, but does not enable the rejected internal
 run-protection ablation. See [M41 evidence and limits](M41_SOUND_PRESERVATION.md).
@@ -43,6 +44,13 @@ EDAT. It accepts only the implemented unambiguous stem-stress subset, with exact
 exceptions and explicit acute taking precedence. Ending-stress, full grammatical
 selectors and phrase prosody remain open. See [M44 evidence and limits](M44_LEXICON_STRESS.md).
 
+M47 inherits the same acoustics and extends only the lexical lookup. It handles
+supported original exact entries and adjective/short-form '+' lanes, with no
+per-word corrections. Select M47 explicitly and click Speak again. A useful
+activation check is `Хорошая. Спокойно. Длинное. Быстро.` versus the explicitly
+stressed equivalent. The original route and old profile names remain available.
+See [M47 evidence, limitations and continuation](M47_LEXICAL_CANDIDATES.md).
+
 Every synthesis job is an owned child of the same EXE. User text travels in an
 explicit UTF-8 file, not interpolated shell commands; paths use wide Win32 APIs
 and quoted argv. Each port child sets both M36 flags explicitly, so inherited
@@ -51,8 +59,8 @@ frontend, coefficients, output gain and terminal silence. Acoustic renderer
 defaults remain unchanged; the shared frontend correction below applies to all
 port callers. Cancellation/timeout kills only that owned child, never
 an existing original server. The window remains responsive when SAPI stalls.
-The opt-in M46 debugger may attach only to its verified same-EXE render parent
-or that render's newly created server. An exceptional detach after breakpoint
+The opt-in M46 debugger may attach only to that render's verified newly created
+server. An exceptional detach after breakpoint
 writes can terminate only that owned target; the worker exits on render death.
 pre-existing/shared servers are refused and left untouched.
 

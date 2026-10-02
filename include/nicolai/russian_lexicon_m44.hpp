@@ -43,4 +43,16 @@ RussianLexiconM44 parse_russian_lexicon_m44(
 RussianLexiconStressM44 lookup_russian_lexicon_stress_m44(
     const RussianLexiconM44&, const std::string& lowercase_utf8_word);
 
+struct RussianExactCandidateM47 {
+    std::uint8_t stress = 0, auxiliary = 0, kind = 0, tag = 0, form = 0;
+};
+// The four-byte exact-entry lane. Unmapped/reserved selectors are refused.
+std::optional<RussianExactCandidateM47> decode_russian_exact_candidate_m47(
+    const std::vector<std::uint8_t>& metadata);
+// Opt-in extension: exact entries and '+' adjective/short-form candidates.
+// Accept only a unanimous, fully supported stress; no contextual disambiguation
+// or ending-stress authoring. The M44 entry point remains unchanged.
+RussianLexiconStressM44 lookup_russian_lexicon_stress_m47(
+    const RussianLexiconM44&, const std::string& lowercase_utf8_word);
+
 } // namespace nicolai

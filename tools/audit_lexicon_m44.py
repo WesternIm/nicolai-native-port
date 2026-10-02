@@ -19,6 +19,7 @@ def main():
     parser.add_argument('--voice', type=Path, required=True)
     parser.add_argument('--exceptions', type=Path, required=True)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--dual-m47', action='store_true', help='Use the M47 probe and compare both lookup lanes')
     args = parser.parse_args()
     labels = {}
     for line in args.exceptions.read_bytes().decode('cp1251').splitlines():
@@ -43,9 +44,19 @@ def main():
                                 capture_output=True, timeout=60, check=True)
     counts = Counter()
     agree = disagree = 0
+    old_agree = old_disagree = added = lost = 0
     seen = set()
     for line in result.stdout.decode('utf-8').splitlines():
-        index, status, stress, candidates = line.split('\t')
+        fields = line.split('\t')
+        if args.dual_m47:
+            index, old_status, old_stress, _, status, stress, candidates = fields
+            if old_status == 'accepted':
+                old_agree += int(old_stress) == labels[words[int(index)]]
+                old_disagree += int(old_stress) != labels[words[int(index)]]
+            added += old_status != 'accepted' and status == 'accepted'
+            lost += old_status == 'accepted' and status != 'accepted'
+        else:
+            index, status, stress, candidates = fields
         index = int(index)
         assert 0 <= index < len(words) and index not in seen
         seen.add(index)
@@ -69,6 +80,10 @@ def main():
         'limits': 'Partial stem-stress subset; exception dictionary wins in rendering. Resource agreement is not full original NLP or perceptual parity.',
     }
     args.out.parent.mkdir(parents=True, exist_ok=True)
+    if args.dual_m47:
+        summary.update(schema='nicolai-m47-lexicon-resource-agreement-v1',
+                       m44_accepted_agree=old_agree, m44_accepted_disagree=old_disagree,
+                       m47_additional_accepted=added, m47_declined_previous_accepted=lost)
     args.out.write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
     print(json.dumps(summary))
 

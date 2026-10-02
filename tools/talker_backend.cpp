@@ -19,6 +19,7 @@ Profile parse_profile(const std::string& value) {
     if (value == "m42-join-pitch") return Profile::M42JoinPitch;
     if (value == "m43-word-rhythm") return Profile::M43WordRhythm;
     if (value == "m44-lexicon") return Profile::M44Lexicon;
+    if (value == "m47-lexicon") return Profile::M47Lexicon;
     throw std::runtime_error("unknown test profile");
 }
 const char* profile_name(Profile profile) {
@@ -32,12 +33,13 @@ const char* profile_name(Profile profile) {
     case Profile::M42JoinPitch: return "m42-join-pitch";
     case Profile::M43WordRhythm: return "m43-word-rhythm";
     case Profile::M44Lexicon: return "m44-lexicon";
+    case Profile::M47Lexicon: return "m47-lexicon";
     }
     throw std::runtime_error("unknown test profile");
 }
 LegacyTimingPolicy timing_policy(Profile profile) {
     profile_name(profile); // Reject invalid enum values, never default silently.
-    if(profile==Profile::M44Lexicon) return timing_policy(Profile::M43WordRhythm);
+    if(profile==Profile::M44Lexicon || profile==Profile::M47Lexicon) return timing_policy(Profile::M43WordRhythm);
     if(profile==Profile::M43WordRhythm) {
         auto policy=timing_policy(Profile::M42JoinPitch);
         policy.word_rhythm_strength_m43=0.25;
@@ -103,9 +105,10 @@ DiphoneChainLegacyResult render(const std::filesystem::path& directory,
     if (!normalized.valid) throw std::runtime_error(normalized.error);
     RussianFrontendOptions options;
     options.stress_dictionary = &stress;
-    options.enable_fixed_ika_stress_m43 = profile == Profile::M43WordRhythm || profile == Profile::M44Lexicon;
+    options.enable_fixed_ika_stress_m43 = profile == Profile::M43WordRhythm || profile == Profile::M44Lexicon || profile == Profile::M47Lexicon;
+    options.enable_lexicon_stress_m47 = profile == Profile::M47Lexicon;
     RussianLexiconM44 lexicon;
-    if(profile==Profile::M44Lexicon) {
+    if(profile==Profile::M44Lexicon || profile==Profile::M47Lexicon) {
         lexicon=parse_russian_lexicon_m44(db.bytes(),db.metadata().edat);
         if(!lexicon.valid) throw std::runtime_error(lexicon.error);
         options.lexicon_m44=&lexicon;
