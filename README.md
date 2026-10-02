@@ -9,10 +9,11 @@ installed Nicolai voice.
 The optional [M46 original linguistic capture](docs/M46_ORIGINAL_LINGUISTIC_CAPTURE.md)
 uses the same x86 EXE as its hidden debugger worker. `--original-trace` selects
 original SAPI and requests four bounded, private intermediate snapshots.
-M46a fixes the premature server check: the verified same-EXE render can wait
-for a lazily loaded original DLL, or capture its already-created server child.
-Shared processes remain excluded. Normal profiles and
-audio defaults are unchanged; live capture is not yet established on this host.
+M46b attaches the render's actual original server after SAPI output binding,
+before text submission. Real captures now pass on 30 phrases with unchanged
+original PCM. Zero-word service calls are preserved and counted separately.
+Shared processes remain excluded. Normal profiles and audio defaults are
+unchanged: this establishes an oracle, not a new acoustic improvement.
 
 The diagnostic-only [M45 original phrase-boundary route](docs/M45_ORIGINAL_SPAN_ROUTE.md)
 locates the raw separator producer in the original DLL and verifies 164

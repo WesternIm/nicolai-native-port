@@ -29,7 +29,8 @@ jobs:
             '.\tools\run_ab_compare.ps1',
             '.\tools\run_m36_original_probe.ps1',
             '.\tools\run_m36_runtime_capture.ps1',
-            '.\tools\package_windows_talker.ps1'
+            '.\tools\package_windows_talker.ps1',
+            '.\tools\run_original_capture.ps1'
           )) {
             $tokens = $null
             $errors = $null
@@ -87,6 +88,7 @@ jobs:
           python tools/test_rhythm_m43.py
           python tools/test_m45_spans.py
           python tools/audit_m46_linguistics.py --self-test
+          python tools/compare_original_frontend.py --self-test
 
   windows-test-package:
     runs-on: windows-latest

@@ -43,7 +43,7 @@ def audit(rows):
         stages = calls.setdefault(identity, [])
         require(len(stages) < 4 and row['event'] == STAGES[len(stages)], 'stage_order')
         state = row['state']
-        count = integer(state['word_count'], 1, 256)
+        count = integer(state['word_count'], 0, 256)
         require(isinstance(state['words'], list) and len(state['words']) == count, 'word_count')
         if stages:
             require(count == stages[0]['word_count'], 'changing_word_count')
@@ -71,10 +71,13 @@ def audit(rows):
         phone_records += total
         stages.append(state)
     require(bool(calls), 'empty_capture')
-    matched = 0
+    matched = empty = 0
     for stages in calls.values():
         require(len(stages) == 4, 'incomplete_call')
         before, after = stages[:2]
+        if not before['word_count']:
+            empty += 1
+            continue
         require([w['candidate_count'] for w in before['words']] ==
                 [w['candidate_count'] for w in after['words']], 'split_changed_candidate_count')
         raw = [' '] + [chr(w['raw_separator']) for w in after['words']]
@@ -85,7 +88,8 @@ def audit(rows):
         matched += expected == actual
     return {'schema': 'nicolai-m46-linguistic-audit-v1',
             'complete_calls': len(calls), 'scan_model_matches': matched,
-            'scan_model_mismatches': len(calls) - matched,
+            'linguistic_calls': len(calls) - empty, 'zero_word_calls': empty,
+            'scan_model_mismatches': len(calls) - empty - matched,
             'source_phone_records': phone_records,
             'limits': 'Scan/split only; not complete morphology, raw-producer parity, acoustic units or audio parity.'}
 
@@ -114,11 +118,16 @@ def self_test():
         report = audit(synthetic(count))
         require(report['complete_calls'] == report['scan_model_matches'] == 1 and
                 report['source_phone_records'] == count, 'synthetic_audit')
+    report = audit(synthetic(0))
+    require(report['complete_calls'] == report['zero_word_calls'] == 1 and
+            report['linguistic_calls'] == report['scan_model_matches'] ==
+            report['source_phone_records'] == 0, 'zero_word_accounting')
     bad = []
     rows = synthetic(); bad.append(rows[:-1])
     rows = synthetic(); rows[1]['event'] = 'before_split'; bad.append(rows)
     rows = synthetic(); rows[-1]['state']['words'][0]['source_phone_records_hex'] = ['00']; bad.append(rows)
     rows = synthetic(); rows[0]['state']['word_count'] = 257; bad.append(rows)
+    rows = synthetic(); rows[0]['state']['word_count'] = -1; bad.append(rows)
     rows = synthetic(); rows[0]['state']['words'][0]['candidate_count'] = 71; bad.append(rows)
     rows = synthetic(); rows[1]['state']['words'][0]['code_hex'] = 'xy'; bad.append(rows)
     rejected = 0
@@ -130,7 +139,7 @@ def self_test():
     require(rejected == len(bad), 'negative_contracts')
     rows = copy.deepcopy(synthetic()); rows[1]['state']['words'][0]['code_hex'] = '2f'
     require(audit(rows)['scan_model_mismatches'] == 1, 'mismatch_accounting')
-    print(json.dumps({'synthetic_positive_cases': 3, 'synthetic_negative_cases': rejected,
+    print(json.dumps({'synthetic_positive_cases': 4, 'synthetic_negative_cases': rejected,
                       'mismatch_accounting_cases': 1, 'actual_original_captures': 0}))
 
 

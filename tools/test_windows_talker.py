@@ -53,6 +53,11 @@ def main():
         assert result.returncode != 0 and not (temp / "missing.wav").exists()
         result = invoke(args.exe, temp, text, "unknown", temp / "bad.wav")
         assert result.returncode != 0 and not (temp / "bad.wav").exists()
+        result = subprocess.run([str(args.exe.resolve()), "--render-trace", str(temp),
+                                 str(text), "stable", str(temp / "wrong-trace.wav")],
+                                capture_output=True, timeout=10)
+        assert result.returncode != 0 and not (temp / "wrong-trace.wav").exists()
+        assert not records.exists(), "trace CLI accepted a port profile"
         output = temp / "existing.wav"
         output.write_bytes(b"keep previous evidence")
         result = invoke(args.exe, temp, text, "stable", output)

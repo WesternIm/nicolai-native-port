@@ -88,6 +88,15 @@ int main(int argc, char** argv) try {
                                "\"annotated_cp866_hex\":\"717a783c7176\"",
                                "\"code_hex\":\"2f2f2f\"", "\"source_phone_count\":1"})
         if (out.str().find(needle) == std::string::npos) throw std::runtime_error("snapshot field mismatch");
+    const auto saved_state = state;
+    std::fill(state.begin(), state.end(), BYTE{0});
+    for (bool records : {false, true}) {
+        std::ostringstream empty;
+        json_linguistic_state_m46(empty, GetCurrentProcess(), address, records);
+        if (empty.str() != "{\"word_count\":0,\"words\":[]}")
+            throw std::runtime_error("zero-word snapshot dereferenced unused arrays");
+    }
+    std::copy(saved_state.begin(), saved_state.end(), state.begin());
     int rejected = 0;
     auto reject = [&](bool records) {
         std::ostringstream staged; staged << "prefix";
@@ -99,6 +108,7 @@ int main(int argc, char** argv) try {
         throw std::runtime_error("invalid snapshot accepted");
     };
     put(state, 0x134, std::int32_t{257}); reject(false);
+    put(state, 0x134, std::int32_t{-1}); reject(true);
     put(state, 0x134, std::int32_t{1});
     morph[kMorphStrideM46] = 71; reject(false); morph[kMorphStrideM46] = 1;
     std::memset(codes.data() + 4, '/', 4); reject(false); std::memcpy(codes.data() + 4, "///", 4);
@@ -106,7 +116,7 @@ int main(int argc, char** argv) try {
     auto* null_pointer = static_cast<BYTE*>(nullptr); put(state, 0x124, null_pointer); reject(false);
     try { validate_owner_m46(GetCurrentProcessId(), 0); }
     catch (const std::runtime_error&) { ++rejected; }
-    if (rejected != 6) throw std::runtime_error("negative contract count mismatch");
-    std::cout << "synthetic linguistic snapshot: fields, atomic output, six guards and owned debug detach passed\n";
+    if (rejected != 7) throw std::runtime_error("negative contract count mismatch");
+    std::cout << "synthetic linguistic snapshot: fields, zero-word calls, atomic output, seven guards and owned debug detach passed\n";
     return 0;
 } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }

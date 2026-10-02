@@ -105,8 +105,12 @@ std::filesystem::path debug_image_path_m46(HANDLE file) {
 void json_linguistic_state_m46(std::ostream& destination, HANDLE process,
                               std::uintptr_t state, bool source_records) {
     const auto count = read_value<std::int32_t>(process, state + 0x134);
-    if (count < 1 || count > kMaxWordsM46)
-        throw std::runtime_error("linguistic word count outside guarded domain");
+    if (count < 0 || count > kMaxWordsM46)
+        throw std::runtime_error("linguistic word count outside guarded domain: " + std::to_string(count));
+    // The real SAPI route dispatches zero-word calls between spoken sentences.
+    // Preserve those observations and stage ordering, but do not dereference
+    // unused arrays or invent words/phones for them.
+    if (!count) { destination << "{\"word_count\":0,\"words\":[]}"; return; }
     const auto morph = read_value<std::uint32_t>(process, state + 0x124);
     const auto raw = read_value<std::uint32_t>(process, state + 0x128);
     const auto codes = read_value<std::uint32_t>(process, state + 0x12c);

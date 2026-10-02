@@ -3,6 +3,7 @@
 #if !defined(_WIN64)
 struct OriginalCaptureM46 {
     HANDLE worker = nullptr, server = nullptr;
+    bool server_owned = false;
     fs::path stop, log;
 
     static DWORD owned_server() {
@@ -21,10 +22,11 @@ struct OriginalCaptureM46 {
             }
         } while (Process32NextW(snapshot, &item));
         CloseHandle(snapshot);
-        // SAPI may create the actual engine lazily during output binding/Speak.
-        // In that case
-        // arm only our render, not an arbitrary external COM server.
-        return found ? found : GetCurrentProcessId();
+        // The supported S5 wrapper starts its out-of-process core in SetOutput.
+        // The caller has bound output but has NOT submitted text yet. Attaching
+        // to our render instead would never observe that server's core.
+        if (!found) throw std::runtime_error("no owned original server after SAPI output binding");
+        return found;
     }
 
     static void require_no_server() {
@@ -51,12 +53,21 @@ struct OriginalCaptureM46 {
             if (WaitForSingleObject(worker, 4000) == WAIT_TIMEOUT) {
                 // Never strand INT3 patches in a live server if the worker
                 // cannot detach. Only this render or its verified child is owned.
-                if (server) { TerminateProcess(server, ERROR_CANCELLED); WaitForSingleObject(server, 1000); }
+                if (server_owned) { TerminateProcess(server, ERROR_CANCELLED); WaitForSingleObject(server, 1000); }
                 if (WaitForSingleObject(worker, 1000) == WAIT_TIMEOUT) TerminateProcess(worker, ERROR_CANCELLED);
             }
         }
         if (worker) { CloseHandle(worker); worker = nullptr; }
+        // This diagnostic demanded a fresh session and retained our direct
+        // child before attaching. Release SAPI first (caller declaration order),
+        // then reap only that retained server; never leave it shared for a later
+        // test, nor search for a replacement PID during cleanup.
+        if (server_owned && WaitForSingleObject(server, 250) == WAIT_TIMEOUT) {
+            TerminateProcess(server, ERROR_CANCELLED);
+            WaitForSingleObject(server, 1000);
+        }
         if (server) { CloseHandle(server); server = nullptr; }
+        server_owned = false;
     }
     explicit OriginalCaptureM46(const fs::path& directory) {
         try {
@@ -68,6 +79,9 @@ struct OriginalCaptureM46 {
                 !GetProcessTimes(server, &child_start, &a, &b, &c) ||
                 CompareFileTime(&child_start, &parent_start) < 0)
                 throw std::runtime_error("original server predates this render process");
+            if (owned_server() != pid || WaitForSingleObject(server, 0) != WAIT_TIMEOUT)
+                throw std::runtime_error("original server ownership changed");
+            server_owned = true;
             stop = directory / "linguistics-m46.stop";
             log = directory / "linguistics-m46-worker.log";
             const auto records = directory / "linguistics-m46.jsonl";
@@ -82,7 +96,7 @@ struct OriginalCaptureM46 {
             const auto exe = executable();
             auto command = quote(exe.wstring()) + L" --m46-capture-worker " + std::to_wstring(pid) +
                 L" " + quote(records.wstring()) + L" " + quote(stop.wstring()) +
-                (pid == GetCurrentProcessId() ? L" --linguistics-render " : L" --linguistics ") +
+                L" --linguistics " +
                 std::to_wstring(GetCurrentProcessId());
             STARTUPINFOW startup{}; startup.cb = sizeof(startup);
             startup.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
@@ -98,7 +112,9 @@ struct OriginalCaptureM46 {
             while (GetTickCount64() < deadline) {
                 if (WaitForSingleObject(worker, 0) != WAIT_TIMEOUT)
                     throw std::runtime_error("M46 worker exited before READY; see linguistics-m46-worker.log");
-                if (read_utf8(log).find("M36_RUNTIME_CAPTURE_READY mode=linguistics") != std::string::npos) return;
+                const auto status = read_utf8(log);
+                if (status.find("M36_RUNTIME_CAPTURE_READY mode=linguistics") != std::string::npos &&
+                    status.find("hooks=ready") != std::string::npos) return;
                 Sleep(20);
             }
             throw std::runtime_error("M46 worker READY timeout");

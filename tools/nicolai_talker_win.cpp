@@ -337,7 +337,7 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wparam, LPARAM lp
                 SendMessageW(app->profile, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(name));
             SendMessageW(app->profile, CB_SETCURSEL, app->initial_profile, 0);
             control(*app, L"STATIC", original_trace_enabled() ?
-                L"M46a: захват ждёт загрузки оригинала. Данные сохраняются локально; это не новая акустика." :
+                L"M46b: захват собственного сервера оригинала. Данные сохраняются локально; это не новая акустика." :
                 L"Оригинал требует 32-битный SAPI-голос Elan. Режимы M36–M44 — эксперименты.", 0, 203);
             app->text = control(*app, L"EDIT", L"Привет! Это Николай. Проверяем голос и акустику.",
                 ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP, kText);
@@ -395,7 +395,7 @@ int ui(HINSTANCE instance, bool smoke, const fs::path& test_voice = {}, int test
     type.lpszClassName = L"NicolaiNativePortTestTalker";
     if (!RegisterClassW(&type)) return 1;
     HWND window = CreateWindowExW(0, type.lpszClassName, original_trace_enabled() ?
-        L"Николай — M46a захват оригинала" : L"Николай — оригинал ПК и порт (M46a)",
+        L"Николай — M46b захват оригинала" : L"Николай — оригинал ПК и порт (M46b)",
         WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 920, 610,
         nullptr, nullptr, instance, &app);
     if (!window) return 1;
@@ -447,6 +447,12 @@ int render_job(int count, wchar_t** arguments) {
     if (count != 6) throw std::runtime_error("usage: --render <voice-directory> <UTF-8-text-file> <stable|m36-local|m36-chain|m38-boundary|m40-transient|m41-preserve|m42-join-pitch|m43-word-rhythm|m44-lexicon|original-sapi> <fresh-output.wav>");
     const fs::path output(arguments[5]);
     if (fs::exists(output)) throw std::runtime_error("output WAV must be fresh");
+    if (std::wstring(arguments[1]) == L"--render-trace") {
+        if (std::wstring(arguments[4]) != L"original-sapi")
+            throw std::runtime_error("--render-trace requires original-sapi");
+        if (!SetEnvironmentVariableW(L"NICOLAI_M46_LINGUISTIC_CAPTURE", L"1"))
+            throw std::runtime_error("cannot enable process-local M46 trace");
+    }
     if (std::wstring(arguments[4]) == L"original-sapi") {
         render_original(arguments[3], output);
         return 0;
@@ -467,8 +473,17 @@ int render_job(int count, wchar_t** arguments) {
         << "\nreconciled_pitch_joins_m42=" << result.reconciled_pitch_joins_m42 << '\n';
     std::cout << "word_budgets_m43=" << result.word_budgets_m43.size() << '\n';
     for(std::size_t wi=0;wi<frontend.words.size();++wi)
+    {
         std::cout << "stress_word=" << wi << ',' << frontend.words[wi].stress_vowel_index
                   << ',' << frontend.words[wi].stress_source << '\n';
+        // PRIVATE alignment evidence from this actual renderer frontend, not a
+        // second tokenizer that could silently compare different expanded words.
+        constexpr char digits[] = "0123456789abcdef";
+        std::cout << "frontend_word_utf8_hex=" << wi << ',';
+        for (unsigned char c : frontend.words[wi].source_utf8)
+            std::cout << digits[c >> 4] << digits[c & 15];
+        std::cout << '\n';
+    }
     for(const auto& word:result.word_budgets_m43)
         std::cout << "word_budget=" << word.first_phone << ',' << word.last_phone << ','
                   << word.baseline_samples << ',' << word.trial_samples << ',' << word.effective_strength << '\n';
@@ -517,6 +532,11 @@ void render_original(const fs::path& text_file, const fs::path& output) {
         }
     }
     if (!selected.p) throw std::runtime_error("Original Nicolai was not found in 32-bit SAPI. Install the original Elan voice; the port modes do not need it.");
+#if !defined(_WIN64)
+    // Destruction order: release the stream and SAPI connection before reaping
+    // the diagnostic's retained owned server. Normal synthesis is unchanged.
+    std::unique_ptr<OriginalCaptureM46> capture;
+#endif
     ComPtr<ISpVoice> voice;
     check(CoCreateInstance(__uuidof(SpVoice), nullptr, CLSCTX_INPROC_SERVER,
         __uuidof(ISpVoice), reinterpret_cast<void**>(&voice.p)), "SpVoice");
@@ -525,10 +545,6 @@ void render_original(const fs::path& text_file, const fs::path& output) {
     original_stage("set-rate");
     check(voice->SetRate(0), "SetRate");
     check(voice->SetVolume(100), "SetVolume");
-#if !defined(_WIN64)
-    std::unique_ptr<OriginalCaptureM46> capture;
-    if (trace) capture = std::make_unique<OriginalCaptureM46>(output.parent_path());
-#endif
     original_stage("bind-output");
     ComPtr<ISpStream> stream;
     check(CoCreateInstance(__uuidof(SpStream), nullptr, CLSCTX_INPROC_SERVER,
@@ -537,6 +553,12 @@ void render_original(const fs::path& text_file, const fs::path& output) {
     check(stream->BindToFile(output.c_str(), SPFM_CREATE_ALWAYS, &SPDFID_WaveFormatEx, &format, 0), "BindToFile");
     original_stage("set-output");
     check(voice->SetOutput(stream.p, TRUE), "SetOutput");
+#if !defined(_WIN64)
+    if (trace) {
+        original_stage("attach-owned-server");
+        capture = std::make_unique<OriginalCaptureM46>(output.parent_path());
+    }
+#endif
     original_stage("speak");
     check(voice->Speak(speech.c_str(), SPF_IS_NOT_XML, nullptr), "Speak");
 #if !defined(_WIN64)
@@ -565,7 +587,8 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
             throw std::runtime_error("M46 capture requires x86");
 #endif
         }
-        if (count > 1 && std::wstring(arguments[1]) == L"--render") return render_job(count, arguments);
+        if (count > 1 && (std::wstring(arguments[1]) == L"--render" ||
+                          std::wstring(arguments[1]) == L"--render-trace")) return render_job(count, arguments);
         const bool smoke = (count == 2 || count == 3) && std::wstring(arguments[1]) == L"--ui-smoke";
         const bool job_test = count == 4 && std::wstring(arguments[1]) == L"--ui-job-test";
         const bool trace_smoke = count == 2 && std::wstring(arguments[1]) == L"--original-trace-smoke";

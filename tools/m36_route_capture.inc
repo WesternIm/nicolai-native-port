@@ -317,7 +317,8 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
                   << ",\"completed_calls\":" << completed << "}\n";
         if (linguistic && !hooks_ready) std::cerr << "original module not loaded in owned capture target\n";
         return records && !skipped && pending.empty() &&
-            (!linguistic || (completed && records == completed * 4)) ? 0 : 3;
+            (!linguistic || (!owner_gone && !exited && hooks_ready &&
+                            completed && records == completed * 4)) ? 0 : 3;
     } catch (const std::exception& e) {
         if (linguistic && attached && mutated && !exited) {
             // Exceptional detach cannot safely restore into a running target.
