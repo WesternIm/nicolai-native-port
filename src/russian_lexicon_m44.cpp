@@ -172,8 +172,28 @@ RussianLexiconM44 parse_russian_lexicon_m44(const std::vector<std::uint8_t>& b,c
     } catch(const std::exception& e) {RussianLexiconM44 out;out.error=e.what();return out;}
 }
 
-RussianLexiconStressM44 lookup_russian_lexicon_stress_m44(
-    const RussianLexiconM44& l,const std::string& word) {
+std::optional<RussianExactCandidateM47> decode_russian_exact_candidate_m47(
+    const std::vector<std::uint8_t>& m) {
+    if(m.size()!=4 || m[0]>=254) return std::nullopt;
+    RussianExactCandidateM47 c;
+    c.stress=m[1];c.auxiliary=m[2];
+    const unsigned s=m[0];
+    if(!s) c.kind=10;
+    else if(s<=8) {c.kind=1;c.form=s;}
+    else if(s<=14) {c.kind=2;c.form=s-8;}
+    else if(s>=20 && s<=45) {c.kind=3;c.form=s-19;}
+    else if(s>=46 && s<=49) {c.kind=4;c.form=s-45;}
+    else if(s==50) {c.kind=5;c.form=1;}
+    else if(s>=60 && s<=73) {c.kind=6;c.form=s-59;}
+    else if(s>=74 && s<=81) {c.kind=7;c.form=s+31;}
+    else if(s>=82 && s<=88) {c.kind=0;c.form=s-81;}
+    else if(s>=100 && s<=105) {c.kind=1;c.tag=7;c.form=s<=101?s-99:s-98;}
+    else return std::nullopt;
+    return c;
+}
+namespace {
+RussianLexiconStressM44 lookup_stress(
+    const RussianLexiconM44& l,const std::string& word,bool m47) {
     RussianLexiconStressM44 out;
     if(!l.valid) {out.status="invalid-lexicon";return out;}
     const auto encoded=cp866_word(word);
@@ -200,12 +220,14 @@ RussianLexiconStressM44 lookup_russian_lexicon_stress_m44(
                         if(plain=="#") plain.clear();
                         if(plain==suffix && variant!="**" && variant!="--") {
                             ++out.candidates;
-                            const std::size_t slot=kind==7 ?
+                            const std::size_t slot=kind==3 || kind==5 ? 1 : kind==7 ?
                                 (f<26?1:f<52?2:f<78?3:f<104?4:f<108?5:f<112?6:8):f+1;
                             const auto row=23*(20*kind+type);
-                            const bool plus=kind<8 && type<20 && slot<=l.types[row] && l.types[row+slot]=='+';
-                            // Marked suffixes and unknown selectors remain audit-only.
-                            if(!plus || variant.find('<')!=std::string::npos || !stress || stress>vowels(stem))
+                            const bool plus=kind<8 && type<20 && slot<23 && slot<=l.types[row] && l.types[row+slot]=='+';
+                            // The original '+' lane copies stem stress without
+                            // consulting '<'. Keep the older M44 refusal intact.
+                            if(!plus || (!m47 && variant.find('<')!=std::string::npos) ||
+                               !stress || stress>vowels(stem))
                                 unresolved=true;
                             else {stresses.insert(stress-1);eligible|=supported;}
                         }
@@ -219,12 +241,29 @@ RussianLexiconStressM44 lookup_russian_lexicon_stress_m44(
                 scan(true,m[0],main?14:113,main?6:7,m[6],m[4],supported);
                 scan(true,m[1],113,7,m[6],m[4],false);
             } else if(m.size()==6) {
+                if(m47 && m[5]<247) {
+                    for(unsigned p:{unsigned(m[0]),unsigned(m[1])}) {
+                        // Full adjectives and short forms use a different
+                        // metadata layout: stress m[3], type m[5]. Earlier
+                        // paradigms in this lane need the unported selector table.
+                        const unsigned kind=p>=203 && p<=231?3:p>=232?4:8;
+                        scan(false,p,kind==3?26:kind==4?4:113,kind,m[5],m[3],kind<5);
+                    }
+                    continue;
+                }
                 const auto cls=[](unsigned p){return p>=1 && p<=99?1:p>=100 && p<=202?2:8;};
                 for(unsigned p:{unsigned(m[0]),unsigned(m[1])}) {
                     const auto kind=cls(p);
                     scan(false,p,kind==1?8:kind==2?6:113,kind,m[4],m[2],kind<3);
                 }
-            } else if(suffix.empty()) unresolved=true;
+            } else if(suffix.empty()) {
+                const auto exact=m47?decode_russian_exact_candidate_m47(m):std::nullopt;
+                if(exact) {
+                    ++out.candidates;
+                    if(!exact->stress || exact->stress>vowels(stem)) unresolved=true;
+                    else {stresses.insert(exact->stress-1);eligible=true;}
+                } else unresolved=true;
+            }
         }
     }
     if(unresolved && out.candidates) out.status="unsupported-candidate";
@@ -233,4 +272,9 @@ RussianLexiconStressM44 lookup_russian_lexicon_stress_m44(
     else if(out.candidates) out.status="unsupported-candidate";
     return out;
 }
+} // namespace
+RussianLexiconStressM44 lookup_russian_lexicon_stress_m44(
+    const RussianLexiconM44& l,const std::string& word) {return lookup_stress(l,word,false);}
+RussianLexiconStressM44 lookup_russian_lexicon_stress_m47(
+    const RussianLexiconM44& l,const std::string& word) {return lookup_stress(l,word,true);}
 } // namespace nicolai

@@ -1,0 +1,12 @@
+{
+  "schema": "nicolai-m47-local-contracts-v1",
+  "controls": 29,
+  "accepted_controls": 21,
+  "declined_controls": 8,
+  "original_exact_candidate_matches": 810,
+  "original_reserved_refusals": 20,
+  "original_plus_candidate_matches": 464,
+  "voice_sha256": "471bf1266c913784187dae25a2e5784a6ec309162e7dee2167ca9887c253e74d",
+  "scope": "Synthetic intermediate primitives and fixed ordinary-word controls; no full NLP or perceptual claim.",
+  "original_sha256": "f6b7e926c46a0259a866260cafb9d24d6ebed3dd7198829d16179348a186abc7"
+}

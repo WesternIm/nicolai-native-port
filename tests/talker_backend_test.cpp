@@ -18,6 +18,9 @@ int main() try {
     require(parse_profile("m43-word-rhythm") == Profile::M43WordRhythm);
     require(std::string(profile_name(Profile::M43WordRhythm)) == "m43-word-rhythm");
     require(parse_profile("m44-lexicon") == Profile::M44Lexicon);
+    require(parse_profile("m47-lexicon") == Profile::M47Lexicon);
+    require(std::string(profile_name(Profile::M47Lexicon)) == "m47-lexicon");
+    require(timing_policy(Profile::M47Lexicon).word_rhythm_strength_m43 == 0.25);
     require(std::string(profile_name(Profile::M44Lexicon)) == "m44-lexicon");
     require(timing_policy(Profile::M44Lexicon).word_rhythm_strength_m43 == 0.25);
     require(timing_policy(Profile::M44Lexicon).join_period_continuity_m42 == 0.5);

@@ -88,6 +88,7 @@ def main():
     parser.add_argument('--capture-root', type=Path)
     parser.add_argument('--output', type=Path)
     parser.add_argument('--report', type=Path)
+    parser.add_argument('--profile', choices=('m44-lexicon', 'm47-lexicon'), default='m44-lexicon')
     args = parser.parse_args()
     if args.self_test: self_test()
     if not args.exe:
@@ -112,7 +113,7 @@ def main():
                 except ValueError: unsupported = True
         directory = args.output / identity; directory.mkdir()
         result = subprocess.run([str(args.exe.resolve()), '--render', str(args.voice.resolve()),
-            str((capture / 'input.txt').resolve()), 'm44-lexicon', str((directory / 'port.wav').resolve())],
+            str((capture / 'input.txt').resolve()), args.profile, str((directory / 'port.wav').resolve())],
             capture_output=True, timeout=65)
         require(result.returncode == 0, f'port_render_failed:{identity}')
         log = result.stdout.decode('utf-8')
@@ -134,6 +135,7 @@ def main():
         'marked_stress_mismatches', 'original_unmarked_words', 'port_resolved_unmarked_words',
         'original_multi_angle_groups', 'original_internal_splits', 'heuristic_stress_mismatches')
     report = dict(schema='nicolai-m46b-frontend-comparison-v1', cases=len(rows),
+                  profile=args.profile,
                   aligned_cases=sum(row['aligned'] for row in rows), rows=rows,
                   scope='Lexical stress positions on exactly aligned words; markers/splits are not perceived-prominence or acoustic-parity measurements.')
     report.update({field: sum(row.get(field, 0) for row in rows) for field in fields})

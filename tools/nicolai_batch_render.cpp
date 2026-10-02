@@ -24,7 +24,10 @@ int main(int argc,char**argv){
   auto wordstr=nicolai::parse_legacy_russian_wordstr(db.bytes(),db.metadata().edat);
   auto physical=nicolai::parse_legacy_russian_physical(db.bytes(),db.metadata().edat);
   nicolai::RussianLexiconM44 lexicon;
-  if(const char* v=std::getenv("NICOLAI_M44_LEXICON_STRESS")) if(std::atoi(v)!=0) {
+  const char* newer=std::getenv("NICOLAI_M47_LEXICON_STRESS");
+  const char* older=std::getenv("NICOLAI_M44_LEXICON_STRESS");
+  const bool m47=newer && std::atoi(newer)!=0;
+  if(m47 || (older && std::atoi(older)!=0)) {
       lexicon=nicolai::parse_russian_lexicon_m44(db.bytes(),db.metadata().edat);
       if(!lexicon.valid) throw std::runtime_error(lexicon.error);
       std::cerr<<"LEXICON\t"<<lexicon.blocks<<"\t"<<lexicon.records<<"\n";
@@ -41,6 +44,7 @@ int main(int argc,char**argv){
    if(!norm.valid){std::cerr<<id<<" norm "<<norm.error<<"\n";continue;}
    nicolai::RussianFrontendOptions fo;fo.stress_dictionary=&stress;
    if(lexicon.valid) fo.lexicon_m44=&lexicon;
+   fo.enable_lexicon_stress_m47=m47;
    if(const char* v=std::getenv("NICOLAI_M43_FIXED_IKA_STRESS")) fo.enable_fixed_ika_stress_m43=std::atoi(v)!=0;
    auto fr=nicolai::russian_text_to_nicolai_phones(norm.normalized_utf8,fo);
    if(!fr.valid){std::cerr<<id<<" front "<<fr.error<<"\n";continue;}
