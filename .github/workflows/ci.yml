@@ -29,7 +29,8 @@ jobs:
             '.\tools\run_ab_compare.ps1',
             '.\tools\run_m36_original_probe.ps1',
             '.\tools\run_m36_runtime_capture.ps1',
-            '.\tools\package_windows_talker.ps1'
+            '.\tools\package_windows_talker.ps1',
+            '.\tools\run_original_capture.ps1'
           )) {
             $tokens = $null
             $errors = $null
@@ -51,7 +52,7 @@ jobs:
       - name: Configure Win32 x86
         run: cmake -S . -B build-win32 -A Win32 -DBUILD_TESTING=ON
       - name: Build M36 Win32 contracts and capture debugger
-        run: cmake --build build-win32 --config Debug --target nicolai_m45_span_probe nicolai_m36_phone_probe legacy_phone_features_test nicolai_m36_runtime_capture legacy_runtime_state_test legacy_runtime_executor_m36_test stateful_tds_m36_test nicolai_m36_route_probe m36_route_capture_test nicolai_legacy_startup_trace legacy_startup_trace_fixture --parallel
+        run: cmake --build build-win32 --config Debug --target nicolai_m45_span_probe nicolai_m36_phone_probe legacy_phone_features_test nicolai_m36_runtime_capture legacy_runtime_state_test legacy_runtime_executor_m36_test stateful_tds_m36_test nicolai_m36_route_probe m36_route_capture_test m46_linguistic_snapshot_test m46_linguistic_lifecycle_test nicolai_legacy_startup_trace legacy_startup_trace_fixture --parallel
       - name: Run portable Win32 phone-feature corpus
         shell: pwsh
         run: |
@@ -59,7 +60,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           .\build-win32\Debug\nicolai_m36_phone_probe.exe
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          ctest --test-dir build-win32 -C Debug --output-on-failure -R "(m36_route_capture|legacy_runtime_state|legacy_runtime_executor_m36|stateful_tds_m36)_test"
+          ctest --test-dir build-win32 -C Debug --output-on-failure -R "(m46_linguistic_(snapshot|lifecycle)|m36_route_capture|legacy_runtime_state|legacy_runtime_executor_m36|stateful_tds_m36)_test"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/test_m36_routes.py --probe build-win32/Debug/nicolai_m36_route_probe.exe
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -86,6 +87,8 @@ jobs:
           python tools/test_join_periods_m42.py
           python tools/test_rhythm_m43.py
           python tools/test_m45_spans.py
+          python tools/audit_m46_linguistics.py --self-test
+          python tools/compare_original_frontend.py --self-test
 
   windows-test-package:
     runs-on: windows-latest
@@ -96,10 +99,10 @@ jobs:
       - name: Build test talker
         run: cmake --build build-talker --config Release --target NicolaiTalker talker_backend_test russian_frontend_test russian_stress_test word_rhythm_m43_test russian_lexicon_m44_test --parallel
       - name: Run voice-free UI and profile contracts
-        run: ctest --test-dir build-talker -C Release --output-on-failure -R "talker_(backend_test|ui_smoke)|russian_(frontend|stress)_test|word_rhythm_m43_test|russian_lexicon_m44_test"
+        run: ctest --test-dir build-talker -C Release --output-on-failure -R "talker_(backend_test|ui_smoke|original_trace_smoke)|russian_(frontend|stress)_test|word_rhythm_m43_test|russian_lexicon_m44_test"
       - name: Package without proprietary inputs
         shell: pwsh
-        run: ./tools/package_windows_talker.ps1 -BuildDir build-talker
+        run: ./tools/package_windows_talker.ps1 -BuildDir build-talker -IncludeOriginalTraceLauncher
       - name: Verify packaged EXE and ZIP
         run: python tools/test_windows_talker.py --exe build-talker/Release/NicolaiTalker.exe --zip out/Nicolai-Test-win32.zip
       - uses: actions/upload-artifact@v4

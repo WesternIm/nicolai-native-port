@@ -15,6 +15,12 @@
 #include <string>
 #include <vector>
 #include <cwctype>
+#include <tlhelp32.h>
+#include <memory>
+
+#if !defined(_WIN64)
+int nicolai_runtime_capture_main(int argc, char** argv);
+#endif
 
 namespace {
 namespace fs = std::filesystem;
@@ -35,6 +41,10 @@ void original_stage(const char* stage) {
     std::cout << "original_sapi_stage=" << stage << '\n' << std::flush;
 }
 void render_original(const fs::path& text_file, const fs::path& output);
+bool original_trace_enabled() {
+    wchar_t value[2]{};
+    return GetEnvironmentVariableW(L"NICOLAI_M46_LINGUISTIC_CAPTURE", value, 2) == 1 && value[0] == L'1';
+}
 constexpr int kText = 101, kVoice = 102, kProfile = 103, kSpeak = 104,
     kStop = 105, kReplay = 106, kSave = 107, kBrowse = 108, kLogs = 109;
 struct App {
@@ -44,6 +54,7 @@ struct App {
     ULONGLONG started{};
     fs::path job, wav;
     bool smoke = false;
+    int initial_profile = 0;
 };
 
 std::string utf8(const std::wstring& input) {
@@ -324,8 +335,10 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wparam, LPARAM lp
             app->profile = control(*app, L"COMBOBOX", L"", CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP, kProfile);
             for (const auto* name : {L"Порт — обычная акустика", L"Порт — M36 local (эксперимент)", L"Порт — M36 chain (эксперимент)", L"Порт — M38 связная речь (эксперимент)", L"Порт — M40 меньше щелчков (эксперимент)", L"Порт — M41 сохранение звуков (эксперимент)", L"Порт — M42 тон на стыках (эксперимент)", L"Порт — M43 ритм слова (эксперимент)", L"Порт — M44 словарь форм (эксперимент)", L"Оригинал ПК — Nicolai через SAPI"})
                 SendMessageW(app->profile, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(name));
-            SendMessageW(app->profile, CB_SETCURSEL, 0, 0);
-            control(*app, L"STATIC", L"Оригинал требует 32-битный SAPI-голос Elan. Режимы M36–M44 — эксперименты.", 0, 203);
+            SendMessageW(app->profile, CB_SETCURSEL, app->initial_profile, 0);
+            control(*app, L"STATIC", original_trace_enabled() ?
+                L"M46b: захват собственного сервера оригинала. Данные сохраняются локально; это не новая акустика." :
+                L"Оригинал требует 32-битный SAPI-голос Elan. Режимы M36–M44 — эксперименты.", 0, 203);
             app->text = control(*app, L"EDIT", L"Привет! Это Николай. Проверяем голос и акустику.",
                 ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP, kText);
             SendMessageW(app->text, EM_SETLIMITTEXT, 16000, 0);
@@ -374,14 +387,15 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wparam, LPARAM lp
     }
     return DefWindowProcW(window, message, wparam, lparam);
 }
-int ui(HINSTANCE instance, bool smoke, const fs::path& test_voice = {}, Profile test_profile = Profile::Stable, const fs::path& screenshot = {}) {
-    App app; app.smoke = smoke;
+int ui(HINSTANCE instance, bool smoke, const fs::path& test_voice = {}, int test_profile = 0, const fs::path& screenshot = {}) {
+    App app; app.smoke = smoke; app.initial_profile = test_profile;
     WNDCLASSW type{}; type.lpfnWndProc = window_proc; type.hInstance = instance;
     type.hCursor = LoadCursorW(nullptr, IDC_ARROW);
     type.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
     type.lpszClassName = L"NicolaiNativePortTestTalker";
     if (!RegisterClassW(&type)) return 1;
-    HWND window = CreateWindowExW(0, type.lpszClassName, L"Николай — оригинал ПК и порт",
+    HWND window = CreateWindowExW(0, type.lpszClassName, original_trace_enabled() ?
+        L"Николай — M46b захват оригинала" : L"Николай — оригинал ПК и порт (M46b)",
         WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 920, 610,
         nullptr, nullptr, instance, &app);
     if (!window) return 1;
@@ -415,7 +429,7 @@ int ui(HINSTANCE instance, bool smoke, const fs::path& test_voice = {}, Profile 
         SetWindowTextW(app.text, sample.c_str());
         const bool ok = text_of(app.text) == sample &&
             wide(utf8(sample)) == sample && SendMessageW(app.profile, CB_GETCOUNT, 0, 0) == 10 &&
-            SendMessageW(app.profile, CB_GETCURSEL, 0, 0) == 0 &&
+            SendMessageW(app.profile, CB_GETCURSEL, 0, 0) == test_profile &&
             !IsWindowEnabled(app.save) && !IsWindowEnabled(app.stop) && IsWindowEnabled(app.speak);
         DestroyWindow(window);
         return ok ? 0 : 1;
@@ -433,6 +447,12 @@ int render_job(int count, wchar_t** arguments) {
     if (count != 6) throw std::runtime_error("usage: --render <voice-directory> <UTF-8-text-file> <stable|m36-local|m36-chain|m38-boundary|m40-transient|m41-preserve|m42-join-pitch|m43-word-rhythm|m44-lexicon|original-sapi> <fresh-output.wav>");
     const fs::path output(arguments[5]);
     if (fs::exists(output)) throw std::runtime_error("output WAV must be fresh");
+    if (std::wstring(arguments[1]) == L"--render-trace") {
+        if (std::wstring(arguments[4]) != L"original-sapi")
+            throw std::runtime_error("--render-trace requires original-sapi");
+        if (!SetEnvironmentVariableW(L"NICOLAI_M46_LINGUISTIC_CAPTURE", L"1"))
+            throw std::runtime_error("cannot enable process-local M46 trace");
+    }
     if (std::wstring(arguments[4]) == L"original-sapi") {
         render_original(arguments[3], output);
         return 0;
@@ -453,8 +473,17 @@ int render_job(int count, wchar_t** arguments) {
         << "\nreconciled_pitch_joins_m42=" << result.reconciled_pitch_joins_m42 << '\n';
     std::cout << "word_budgets_m43=" << result.word_budgets_m43.size() << '\n';
     for(std::size_t wi=0;wi<frontend.words.size();++wi)
+    {
         std::cout << "stress_word=" << wi << ',' << frontend.words[wi].stress_vowel_index
                   << ',' << frontend.words[wi].stress_source << '\n';
+        // PRIVATE alignment evidence from this actual renderer frontend, not a
+        // second tokenizer that could silently compare different expanded words.
+        constexpr char digits[] = "0123456789abcdef";
+        std::cout << "frontend_word_utf8_hex=" << wi << ',';
+        for (unsigned char c : frontend.words[wi].source_utf8)
+            std::cout << digits[c >> 4] << digits[c & 15];
+        std::cout << '\n';
+    }
     for(const auto& word:result.word_budgets_m43)
         std::cout << "word_budget=" << word.first_phone << ',' << word.last_phone << ','
                   << word.baseline_samples << ',' << word.trial_samples << ',' << word.effective_strength << '\n';
@@ -465,8 +494,13 @@ int render_job(int count, wchar_t** arguments) {
                   << ',' << join.right_trim << ',' << join.normalized_correlation << '\n';
     return 0;
 }
+#include "m46_talker_capture.inc"
 void render_original(const fs::path& text_file, const fs::path& output) {
     if (sizeof(void*) != 4) throw std::runtime_error("Original Nicolai requires the 32-bit test executable.");
+    const bool trace = original_trace_enabled();
+#if !defined(_WIN64)
+    if (trace) { original_stage("trace-requested"); OriginalCaptureM46::require_no_server(); }
+#endif
     const auto text = read_utf8(text_file);
     if (text.empty() || text.size() > 64000) throw std::runtime_error("text must contain 1..64000 UTF-8 bytes");
     const int length = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, text.data(), static_cast<int>(text.size()), nullptr, 0);
@@ -498,6 +532,11 @@ void render_original(const fs::path& text_file, const fs::path& output) {
         }
     }
     if (!selected.p) throw std::runtime_error("Original Nicolai was not found in 32-bit SAPI. Install the original Elan voice; the port modes do not need it.");
+#if !defined(_WIN64)
+    // Destruction order: release the stream and SAPI connection before reaping
+    // the diagnostic's retained owned server. Normal synthesis is unchanged.
+    std::unique_ptr<OriginalCaptureM46> capture;
+#endif
     ComPtr<ISpVoice> voice;
     check(CoCreateInstance(__uuidof(SpVoice), nullptr, CLSCTX_INPROC_SERVER,
         __uuidof(ISpVoice), reinterpret_cast<void**>(&voice.p)), "SpVoice");
@@ -506,14 +545,25 @@ void render_original(const fs::path& text_file, const fs::path& output) {
     original_stage("set-rate");
     check(voice->SetRate(0), "SetRate");
     check(voice->SetVolume(100), "SetVolume");
+    original_stage("bind-output");
     ComPtr<ISpStream> stream;
     check(CoCreateInstance(__uuidof(SpStream), nullptr, CLSCTX_INPROC_SERVER,
         __uuidof(ISpStream), reinterpret_cast<void**>(&stream.p)), "SpStream");
     const WAVEFORMATEX format{WAVE_FORMAT_PCM, 1, 16000, 32000, 2, 16, 0};
     check(stream->BindToFile(output.c_str(), SPFM_CREATE_ALWAYS, &SPDFID_WaveFormatEx, &format, 0), "BindToFile");
+    original_stage("set-output");
     check(voice->SetOutput(stream.p, TRUE), "SetOutput");
+#if !defined(_WIN64)
+    if (trace) {
+        original_stage("attach-owned-server");
+        capture = std::make_unique<OriginalCaptureM46>(output.parent_path());
+    }
+#endif
     original_stage("speak");
     check(voice->Speak(speech.c_str(), SPF_IS_NOT_XML, nullptr), "Speak");
+#if !defined(_WIN64)
+    if (capture) { capture->finish(); original_stage("trace-complete"); }
+#endif
     check(stream->Close(), "Close stream");
     if (!fs::exists(output) || fs::file_size(output) <= 44) throw std::runtime_error("Original SAPI produced no audio");
     original_stage("complete");
@@ -526,14 +576,38 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
     if (!arguments) return 1;
     struct ArgGuard { wchar_t** p; ~ArgGuard() { LocalFree(p); } } guard{arguments};
     try {
-        if (count > 1 && std::wstring(arguments[1]) == L"--render") return render_job(count, arguments);
+        if (count == 7 && std::wstring(arguments[1]) == L"--m46-capture-worker") {
+#if !defined(_WIN64)
+            std::vector<std::string> values{utf8(arguments[0])};
+            for (int i = 2; i < count; ++i) values.push_back(utf8(arguments[i]));
+            std::vector<char*> narrow;
+            for (auto& value : values) narrow.push_back(value.data());
+            return nicolai_runtime_capture_main(static_cast<int>(narrow.size()), narrow.data());
+#else
+            throw std::runtime_error("M46 capture requires x86");
+#endif
+        }
+        if (count > 1 && (std::wstring(arguments[1]) == L"--render" ||
+                          std::wstring(arguments[1]) == L"--render-trace")) return render_job(count, arguments);
         const bool smoke = (count == 2 || count == 3) && std::wstring(arguments[1]) == L"--ui-smoke";
         const bool job_test = count == 4 && std::wstring(arguments[1]) == L"--ui-job-test";
-        if (count != 1 && !smoke && !job_test) return 2;
+        const bool trace_smoke = count == 2 && std::wstring(arguments[1]) == L"--original-trace-smoke";
+        const bool trace_ui = count == 2 && std::wstring(arguments[1]) == L"--original-trace";
+        if (count != 1 && !smoke && !job_test && !trace_ui && !trace_smoke) return 2;
+        if ((trace_ui || trace_smoke) && !SetEnvironmentVariableW(L"NICOLAI_M46_LINGUISTIC_CAPTURE", L"1"))
+            throw std::runtime_error("cannot enable process-local M46 trace");
         const HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
         struct ComGuard { HRESULT hr; ~ComGuard() { if (SUCCEEDED(hr)) CoUninitialize(); } } com{hr};
-        if (job_test) return ui(instance, true, fs::path(arguments[2]), nicolai::test_talker::parse_profile(utf8(arguments[3])));
-        return ui(instance, smoke, {}, Profile::Stable, smoke && count == 3 ? fs::path(arguments[2]) : fs::path{});
+        if (job_test) {
+            const auto profile = utf8(arguments[3]);
+            // Original SAPI is a GUI selection, not a portable backend profile.
+            // Keep the hidden job test on the same startup route as a user click.
+            const int index = profile == "original-sapi" ? 9 :
+                static_cast<int>(nicolai::test_talker::parse_profile(profile));
+            return ui(instance, true, fs::path(arguments[2]), index);
+        }
+        return ui(instance, smoke || trace_smoke, {}, (trace_ui || trace_smoke) ? 9 : 0,
+                  smoke && count == 3 ? fs::path(arguments[2]) : fs::path{});
     } catch (const std::exception& error) {
         std::cerr << "error=" << error.what() << '\n';
         return 1;

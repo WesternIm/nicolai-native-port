@@ -16,6 +16,8 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <filesystem>
+#include "local_original_sha256.hpp"
 
 namespace {
 constexpr std::uintptr_t kBuilderRva = 0x1a2780;
@@ -261,20 +263,30 @@ void write_record(std::ofstream& out, DWORD tid, const PendingCall& pending,
 
 bool file_exists(const std::string& path) {
     if (path.empty()) return false;
-    const DWORD attr = GetFileAttributesA(path.c_str());
+    const DWORD attr = GetFileAttributesW(std::filesystem::u8path(path).c_str());
     return attr != INVALID_FILE_ATTRIBUTES &&
         (attr & FILE_ATTRIBUTE_DIRECTORY) == 0;
 }
+#include "m46_linguistic_snapshot.inc"
 #include "m36_route_capture.inc"
 } // namespace
 
 #ifndef NICOLAI_CAPTURE_TEST
-int main(int argc, char** argv) {
+int nicolai_runtime_capture_main(int argc, char** argv) {
+    if (argc == 6 && (std::string(argv[4]) == "--linguistics" ||
+                      std::string(argv[4]) == "--linguistics-render")) {
+        try {
+            return run_route_capture(static_cast<DWORD>(std::stoul(argv[1])), argv[2], argv[3],
+                                     true, static_cast<DWORD>(std::stoul(argv[5])),
+                                     std::string(argv[4]) == "--linguistics-render");
+        } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 2; }
+    }
     if (argc == 5 && std::string(argv[4]) == "--route")
         return run_route_capture(static_cast<DWORD>(std::stoul(argv[1])), argv[2], argv[3]);
     if (argc < 3 || argc > 4) {
         std::cerr << "usage: nicolai_m36_runtime_capture <ettsengine-pid> "
-                     "<output.jsonl> [stop-file] [--route]\n";
+                     "<output.jsonl> [stop-file] [--route | --linguistics <owned-trigger-pid> | "
+                     "--linguistics-render <render-parent-pid>]\n";
         return 2;
     }
 
@@ -310,7 +322,7 @@ int main(int argc, char** argv) {
         write_byte(process, entry, 0xcc);
         write_byte(process, ret, 0xcc);
 
-        std::ofstream out(output_path, std::ios::binary | std::ios::trunc);
+        std::ofstream out(std::filesystem::u8path(output_path), std::ios::binary | std::ios::trunc);
         if (!out) throw std::runtime_error("cannot open capture output");
 
         std::map<DWORD, PendingCall> pending;
@@ -496,4 +508,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 }
+#ifndef NICOLAI_CAPTURE_EMBEDDED
+int main(int argc, char** argv) { return nicolai_runtime_capture_main(argc, argv); }
+#endif
 #endif

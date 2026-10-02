@@ -1,7 +1,8 @@
 param(
     [string]$BuildDir = 'build-talker',
     [string]$OutputDir = 'out/Nicolai-Test-win32',
-    [string]$ZipPath = 'out/Nicolai-Test-win32.zip'
+    [string]$ZipPath = 'out/Nicolai-Test-win32.zip',
+    [switch]$IncludeOriginalTraceLauncher
 )
 $ErrorActionPreference = 'Stop'
 $repoRoot = Split-Path -Parent $PSScriptRoot
@@ -46,15 +47,22 @@ try {
         proprietary_inputs_included = $false
         original_sapi_engine_included = $false
         original_sapi_requires_installed_voice = $true
+        original_trace_launcher_included = [bool]$IncludeOriginalTraceLauncher
     } | ConvertTo-Json
     [IO.File]::WriteAllText((Join-Path $output 'build.json'), $manifest + "`n", [Text.UTF8Encoding]::new($false))
     $zipParent = Split-Path -Parent $zip
     if (-not (Test-Path -LiteralPath $zipParent)) { New-Item -ItemType Directory -Path $zipParent | Out-Null }
-    Compress-Archive -LiteralPath @(
+    $packageFiles = @(
         (Join-Path $output 'NicolaiTalker.exe'),
         (Join-Path $output 'README.txt'),
         (Join-Path $output 'build.json')
-    ) -DestinationPath $zip
+    )
+    if ($IncludeOriginalTraceLauncher) {
+        $launcher = Join-Path $output 'Trace-Original.cmd'
+        Copy-Item -LiteralPath (Join-Path $repoRoot 'tools/Trace-Original.cmd') -Destination $launcher
+        $packageFiles += $launcher
+    }
+    Compress-Archive -LiteralPath $packageFiles -DestinationPath $zip
     Write-Host "EXE: $(Join-Path $output 'NicolaiTalker.exe')"
     Write-Host "ZIP: $zip"
     Write-Host "SHA256: $hash"

@@ -25,23 +25,39 @@ def main():
     parser.add_argument("--zip", type=Path)
     parser.add_argument("--check-original", action="store_true")
     parser.add_argument("--baseline-exe", type=Path,
-                        help="Optional previous M43 EXE for old-profile PCM isolation")
+                        help="Optional previous EXE for old-profile PCM isolation")
+    parser.add_argument("--baseline-includes-m44", action="store_true",
+                        help="Compare M44 too when the baseline EXE already supports it")
     parser.add_argument("--report", type=Path, help="Fresh scalar-only local test report")
     args = parser.parse_args()
     if args.baseline_exe and not args.voice:
         parser.error("--baseline-exe requires --voice and --batch")
+    if args.baseline_includes_m44 and not args.baseline_exe:
+        parser.error("--baseline-includes-m44 requires --baseline-exe")
     wrapper_pairs = old_profile_pairs = gui_jobs = 0
     subprocess.run([str(args.exe.resolve()), "--ui-smoke"], timeout=15, check=True)
+    subprocess.run([str(args.exe.resolve()), "--original-trace-smoke"], timeout=15, check=True)
     with tempfile.TemporaryDirectory(prefix="nicolai-talker-test-") as root:
         # Whitespace, Cyrillic paths, multi-line text and quote-safe argv.
         temp = Path(root) / "Проверка пути с пробелами"
         temp.mkdir()
+        records = temp / "linguistics-m46.jsonl"
+        for mode in ("--linguistics", "--linguistics-render"):
+            worker = subprocess.run([str(args.exe.resolve()), "--m46-capture-worker", "0",
+                                     str(records), str(temp / "stop"), mode, "0"],
+                                    capture_output=True, timeout=10)
+            assert worker.returncode != 0 and not records.exists(), "invalid capture owner accepted"
         text = temp / "текст.txt"
         text.write_text('Привет, мир!\nЁжик читает «текст».', encoding="utf-8")
         result = invoke(args.exe, temp / "missing", text, "stable", temp / "missing.wav")
         assert result.returncode != 0 and not (temp / "missing.wav").exists()
         result = invoke(args.exe, temp, text, "unknown", temp / "bad.wav")
         assert result.returncode != 0 and not (temp / "bad.wav").exists()
+        result = subprocess.run([str(args.exe.resolve()), "--render-trace", str(temp),
+                                 str(text), "stable", str(temp / "wrong-trace.wav")],
+                                capture_output=True, timeout=10)
+        assert result.returncode != 0 and not (temp / "wrong-trace.wav").exists()
+        assert not records.exists(), "trace CLI accepted a port profile"
         output = temp / "existing.wav"
         output.write_bytes(b"keep previous evidence")
         result = invoke(args.exe, temp, text, "stable", output)
@@ -138,7 +154,7 @@ def main():
                         assert not joins, (profile, name)
                     assert output.read_bytes() == (target / f"{name}.wav").read_bytes(), (profile, name)
                     wrapper_pairs += 1
-                    if args.baseline_exe and profile != "m44-lexicon":
+                    if args.baseline_exe and (profile != "m44-lexicon" or args.baseline_includes_m44):
                         previous = temp / f"previous-{profile}-{name}.wav"
                         old = invoke(args.baseline_exe, args.voice, text, profile, previous)
                         assert old.returncode == 0, ("old profile failed", profile, name)
@@ -186,8 +202,13 @@ def main():
             print(f"local voice: startup GUI jobs and {len(cases)} phrases x {len(profiles)} profiles pass; child WAVs match batch byte-for-byte")
     if args.zip:
         with zipfile.ZipFile(args.zip) as package:
-            assert set(package.namelist()) == {"NicolaiTalker.exe", "README.txt", "build.json"}
             manifest = json.loads(package.read("build.json"))
+            names = {"NicolaiTalker.exe", "README.txt", "build.json"}
+            if manifest.get("original_trace_launcher_included", False):
+                names.add("Trace-Original.cmd")
+                assert package.read("Trace-Original.cmd").decode("utf-8").splitlines() == [
+                    '@echo off', 'start "" "%~dp0NicolaiTalker.exe" --original-trace']
+            assert set(package.namelist()) == names
             assert manifest["proprietary_inputs_included"] is False
             assert manifest["original_sapi_engine_included"] is False
             assert manifest["original_sapi_requires_installed_voice"] is True

@@ -3,6 +3,7 @@ constexpr std::uintptr_t kRouteEntry = 0x107c20;
 struct RouteCall {
     std::uint64_t sequence;
     std::uintptr_t state, previous, current;
+    unsigned stages = 0;
 };
 
 void json_runtime_state(std::ostream& out, HANDLE process, std::uintptr_t ptr) {
@@ -46,11 +47,17 @@ void json_runtime_descriptor(std::ostream& out, HANDLE process, std::uintptr_t p
     out << ",\"pcm_address\":" << read_value<std::uint32_t>(process, ptr + 0x4c) << '}';
 }
 
-int run_route_capture(DWORD pid, const std::string& output, const std::string& stop) {
+int run_route_capture(DWORD pid, const std::string& output, const std::string& stop,
+                      bool linguistic = false, DWORD parent_pid = 0, bool render_host = false) {
     HANDLE process = nullptr;
+    HANDLE owner = nullptr;
+    struct OwnerGuard { HANDLE& h; ~OwnerGuard() { if (h) CloseHandle(h); } } owner_guard{owner};
     bool attached = false;
     bool active_event = false;
     bool exited = false;
+    bool owner_gone = false;
+    bool mutated = false, hooks_ready = false;
+    std::uintptr_t base = 0;
     DEBUG_EVENT ev{};
     std::map<std::uintptr_t, BYTE> originals;
     std::map<DWORD, StepState> stepping;
@@ -69,45 +76,96 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
                 CONTEXT ctx{}; ctx.ContextFlags = CONTEXT_CONTROL;
                 if (GetThreadContext(thread, &ctx)) {
                     ctx.EFlags &= ~static_cast<DWORD>(0x100);
-                    SetThreadContext(thread, &ctx);
-                }
+                    if (!SetThreadContext(thread, &ctx)) failed = true;
+                } else failed = true;
                 CloseHandle(thread);
-            }
+            } else failed = true;
             resume_threads(step.second.suspended_threads);
         }
         if (failed) throw std::runtime_error("could not restore every breakpoint");
     };
     try {
-        if (GetFileAttributesA(output.c_str()) != INVALID_FILE_ATTRIBUTES)
+        if (linguistic) {
+            validate_owner_m46(pid, parent_pid, render_host);
+            owner = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, parent_pid);
+            if (!owner || WaitForSingleObject(owner, 0) != WAIT_TIMEOUT)
+                throw std::runtime_error("owned trigger exited before capture");
+        }
+        if (GetFileAttributesW(std::filesystem::u8path(output).c_str()) != INVALID_FILE_ATTRIBUTES)
             throw std::runtime_error("route capture output must be fresh");
-        const auto base = find_module_base(pid, L"mtsyc32.dll");
-        if (!base) throw std::runtime_error("mtsyc32.dll is not loaded");
-        process = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ |
-            PROCESS_VM_WRITE | PROCESS_VM_OPERATION, FALSE, pid);
+        base = find_module_base(pid, L"mtsyc32.dll");
+        if (!base && !render_host) throw std::runtime_error("mtsyc32.dll is not loaded");
+        process = OpenProcess(linguistic ? kLinguisticAccessM46 :
+            (PROCESS_QUERY_INFORMATION | PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION), FALSE, pid);
         if (!process) throw std::runtime_error("OpenProcess failed");
-        validate_remote_image(process, base);
+        if (linguistic) {
+            FILETIME parent_start{}, target_start{}, a{}, b{}, c{};
+            if (!GetProcessTimes(owner, &parent_start, &a, &b, &c) ||
+                !GetProcessTimes(process, &target_start, &a, &b, &c) ||
+                (render_host ? CompareFileTime(&target_start, &parent_start) != 0 :
+                               CompareFileTime(&target_start, &parent_start) < 0))
+                throw std::runtime_error("owned-process lifetime changed");
+        }
+        if (base) {
+            // Preserve early fail-closed behavior for an already loaded image.
+            validate_remote_image(process, base);
+            if (linguistic) validate_file_m46(pid);
+        }
         // Instruction starts verified against the pinned 2004 image. Actual
         // writer call sites, not inferred voicing, identify the observed route.
-        const std::map<std::uintptr_t, std::string> points{
+        const std::map<std::uintptr_t, std::string> points = linguistic ?
+            std::map<std::uintptr_t, std::string>{
+                {0x1a17ed, "before_split"}, {0x1a17f3, "after_split"},
+                {0x1a17ff, "after_markers"}, {0x1a1811, "after_authoring"}} :
+            std::map<std::uintptr_t, std::string>{
             {kRouteEntry, "entry"}, {0x107d54, "decision"},
             {0x107d8b, "cross"}, {0x107e28, "initial"},
             {0x107ebe, "ordinary"}, {0x108004, "interval_end"},
             {0x10801b, "post_loop"}, {0x108076, "terminal_flush"},
             {0x10808b, "failure_return"}, {0x10820d, "return"}};
-        for (const auto& point : points)
-            originals[base + point.first] = read_byte(process, base + point.first);
-        std::ofstream out(output, std::ios::binary);
+        auto arm = [&](const std::filesystem::path& loaded_path) {
+            // At attach, or a LOAD_DLL event, ALL target threads are stopped.
+            // Validate the entire image/point set before changing any byte.
+            validate_remote_image(process, base);
+            if (linguistic) {
+                if (loaded_path.empty()) validate_file_m46(pid);
+                else validate_file_m46(loaded_path);
+            }
+            std::map<std::uintptr_t, BYTE> verified;
+            for (const auto& point : points) {
+                const auto byte = read_byte(process, base + point.first);
+                if (linguistic && byte != 0x55)
+                    throw std::runtime_error("linguistic instruction fingerprint mismatch");
+                verified.emplace(base + point.first, byte);
+            }
+            originals = std::move(verified);
+            mutated = true; // Includes a partial write failure: fail closed.
+            for (const auto& bp : originals) write_byte(process, bp.first, 0xcc);
+            hooks_ready = true;
+            if (linguistic) std::cout << "M46_HOOKS_READY pinned_original=1\n" << std::flush;
+        };
+        std::ofstream out(std::filesystem::u8path(output), std::ios::binary);
         if (!out) throw std::runtime_error("cannot open route output");
         if (!DebugActiveProcess(pid)) throw std::runtime_error("DebugActiveProcess failed");
         attached = true;
-        DebugSetProcessKillOnExit(FALSE);
-        for (const auto& bp : originals) write_byte(process, bp.first, 0xcc);
+        if (!DebugSetProcessKillOnExit(FALSE)) throw std::runtime_error("cannot set detach policy");
+        if (base) arm({});
         SetConsoleCtrlHandler(console_handler, TRUE);
         std::map<DWORD, RouteCall> pending;
-        std::uint64_t sequence = 0, records = 0, skipped = 0;
-        std::cout << "M36_RUNTIME_CAPTURE_READY mode=route pid=" << pid << '\n' << std::flush;
+        std::uint64_t sequence = 0, records = 0, skipped = 0, completed = 0;
+        std::cout << "M36_RUNTIME_CAPTURE_READY mode=" << (linguistic ? "linguistics" : "route")
+                  << " pid=" << pid << " hooks=" << (hooks_ready ? "ready" : "waiting-for-module")
+                  << '\n' << std::flush;
         bool detach_requested = false;
+        const auto capture_deadline = GetTickCount64() + 90000;
+        ULONGLONG stop_deadline = 0;
         while (true) {
+            if (linguistic) {
+                owner_gone = WaitForSingleObject(owner, 0) != WAIT_TIMEOUT;
+                if (owner_gone || GetTickCount64() >= capture_deadline) g_stop = true;
+                if (file_exists(stop) && !stop_deadline) stop_deadline = GetTickCount64() + 3000;
+                if (stop_deadline && GetTickCount64() >= stop_deadline) g_stop = true;
+            }
             // Restore while a debugger event stops ALL target threads. Restoring
             // into a running process can race a queued INT3 and skip an opcode.
             if (!detach_requested && (g_stop ||
@@ -120,9 +178,23 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
                 throw std::runtime_error("WaitForDebugEvent failed");
             }
             active_event = true;
+            // Read the LOAD_DLL file identity before closing its event handle.
+            const auto image_path = render_host && ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT ?
+                debug_image_path_m46(ev.u.LoadDll.hFile) : std::filesystem::path{};
+            close_debug_image_file_m46(ev);
             DWORD status = DBG_CONTINUE;
             bool detach_now = false;
-            if (ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
+            if (render_host && !hooks_ready && !detach_requested &&
+                ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT &&
+                _wcsicmp(image_path.filename().c_str(), L"mtsyc32.dll") == 0) {
+                base = reinterpret_cast<std::uintptr_t>(ev.u.LoadDll.lpBaseOfDll);
+                arm(image_path);
+            } else if (hooks_ready && ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT &&
+                reinterpret_cast<std::uintptr_t>(ev.u.UnloadDll.lpBaseOfDll) == base) {
+                // Never restore to unmapped/reused addresses after module unload.
+                originals.clear();
+                throw std::runtime_error("original module unloaded during capture");
+            } else if (ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT) {
                 const auto code = ev.u.Exception.ExceptionRecord.ExceptionCode;
                 const auto address = reinterpret_cast<std::uintptr_t>(
                     ev.u.Exception.ExceptionRecord.ExceptionAddress);
@@ -150,7 +222,10 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
                         const auto rva = address - base;
                         const auto& name = points.at(rva);
                         try {
-                            if (rva == kRouteEntry) {
+                            if (linguistic && name == "before_split") {
+                                if (pending.count(ev.dwThreadId)) throw std::runtime_error("nested linguistic call");
+                                pending[ev.dwThreadId] = RouteCall{++sequence, ctx.Ebp, 0, 0};
+                            } else if (rva == kRouteEntry) {
                                 if (pending.count(ev.dwThreadId)) throw std::runtime_error("nested route call");
                                 RouteCall call{++sequence,
                                     read_value<std::uint32_t>(process, ctx.Esp + 16),
@@ -162,11 +237,19 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
                             if (it != pending.end()) {
                                 // Stage the whole row to prevent partial JSON on read failure.
                                 std::ostringstream row;
-                                row << "{\"schema\":\"nicolai-m36-route-v1\",\"call\":"
+                                row << "{\"schema\":\"" << (linguistic ? "nicolai-m46-linguistic-v1" : "nicolai-m36-route-v1")
+                                    << "\",\"call\":"
                                     << it->second.sequence << ",\"thread_id\":" << ev.dwThreadId
                                     << ",\"event\":\"" << name << "\",\"state\":";
-                                json_runtime_state(row, process, it->second.state);
-                                if (rva == kRouteEntry) {
+                                if (linguistic) {
+                                    if (ctx.Ebp != it->second.state) throw std::runtime_error("linguistic state changed");
+                                    const unsigned stage = name == "before_split" ? 0 :
+                                        name == "after_split" ? 1 : name == "after_markers" ? 2 : 3;
+                                    if (it->second.stages != stage)
+                                        throw std::runtime_error("linguistic stage out of order");
+                                    json_linguistic_state_m46(row, process, it->second.state, name == "after_authoring");
+                                } else json_runtime_state(row, process, it->second.state);
+                                if (!linguistic && rva == kRouteEntry) {
                                     const auto context = read_value<std::uint32_t>(process, ctx.Esp + 4);
                                     row << ",\"flush_gate\":" << read_value<std::int32_t>(process, context + 0x7c)
                                         << ",\"previous\":";
@@ -189,12 +272,18 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
                                 out << row.str() << std::flush;
                                 if (!out) throw std::runtime_error("route write failed");
                                 ++records;
+                                if (linguistic && ++it->second.stages == 4) ++completed;
+                            } else if (linguistic) {
+                                throw std::runtime_error("linguistic stage without its entry");
                             }
-                        } catch (const std::exception&) {
+                        } catch (const std::exception& error) {
+                            if (linguistic) std::cerr << "M46 rejected stage=" << name
+                                << " reason=" << error.what() << '\n' << std::flush;
                             ++skipped;
                             pending.erase(ev.dwThreadId);
                         }
-                        if (name == "return" || name == "failure_return") pending.erase(ev.dwThreadId);
+                        if (name == "return" || name == "failure_return" ||
+                            (linguistic && name == "after_authoring")) pending.erase(ev.dwThreadId);
                         StepState step;
                         step.breakpoint_address = address;
                         step.suspended_threads = suspend_other_threads(pid, ev.dwThreadId);
@@ -206,15 +295,8 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
                     restore();
                     detach_now = true;
                 } else if (code != EXCEPTION_BREAKPOINT) status = DBG_EXCEPTION_NOT_HANDLED;
-            } else if (ev.dwDebugEventCode == CREATE_PROCESS_DEBUG_EVENT) {
-                if (ev.u.CreateProcessInfo.hFile) CloseHandle(ev.u.CreateProcessInfo.hFile);
-                if (ev.u.CreateProcessInfo.hThread) CloseHandle(ev.u.CreateProcessInfo.hThread);
-                if (ev.u.CreateProcessInfo.hProcess) CloseHandle(ev.u.CreateProcessInfo.hProcess);
-            } else if (ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT) {
-                if (ev.u.CreateThread.hThread) CloseHandle(ev.u.CreateThread.hThread);
-            } else if (ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT) {
-                if (ev.u.LoadDll.hFile) CloseHandle(ev.u.LoadDll.hFile);
             } else if (ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT) {
+                if (linguistic && pending.count(ev.dwThreadId)) ++skipped;
                 pending.erase(ev.dwThreadId);
                 auto it = stepping.find(ev.dwThreadId);
                 if (it != stepping.end()) { resume_threads(it->second.suspended_threads); stepping.erase(it); }
@@ -226,11 +308,24 @@ int run_route_capture(DWORD pid, const std::string& output, const std::string& s
         }
         if (!exited && !DebugActiveProcessStop(pid)) throw std::runtime_error("detach failed");
         attached = false;
+        // A GUI cancellation kills the render parent without running its RAII.
+        // The worker watches that retained parent handle and cleans up only its
+        // verified server child, after restoring/detaching the breakpoints.
+        if (linguistic && owner_gone && !exited) TerminateProcess(process, ERROR_CANCELLED);
         CloseHandle(process);
-        std::cout << "{\"records\":" << records << ",\"skipped\":" << skipped << "}\n";
-        return records && !skipped && pending.empty() ? 0 : 3;
+        std::cout << "{\"records\":" << records << ",\"skipped\":" << skipped
+                  << ",\"completed_calls\":" << completed << "}\n";
+        if (linguistic && !hooks_ready) std::cerr << "original module not loaded in owned capture target\n";
+        return records && !skipped && pending.empty() &&
+            (!linguistic || (!owner_gone && !exited && hooks_ready &&
+                            completed && records == completed * 4)) ? 0 : 3;
     } catch (const std::exception& e) {
-        try { restore(); } catch (...) {}
+        if (linguistic && attached && mutated && !exited) {
+            // Exceptional detach cannot safely restore into a running target.
+            // Fail closed on THIS verified child; never leave live INT3 bytes.
+            TerminateProcess(process, ERROR_CANCELLED);
+        }
+        if (attached) { try { restore(); } catch (...) {} }
         if (active_event) ContinueDebugEvent(ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE);
         if (attached && !exited) DebugActiveProcessStop(pid);
         if (process) CloseHandle(process);
