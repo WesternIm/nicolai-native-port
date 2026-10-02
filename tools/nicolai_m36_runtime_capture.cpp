@@ -273,17 +273,20 @@ bool file_exists(const std::string& path) {
 
 #ifndef NICOLAI_CAPTURE_TEST
 int nicolai_runtime_capture_main(int argc, char** argv) {
-    if (argc == 6 && std::string(argv[4]) == "--linguistics") {
+    if (argc == 6 && (std::string(argv[4]) == "--linguistics" ||
+                      std::string(argv[4]) == "--linguistics-render")) {
         try {
             return run_route_capture(static_cast<DWORD>(std::stoul(argv[1])), argv[2], argv[3],
-                                     true, static_cast<DWORD>(std::stoul(argv[5])));
+                                     true, static_cast<DWORD>(std::stoul(argv[5])),
+                                     std::string(argv[4]) == "--linguistics-render");
         } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 2; }
     }
     if (argc == 5 && std::string(argv[4]) == "--route")
         return run_route_capture(static_cast<DWORD>(std::stoul(argv[1])), argv[2], argv[3]);
     if (argc < 3 || argc > 4) {
         std::cerr << "usage: nicolai_m36_runtime_capture <ettsengine-pid> "
-                     "<output.jsonl> [stop-file] [--route | --linguistics <owned-trigger-pid>]\n";
+                     "<output.jsonl> [stop-file] [--route | --linguistics <owned-trigger-pid> | "
+                     "--linguistics-render <render-parent-pid>]\n";
         return 2;
     }
 

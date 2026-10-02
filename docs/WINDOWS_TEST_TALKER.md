@@ -9,7 +9,8 @@ Windows. The static Release runtime avoids a separate VC++ runtime install.
 M46 adds an [optional original linguistic capture](M46_ORIGINAL_LINGUISTIC_CAPTURE.md),
 not a new acoustic profile. `Trace-Original.cmd` (when included) starts this same
 EXE with `--original-trace`; normal launch and audio defaults remain unchanged.
-Capture requires a fresh verified server child and is not yet live-validated
+M46a can wait for a lazy original DLL in the verified render itself, or capture
+its fresh verified server child. Capture is not yet live-validated
 on this host. It saves private records locally, never uploads them automatically.
 
 Ten selections are exposed: stable native port (default), experimental M36
@@ -50,8 +51,9 @@ frontend, coefficients, output gain and terminal silence. Acoustic renderer
 defaults remain unchanged; the shared frontend correction below applies to all
 port callers. Cancellation/timeout kills only that owned child, never
 an existing original server. The window remains responsive when SAPI stalls.
-The opt-in M46 debugger additionally owns its newly created server and may
-terminate that verified child on exceptional detach or render-parent death;
+The opt-in M46 debugger may attach only to its verified same-EXE render parent
+or that render's newly created server. An exceptional detach after breakpoint
+writes can terminate only that owned target; the worker exits on render death.
 pre-existing/shared servers are refused and left untouched.
 
 Original SAPI is intermittent on this host. User-owned GUI jobs have produced
@@ -105,7 +107,8 @@ inherited flag isolation and refusal to overwrite old WAVs are also checked.
 
 Voice-free contracts inspect profile policies and GUI controls/Unicode input.
 The M44 local Win32 Release CTest run passed 33/33; M46 adds two contracts and
-the fresh full run passes 35/35. The executable's imports
+the original fresh full run passed 35/35. M46a adds a lazy-load/stop/reject/cancel
+contract (36 tests total); see the capture notes for current validation. The executable's imports
 are Windows system DLLs only (no VCRUNTIME/MSVCP DLL requirement). A screenshot
 rendered by the app's own UI smoke mode was inspected for clipped controls and
 readability. The test frontend adds no networking or registry mutations.

@@ -16,7 +16,8 @@ set(_capture_includes
   "${CMAKE_CURRENT_SOURCE_DIR}/tools/local_original_sha256.hpp")
 set_property(SOURCE tools/nicolai_m36_runtime_capture.cpp APPEND
   PROPERTY OBJECT_DEPENDS "${_capture_includes}")
-set_property(SOURCE tests/m36_route_capture_test.cpp tests/m46_linguistic_snapshot_test.cpp APPEND
+set_property(SOURCE tests/m36_route_capture_test.cpp tests/m46_linguistic_snapshot_test.cpp
+  tests/m46_linguistic_lifecycle_test.cpp APPEND
   PROPERTY OBJECT_DEPENDS "${_capture_includes};${CMAKE_CURRENT_SOURCE_DIR}/tools/nicolai_m36_runtime_capture.cpp")
 set_property(SOURCE tools/nicolai_talker_win.cpp APPEND
   PROPERTY OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/tools/m46_talker_capture.inc")
@@ -87,6 +88,15 @@ if(BUILD_TESTING AND NOT ANDROID)
     add_executable(m46_linguistic_snapshot_test tests/m46_linguistic_snapshot_test.cpp)
     add_test(NAME talker_original_trace_smoke COMMAND NicolaiTalker --original-trace-smoke)
     add_test(NAME m46_linguistic_snapshot_test COMMAND m46_linguistic_snapshot_test)
+    add_library(m46_untrusted_module_fixture MODULE tests/m46_untrusted_module_fixture.cpp)
+    set_target_properties(m46_untrusted_module_fixture PROPERTIES PREFIX "" OUTPUT_NAME "mtsyc32"
+      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/m46-fixture"
+      LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/m46-fixture")
+    add_executable(m46_linguistic_lifecycle_test tests/m46_linguistic_lifecycle_test.cpp)
+    add_dependencies(m46_linguistic_lifecycle_test m46_untrusted_module_fixture)
+    add_test(NAME m46_linguistic_lifecycle_test COMMAND m46_linguistic_lifecycle_test
+      "$<TARGET_FILE:m46_untrusted_module_fixture>")
+    set_tests_properties(m46_linguistic_lifecycle_test PROPERTIES TIMEOUT 30)
     add_executable(m36_route_capture_test tests/m36_route_capture_test.cpp)
     add_test(NAME m36_route_capture_test COMMAND m36_route_capture_test)
     add_executable(legacy_startup_trace_fixture tests/legacy_startup_trace_fixture.cpp)

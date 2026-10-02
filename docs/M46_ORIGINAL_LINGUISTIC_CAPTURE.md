@@ -63,29 +63,38 @@ Limits: 1–256 words; at most 70 candidates per word; null-terminated word stri
 within 4096 bytes, punctuation within 12 bytes and codes within four bytes;
 at most 128 phones per word and 4096 phones per call. A failed read emits no
 partial JSON row and increments the worker's skipped count. Worker success
-requires nonzero rows, no skipped reads and no pending call. The separate audit
-also requires all four ordered stages; worker exit alone is not parity evidence.
+requires complete four-stage calls in order, no skipped reads, no pending call
+and exactly four rows per completed call. The separate audit also checks the
+record shape and split model; worker exit alone is not parity evidence.
 
 ## Process isolation and cancellation
 
 The trace refuses any pre-existing ettsengine server. After normal SAPI setup,
-it requires a direct server child of this render process, checks process creation
-times against PID reuse and retains target/parent handles. Both worker and server
-must be direct children of the same live trigger. The worker is launched
-hidden from the same EXE; Speak begins only after worker READY. A SHA256 check of
-the loaded DLL's file, PE identity checks and the four `push ebp` instruction-byte
-guards precede instrumentation. Supported original SHA256:
+it selects either a direct server child of the render or the render itself.
+The latter requires target PID = parent PID, the worker's actual direct parent,
+an identical executable path and identical process creation times. It never
+substitutes a differently parented COM server. Target/parent handles are retained
+and process creation times checked against PID reuse. The worker is launched
+hidden from the same EXE. SAPI output binding/Speak proceeds after worker READY.
+If the original module is not loaded, READY says `hooks=waiting-for-module`:
+this means **attached and waiting**, not a successful capture. The owned render's
+`LOAD_DLL` event allows guarded hooks to be installed before its threads resume.
+Only `M46_HOOKS_READY pinned_original=1` establishes that the hooks are armed.
+A SHA256 check of the loaded DLL's file, PE identity checks and the four
+`push ebp` instruction-byte guards precede any write. Supported original SHA256:
 
 `f6b7e926c46a0259a866260cafb9d24d6ebed3dd7198829d16179348a186abc7`
 
-Only temporary in-memory INT3 bytes in this owned server are written; no disk
+Only temporary in-memory INT3 bytes in this owned target are written; no disk
 binary, voice file or registry entry is changed. The existing single-step route
 debugger restores breakpoints during a debugger stop before detaching. It watches
 the retained render-parent handle for GUI cancellation, imposes a 90-second
 capture deadline, and bounds stop-file draining to three seconds. Parent-side
 READY/detach waits are seven seconds. Exceptional detach or an unresponsive
-worker can terminate **only the verified owned server**, to avoid leaving live
-breakpoints behind. Shared/existing servers are rejected, not shut down.
+worker can terminate **only the verified owned target**, to avoid leaving live
+breakpoints behind. A rejected image before any write leaves the target alive
+and detached. Module unloading fails closed instead of restoring to unmapped
+addresses. Shared/existing servers are rejected, not shut down.
 
 This may reject a working original that is hosted in a shared or differently
 parented server. That is an explicit diagnostic limitation, not a reason to
@@ -144,6 +153,42 @@ fixture now use the same image-file cleanup helper, leaving process/thread
 handles to the Windows debug-event lifecycle. After that correction, twenty
 consecutive fixture detach runs pass. See
 [ContinueDebugEvent lifecycle](https://learn.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-continuedebugevent).
+
+## M46a correction (2026-10-02)
+
+The user's M46 error after `set-rate` came from demanding an owned server before
+SAPI had activated its actual engine. A read-only host probe showed no core DLL
+or server at that point; the SAPI wrapper appeared only during later output
+setup. This is a capture-order defect, not evidence that the user's working
+original selection is broken. M46a adds the guarded lazy-render path above,
+and `bind-output` / `set-output` stages to distinguish those calls from Speak.
+
+The synthetic lifecycle test uses a real same-EXE worker/parent attach, Unicode
+paths, graceful stop without a module, SHA256 rejection and a real `LOAD_DLL`
+event for a deliberately untrusted synthetic DLL. It also verifies that killing
+an owned synthetic render ends its worker. No original code/data is in this
+fixture. Normal port/GUI PCM isolation is rerun against the preserved M44 EXE.
+The DLL event's file handle is used only for a wide, normalized path, not the
+optional remote image-name pointer. Windows' documented
+[LOAD_DLL event](https://learn.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-load_dll_debug_info)
+and [attach lifecycle](https://learn.microsoft.com/en-us/windows/win32/api/debugapi/nf-debugapi-debugactiveprocess)
+define the stopped-thread and handle contracts. If the event cannot identify
+the supported module, the worker never arms guessed addresses.
+
+A bounded local original probe now reaches READY waiting for the core; its
+render loads `sapi.dll` and `ettsengines5.dll`, but not `mtsyc32.dll`. It still
+stalls before Speak with zero WAV bytes and zero records. Cancelling only that
+retained render also ends the worker. **Actual complete original captures remain
+zero**; in-process hosting of the working original remains unproven. Do not
+interpret a waiting READY or an empty JSONL as progress on acoustic parity.
+
+M46a validation: fresh Win32 static Release CTest **36/36**; the new lifecycle
+contract passes **20 consecutive repeats**, including parent cancellation.
+Audit self-tests remain 3 positive, 6 negative and 1 mismatch-accounting case.
+The final EXE hash and zero-capture result are recorded in
+[the M46a scalar contract report](metrics/m46a-capture-contracts-20261002.json).
+All nine profiles are checked against batch and the preserved M44 executable
+in [the fresh PCM isolation report](metrics/m46a-wrapper-isolation-20261002-fresh.json).
 
 Next: obtain four complete stages from the working original GUI path; reconcile
 actual morphology/markers/raw boundaries; only then implement and oracle-test

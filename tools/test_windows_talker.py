@@ -42,10 +42,11 @@ def main():
         temp = Path(root) / "Проверка пути с пробелами"
         temp.mkdir()
         records = temp / "linguistics-m46.jsonl"
-        worker = subprocess.run([str(args.exe.resolve()), "--m46-capture-worker", "0",
-                                 str(records), str(temp / "stop"), "--linguistics", "0"],
-                                capture_output=True, timeout=10)
-        assert worker.returncode != 0 and not records.exists(), "invalid capture owner accepted"
+        for mode in ("--linguistics", "--linguistics-render"):
+            worker = subprocess.run([str(args.exe.resolve()), "--m46-capture-worker", "0",
+                                     str(records), str(temp / "stop"), mode, "0"],
+                                    capture_output=True, timeout=10)
+            assert worker.returncode != 0 and not records.exists(), "invalid capture owner accepted"
         text = temp / "текст.txt"
         text.write_text('Привет, мир!\nЁжик читает «текст».', encoding="utf-8")
         result = invoke(args.exe, temp / "missing", text, "stable", temp / "missing.wav")

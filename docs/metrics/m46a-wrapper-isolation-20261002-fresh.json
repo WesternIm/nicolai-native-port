@@ -1,0 +1,10 @@
+{
+  "schema": "nicolai-m44-wrapper-isolation-v1",
+  "exe_sha256": "c71c7e1369a0d8c91d872a0ff9cc147ef2d2b89a86898c3a9cb59cc76e99f3ac",
+  "gui_startup_jobs": 9,
+  "wrapper_batch_pcm_pairs": 90,
+  "unchanged_old_profile_pcm_pairs": 90,
+  "package_checked": false,
+  "limits": "Wrapper and old-profile PCM isolation, not listening superiority or full original NLP parity.",
+  "baseline_exe_sha256": "b0c94ade90a9e9756b2e8752f91f847b555a80fb9cf8217eb3facff0f6fa7913"
+}

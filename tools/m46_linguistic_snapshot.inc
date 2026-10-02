@@ -38,8 +38,8 @@ std::string hex_m46(const std::string& bytes) {
     return hex_m46(std::vector<unsigned char>(bytes.begin(), bytes.end()));
 }
 
-void validate_owner_m46(DWORD pid, DWORD parent_pid) {
-    if (!pid || !parent_pid || pid == parent_pid)
+void validate_owner_m46(DWORD pid, DWORD parent_pid, bool render_host = false) {
+    if (!pid || !parent_pid || ((pid == parent_pid) != render_host))
         throw std::runtime_error("invalid owned-process identity");
     HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (snap == INVALID_HANDLE_VALUE) throw std::runtime_error("cannot inspect process owner");
@@ -48,8 +48,9 @@ void validate_owner_m46(DWORD pid, DWORD parent_pid) {
     if (Process32FirstW(snap, &item)) do {
         if (item.th32ProcessID == GetCurrentProcessId() && item.th32ParentProcessID == parent_pid)
             worker_owned = true;
-        if (item.th32ProcessID == pid && item.th32ParentProcessID == parent_pid &&
-            _wcsicmp(item.szExeFile, L"ettsengine.exe") == 0) found = true;
+        if (item.th32ProcessID == pid && (render_host ||
+            (item.th32ParentProcessID == parent_pid &&
+             _wcsicmp(item.szExeFile, L"ettsengine.exe") == 0))) found = true;
     } while (Process32NextW(snap, &item));
     CloseHandle(snap);
     HANDLE parent = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | SYNCHRONIZE, FALSE, parent_pid);
@@ -59,11 +60,26 @@ void validate_owner_m46(DWORD pid, DWORD parent_pid) {
     FILETIME parent_start{}, child_start{}, unused_a{}, unused_b{}, unused_c{};
     const bool order = target && GetProcessTimes(parent, &parent_start, &unused_a, &unused_b, &unused_c) &&
         GetProcessTimes(target, &child_start, &unused_a, &unused_b, &unused_c) &&
-        CompareFileTime(&child_start, &parent_start) >= 0;
+        (render_host ? CompareFileTime(&child_start, &parent_start) == 0 :
+                       CompareFileTime(&child_start, &parent_start) >= 0);
+    bool same_executable = !render_host;
+    if (render_host && target) {
+        wchar_t target_path[32768]{}, worker_path[32768]{};
+        DWORD length = 32768;
+        same_executable = QueryFullProcessImageNameW(target, 0, target_path, &length) &&
+            GetModuleFileNameW(nullptr, worker_path, 32768) &&
+            _wcsicmp(target_path, worker_path) == 0;
+    }
     if (target) CloseHandle(target);
     CloseHandle(parent);
-    if (!found || !worker_owned || !alive || !order)
-        throw std::runtime_error("target and worker are not a live trigger's direct children");
+    if (!found || !worker_owned || !alive || !order || !same_executable)
+        throw std::runtime_error("target is not an owned server or the worker's same-EXE render parent");
+}
+
+void validate_file_m46(const std::filesystem::path& path) {
+    if (path.empty() || nicolai::local_original::sha256(path) !=
+        "f6b7e926c46a0259a866260cafb9d24d6ebed3dd7198829d16179348a186abc7")
+        throw std::runtime_error("unsupported_original_module_sha256");
 }
 
 void validate_file_m46(DWORD pid) {
@@ -75,9 +91,15 @@ void validate_file_m46(DWORD pid) {
         if (_wcsicmp(item.szModule, L"mtsyc32.dll") == 0) path = item.szExePath;
     } while (Module32NextW(snapshot, &item));
     CloseHandle(snapshot);
-    if (path.empty() || nicolai::local_original::sha256(path) !=
-        "f6b7e926c46a0259a866260cafb9d24d6ebed3dd7198829d16179348a186abc7")
-        throw std::runtime_error("unsupported_original_module_sha256");
+    validate_file_m46(path);
+}
+
+std::filesystem::path debug_image_path_m46(HANDLE file) {
+    if (!file || file == INVALID_HANDLE_VALUE) return {};
+    wchar_t path[32768]{};
+    const auto length = GetFinalPathNameByHandleW(file, path, 32768, FILE_NAME_NORMALIZED);
+    if (!length || length >= 32768) return {};
+    return std::filesystem::path(path);
 }
 
 void json_linguistic_state_m46(std::ostream& destination, HANDLE process,

@@ -1,5 +1,5 @@
 // Included in the talker's anonymous namespace. Opt-in, one-EXE diagnostics
-// for an original server created by THIS render process, never a shared one.
+// for THIS render or its original server child, never a shared process.
 #if !defined(_WIN64)
 struct OriginalCaptureM46 {
     HANDLE worker = nullptr, server = nullptr;
@@ -11,15 +11,20 @@ struct OriginalCaptureM46 {
         PROCESSENTRY32W item{}; item.dwSize = sizeof(item);
         DWORD found = 0;
         if (Process32FirstW(snapshot, &item)) do {
-            if (_wcsicmp(item.szExeFile, L"ettsengine.exe") == 0 &&
-                item.th32ParentProcessID == GetCurrentProcessId()) {
+            if (_wcsicmp(item.szExeFile, L"ettsengine.exe") == 0) {
+                if (item.th32ParentProcessID != GetCurrentProcessId()) {
+                    CloseHandle(snapshot);
+                    throw std::runtime_error("shared original servers are not instrumented");
+                }
                 if (found) { CloseHandle(snapshot); throw std::runtime_error("multiple owned original servers"); }
                 found = item.th32ProcessID;
             }
         } while (Process32NextW(snapshot, &item));
         CloseHandle(snapshot);
-        if (!found) throw std::runtime_error("trace requires a server owned by this render process; shared servers are not instrumented");
-        return found;
+        // SAPI may create the actual engine lazily during output binding/Speak.
+        // In that case
+        // arm only our render, not an arbitrary external COM server.
+        return found ? found : GetCurrentProcessId();
     }
 
     static void require_no_server() {
@@ -45,7 +50,7 @@ struct OriginalCaptureM46 {
             signal_stop();
             if (WaitForSingleObject(worker, 4000) == WAIT_TIMEOUT) {
                 // Never strand INT3 patches in a live server if the worker
-                // cannot detach. Only this render's verified child is owned.
+                // cannot detach. Only this render or its verified child is owned.
                 if (server) { TerminateProcess(server, ERROR_CANCELLED); WaitForSingleObject(server, 1000); }
                 if (WaitForSingleObject(worker, 1000) == WAIT_TIMEOUT) TerminateProcess(worker, ERROR_CANCELLED);
             }
@@ -77,7 +82,8 @@ struct OriginalCaptureM46 {
             const auto exe = executable();
             auto command = quote(exe.wstring()) + L" --m46-capture-worker " + std::to_wstring(pid) +
                 L" " + quote(records.wstring()) + L" " + quote(stop.wstring()) +
-                L" --linguistics " + std::to_wstring(GetCurrentProcessId());
+                (pid == GetCurrentProcessId() ? L" --linguistics-render " : L" --linguistics ") +
+                std::to_wstring(GetCurrentProcessId());
             STARTUPINFOW startup{}; startup.cb = sizeof(startup);
             startup.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;
             startup.wShowWindow = SW_HIDE; startup.hStdOutput = startup.hStdError = output;

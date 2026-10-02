@@ -337,7 +337,7 @@ LRESULT CALLBACK window_proc(HWND window, UINT message, WPARAM wparam, LPARAM lp
                 SendMessageW(app->profile, CB_ADDSTRING, 0, reinterpret_cast<LPARAM>(name));
             SendMessageW(app->profile, CB_SETCURSEL, app->initial_profile, 0);
             control(*app, L"STATIC", original_trace_enabled() ?
-                L"M46: диагностический захват оригинала. Данные сохраняются локально; это не новая акустика." :
+                L"M46a: захват ждёт загрузки оригинала. Данные сохраняются локально; это не новая акустика." :
                 L"Оригинал требует 32-битный SAPI-голос Elan. Режимы M36–M44 — эксперименты.", 0, 203);
             app->text = control(*app, L"EDIT", L"Привет! Это Николай. Проверяем голос и акустику.",
                 ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN | WS_VSCROLL | WS_TABSTOP, kText);
@@ -395,7 +395,7 @@ int ui(HINSTANCE instance, bool smoke, const fs::path& test_voice = {}, int test
     type.lpszClassName = L"NicolaiNativePortTestTalker";
     if (!RegisterClassW(&type)) return 1;
     HWND window = CreateWindowExW(0, type.lpszClassName, original_trace_enabled() ?
-        L"Николай — M46 захват оригинала" : L"Николай — оригинал ПК и порт",
+        L"Николай — M46a захват оригинала" : L"Николай — оригинал ПК и порт (M46a)",
         WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 920, 610,
         nullptr, nullptr, instance, &app);
     if (!window) return 1;
@@ -529,11 +529,13 @@ void render_original(const fs::path& text_file, const fs::path& output) {
     std::unique_ptr<OriginalCaptureM46> capture;
     if (trace) capture = std::make_unique<OriginalCaptureM46>(output.parent_path());
 #endif
+    original_stage("bind-output");
     ComPtr<ISpStream> stream;
     check(CoCreateInstance(__uuidof(SpStream), nullptr, CLSCTX_INPROC_SERVER,
         __uuidof(ISpStream), reinterpret_cast<void**>(&stream.p)), "SpStream");
     const WAVEFORMATEX format{WAVE_FORMAT_PCM, 1, 16000, 32000, 2, 16, 0};
     check(stream->BindToFile(output.c_str(), SPFM_CREATE_ALWAYS, &SPDFID_WaveFormatEx, &format, 0), "BindToFile");
+    original_stage("set-output");
     check(voice->SetOutput(stream.p, TRUE), "SetOutput");
     original_stage("speak");
     check(voice->Speak(speech.c_str(), SPF_IS_NOT_XML, nullptr), "Speak");
