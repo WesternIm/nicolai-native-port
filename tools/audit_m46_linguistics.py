@@ -60,6 +60,18 @@ def audit(rows):
                     len(word['candidates_hex']) == candidates, 'candidate_count')
             for candidate in word['candidates_hex']:
                 unhex(candidate, 20, 20)
+            # M51 adds the corrected payload without changing legacy windows
+            # or the default four-stage schema. Old captures remain readable.
+            if 'candidate_layout' in word or 'candidate_payloads_hex' in word:
+                require(word['candidate_layout'] == 'payload20-at-stride-plus4-v1', 'candidate_layout')
+                require(isinstance(word['candidate_payloads_hex'], list) and
+                        len(word['candidate_payloads_hex']) == candidates, 'payload_count')
+                payloads = [unhex(value, 20, 20) for value in word['candidate_payloads_hex']]
+                legacy = [bytes.fromhex(value) for value in word['candidates_hex']]
+                for i, value in enumerate(payloads):
+                    require(legacy[i][4:] == value[:16], 'shifted_window_overlap')
+                    if i + 1 < candidates:
+                        require(legacy[i + 1][:4] == value[16:], 'record_identity_overlap')
             if row['event'] == 'after_authoring':
                 phones = integer(word['source_phone_count'], 0, 128)
                 require(isinstance(word['source_phone_records_hex'], list) and
@@ -122,6 +134,11 @@ def self_test():
     require(report['complete_calls'] == report['zero_word_calls'] == 1 and
             report['linguistic_calls'] == report['scan_model_matches'] ==
             report['source_phone_records'] == 0, 'zero_word_accounting')
+    corrected = synthetic(1)
+    for row in corrected:
+        row['state']['words'][0].update(candidate_count=1, candidates_hex=['00' * 20],
+            candidate_layout='payload20-at-stride-plus4-v1', candidate_payloads_hex=['00' * 20])
+    require(audit(corrected)['complete_calls'] == 1, 'corrected_payload_compatibility')
     bad = []
     rows = synthetic(); bad.append(rows[:-1])
     rows = synthetic(); rows[1]['event'] = 'before_split'; bad.append(rows)
@@ -130,6 +147,8 @@ def self_test():
     rows = synthetic(); rows[0]['state']['word_count'] = -1; bad.append(rows)
     rows = synthetic(); rows[0]['state']['words'][0]['candidate_count'] = 71; bad.append(rows)
     rows = synthetic(); rows[1]['state']['words'][0]['code_hex'] = 'xy'; bad.append(rows)
+    rows = copy.deepcopy(corrected); rows[0]['state']['words'][0]['candidate_payloads_hex'][0] = '01' * 20; bad.append(rows)
+    rows = copy.deepcopy(corrected); rows[0]['state']['words'][0]['candidate_layout'] = 'wrong'; bad.append(rows)
     rejected = 0
     for rows in bad:
         try:
@@ -139,7 +158,7 @@ def self_test():
     require(rejected == len(bad), 'negative_contracts')
     rows = copy.deepcopy(synthetic()); rows[1]['state']['words'][0]['code_hex'] = '2f'
     require(audit(rows)['scan_model_mismatches'] == 1, 'mismatch_accounting')
-    print(json.dumps({'synthetic_positive_cases': 4, 'synthetic_negative_cases': rejected,
+    print(json.dumps({'synthetic_positive_cases': 5, 'synthetic_negative_cases': rejected,
                       'mismatch_accounting_cases': 1, 'actual_original_captures': 0}))
 
 

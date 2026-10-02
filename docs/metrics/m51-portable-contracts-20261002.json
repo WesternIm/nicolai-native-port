@@ -1,0 +1,18 @@
+{
+  "schema": "nicolai-m51-portable-contracts-v1",
+  "build": "Windows x86 Release static MSVC, fresh full build and coherent final rebuild",
+  "ctest_passed": 41,
+  "ctest_failed": 0,
+  "synthetic_full_normalization_payloads": 65536,
+  "synthetic_conflict_checks": 692,
+  "portable_capacity_refusals": 2,
+  "m46_audit_synthetic_positive_cases": 5,
+  "m46_audit_synthetic_negative_cases": 9,
+  "m46_audit_mismatch_accounting_cases": 1,
+  "m51_audit_synthetic_positive_cases": 2,
+  "m51_audit_synthetic_negative_cases": 7,
+  "powershell_launcher_parse_errors": 0,
+  "talker_sha256": "2b97d1296b49f8d14cca1f3d29bccf2e9e7fe53ca1574d92d9cabc56723c4ec2",
+  "probe_sha256": "cd531596ac473d41488715b8ae770a1141218d80713da49d02b094d8728236ae",
+  "scope": "Voice-free bounded primitive, snapshot, lifecycle and audit contracts. Original execution and PCM isolation are recorded separately; no new audible profile."
+}

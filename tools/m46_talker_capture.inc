@@ -94,9 +94,12 @@ struct OriginalCaptureM46 {
             HANDLE input = CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                        &security, OPEN_EXISTING, 0, nullptr);
             const auto exe = executable();
+            wchar_t analysis_flag[2]{};
+            const bool analysis = GetEnvironmentVariableW(L"NICOLAI_M51_ANALYSIS_CAPTURE", analysis_flag, 2) == 1 &&
+                analysis_flag[0] == L'1';
             auto command = quote(exe.wstring()) + L" --m46-capture-worker " + std::to_wstring(pid) +
                 L" " + quote(records.wstring()) + L" " + quote(stop.wstring()) +
-                L" --linguistics " +
+                (analysis ? L" --linguistics-analysis " : L" --linguistics ") +
                 std::to_wstring(GetCurrentProcessId());
             STARTUPINFOW startup{}; startup.cb = sizeof(startup);
             startup.dwFlags = STARTF_USESHOWWINDOW | STARTF_USESTDHANDLES;

@@ -447,11 +447,14 @@ int render_job(int count, wchar_t** arguments) {
     if (count != 6) throw std::runtime_error("usage: --render <voice-directory> <UTF-8-text-file> <stable|m36-local|m36-chain|m38-boundary|m40-transient|m41-preserve|m42-join-pitch|m43-word-rhythm|m44-lexicon|m47-lexicon|m48-lexicon|m49-lexicon|m50-lexicon|original-sapi> <fresh-output.wav>");
     const fs::path output(arguments[5]);
     if (fs::exists(output)) throw std::runtime_error("output WAV must be fresh");
-    if (std::wstring(arguments[1]) == L"--render-trace") {
+    const bool analysis = std::wstring(arguments[1]) == L"--render-analysis-trace";
+    if (std::wstring(arguments[1]) == L"--render-trace" || analysis) {
         if (std::wstring(arguments[4]) != L"original-sapi")
             throw std::runtime_error("--render-trace requires original-sapi");
         if (!SetEnvironmentVariableW(L"NICOLAI_M46_LINGUISTIC_CAPTURE", L"1"))
             throw std::runtime_error("cannot enable process-local M46 trace");
+        if (!SetEnvironmentVariableW(L"NICOLAI_M51_ANALYSIS_CAPTURE", analysis ? L"1" : nullptr))
+            throw std::runtime_error("cannot set process-local M51 analysis trace");
     }
     if (std::wstring(arguments[4]) == L"original-sapi") {
         render_original(arguments[3], output);
@@ -592,7 +595,8 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE, PWSTR, int) {
 #endif
         }
         if (count > 1 && (std::wstring(arguments[1]) == L"--render" ||
-                          std::wstring(arguments[1]) == L"--render-trace")) return render_job(count, arguments);
+                          std::wstring(arguments[1]) == L"--render-trace" ||
+                          std::wstring(arguments[1]) == L"--render-analysis-trace")) return render_job(count, arguments);
         const bool smoke = (count == 2 || count == 3) && std::wstring(arguments[1]) == L"--ui-smoke";
         const bool job_test = count == 4 && std::wstring(arguments[1]) == L"--ui-job-test";
         const bool trace_smoke = count == 2 && std::wstring(arguments[1]) == L"--original-trace-smoke";

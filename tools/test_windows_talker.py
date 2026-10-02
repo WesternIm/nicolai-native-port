@@ -35,9 +35,13 @@ def main():
     parser.add_argument("--report", type=Path, help="Fresh scalar-only local test report")
     parser.add_argument("--baseline-includes-m49", action="store_true",
                         help="Compare all twelve old port profiles against a preserved M49 EXE")
+    parser.add_argument("--baseline-includes-m50", action="store_true",
+                        help="Compare all thirteen unchanged port profiles against preserved M50")
     args = parser.parse_args()
     if args.baseline_exe and not args.voice:
         parser.error("--baseline-exe requires --voice and --batch")
+    if args.baseline_includes_m50:
+        args.baseline_includes_m49 = True
     if (args.baseline_includes_m44 or args.baseline_includes_m47 or args.baseline_includes_m48 or args.baseline_includes_m49) and not args.baseline_exe:
         parser.error("--baseline-includes-m44 requires --baseline-exe")
     wrapper_pairs = old_profile_pairs = gui_jobs = 0
@@ -48,7 +52,7 @@ def main():
         temp = Path(root) / "Проверка пути с пробелами"
         temp.mkdir()
         records = temp / "linguistics-m46.jsonl"
-        for mode in ("--linguistics", "--linguistics-render"):
+        for mode in ("--linguistics", "--linguistics-render", "--linguistics-analysis"):
             worker = subprocess.run([str(args.exe.resolve()), "--m46-capture-worker", "0",
                                      str(records), str(temp / "stop"), mode, "0"],
                                     capture_output=True, timeout=10)
@@ -64,6 +68,11 @@ def main():
                                 capture_output=True, timeout=10)
         assert result.returncode != 0 and not (temp / "wrong-trace.wav").exists()
         assert not records.exists(), "trace CLI accepted a port profile"
+        result = subprocess.run([str(args.exe.resolve()), "--render-analysis-trace", str(temp),
+                                 str(text), "stable", str(temp / "wrong-analysis.wav")],
+                                capture_output=True, timeout=10)
+        assert result.returncode != 0 and not (temp / "wrong-analysis.wav").exists()
+        assert not records.exists(), "analysis CLI accepted a port profile"
         output = temp / "existing.wav"
         output.write_bytes(b"keep previous evidence")
         result = invoke(args.exe, temp, text, "stable", output)
@@ -172,7 +181,7 @@ def main():
                         assert not joins, (profile, name)
                     assert output.read_bytes() == (target / f"{name}.wav").read_bytes(), (profile, name)
                     wrapper_pairs += 1
-                    if args.baseline_exe and profile != "m50-lexicon" and (profile != "m49-lexicon" or args.baseline_includes_m49) and (profile != "m48-lexicon" or args.baseline_includes_m48 or args.baseline_includes_m49) and (profile != "m47-lexicon" or args.baseline_includes_m47 or args.baseline_includes_m48 or args.baseline_includes_m49) and (profile != "m44-lexicon" or args.baseline_includes_m44 or args.baseline_includes_m47 or args.baseline_includes_m48 or args.baseline_includes_m49):
+                    if args.baseline_exe and (profile != "m50-lexicon" or args.baseline_includes_m50) and (profile != "m49-lexicon" or args.baseline_includes_m49) and (profile != "m48-lexicon" or args.baseline_includes_m48 or args.baseline_includes_m49) and (profile != "m47-lexicon" or args.baseline_includes_m47 or args.baseline_includes_m48 or args.baseline_includes_m49) and (profile != "m44-lexicon" or args.baseline_includes_m44 or args.baseline_includes_m47 or args.baseline_includes_m48 or args.baseline_includes_m49):
                         previous = temp / f"previous-{profile}-{name}.wav"
                         old = invoke(args.baseline_exe, args.voice, text, profile, previous)
                         assert old.returncode == 0, ("old profile failed", profile, name)

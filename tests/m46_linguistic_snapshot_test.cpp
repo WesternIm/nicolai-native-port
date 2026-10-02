@@ -75,8 +75,14 @@ int main(int argc, char** argv) try {
     auto* word_pointers = words; put(state, 0x13c, word_pointers);
     put(state, 0x16c, descriptors.data());
     morph[kMorphStrideM46] = 1;
+    put(morph, kMorphStrideM46 + 20, std::uint32_t{0x12345678});
+    morph[kMorphStrideM46 + 24] = 5;
+    morph[kMorphStrideM46 + 25] = 2;
     morph[kMorphStrideM46 + 27] = 4;
     morph[kMorphStrideM46 + 29] = 60;
+    put(morph, kMorphStrideM46 + 32, std::int32_t{-7});
+    morph[kMorphStrideM46 + 36] = 9;
+    put(morph, kMorphStrideM46 + 40, std::uint32_t{0xabcdef01});
     morph[kMorphStrideM46 + 0x590] = ',';
     raw[1] = ','; std::memcpy(codes.data() + 4, "///", 4);
     put(descriptors, 12, phones.data()); descriptors[16] = 1;
@@ -86,9 +92,28 @@ int main(int argc, char** argv) try {
     json_linguistic_state_m46(out, GetCurrentProcess(), address, true);
     for (const auto* needle : {"\"word_count\":1", "\"candidate_count\":1",
                                "\"annotated_cp866_hex\":\"717a783c7176\"",
-                               "\"code_hex\":\"2f2f2f\"", "\"source_phone_count\":1"})
+                               "\"code_hex\":\"2f2f2f\"", "\"source_phone_count\":1",
+                               "\"candidates_hex\":[\"7856341205020004003c0000f9ffffff09000000\"]",
+                               "\"candidate_payloads_hex\":[\"05020004003c0000f9ffffff0900000001efcdab\"]"})
         if (out.str().find(needle) == std::string::npos) throw std::runtime_error("snapshot field mismatch");
     const auto saved_state = state;
+    // Early hooks must not inspect separator/code/source arrays before setup.
+    put(state, 0x128, std::uint32_t{0}); put(state, 0x12c, std::uint32_t{0});
+    put(state, 0x16c, std::uint32_t{0});
+    std::ostringstream early;
+    json_linguistic_state_m46(early, GetCurrentProcess(), address, false, true);
+    if (early.str().find("candidate_payloads_hex") == std::string::npos ||
+        early.str().find("code_hex") != std::string::npos)
+        throw std::runtime_error("early analysis read uninitialized separator arrays");
+    std::copy(saved_state.begin(), saved_state.end(), state.begin());
+    // The last payload ends exactly at punctuation, not four bytes inside it.
+    morph[kMorphStrideM46] = 70;
+    put(morph, kMorphStrideM46 + 0x58c, std::uint32_t{0x11223344});
+    std::ostringstream capacity;
+    json_linguistic_state_m46(capacity, GetCurrentProcess(), address, false, true);
+    if (capacity.str().find("0000000000000000000000000000000044332211\"]") == std::string::npos)
+        throw std::runtime_error("last candidate payload boundary mismatch");
+    morph[kMorphStrideM46] = 1;
     std::fill(state.begin(), state.end(), BYTE{0});
     for (bool records : {false, true}) {
         std::ostringstream empty;

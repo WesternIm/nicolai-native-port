@@ -103,7 +103,7 @@ std::filesystem::path debug_image_path_m46(HANDLE file) {
 }
 
 void json_linguistic_state_m46(std::ostream& destination, HANDLE process,
-                              std::uintptr_t state, bool source_records) {
+                              std::uintptr_t state, bool source_records, bool analyses_only = false) {
     const auto count = read_value<std::int32_t>(process, state + 0x134);
     if (count < 0 || count > kMaxWordsM46)
         throw std::runtime_error("linguistic word count outside guarded domain: " + std::to_string(count));
@@ -112,11 +112,11 @@ void json_linguistic_state_m46(std::ostream& destination, HANDLE process,
     // unused arrays or invent words/phones for them.
     if (!count) { destination << "{\"word_count\":0,\"words\":[]}"; return; }
     const auto morph = read_value<std::uint32_t>(process, state + 0x124);
-    const auto raw = read_value<std::uint32_t>(process, state + 0x128);
-    const auto codes = read_value<std::uint32_t>(process, state + 0x12c);
+    const auto raw = analyses_only ? 0 : read_value<std::uint32_t>(process, state + 0x128);
+    const auto codes = analyses_only ? 0 : read_value<std::uint32_t>(process, state + 0x12c);
     const auto words = read_value<std::uint32_t>(process, state + 0x13c);
     const auto descriptors = source_records ? read_value<std::uint32_t>(process, state + 0x16c) : 0;
-    if (!morph || !raw || !codes || !words || (source_records && !descriptors))
+    if (!morph || !words || (!analyses_only && (!raw || !codes)) || (source_records && !descriptors))
         throw std::runtime_error("null linguistic array");
     // Stage even for unit callers: a rejected read must never leave partial JSON.
     std::ostringstream out;
@@ -129,14 +129,23 @@ void json_linguistic_state_m46(std::ostream& destination, HANDLE process,
         const auto candidates = read_value<unsigned char>(process, block);
         if (candidates > 70) throw std::runtime_error("morphology count outside block capacity");
         out << "{\"index\":" << i << ",\"annotated_cp866_hex\":\""
-            << hex_m46(read_string_m46(process, word, 4096)) << "\",\"punctuation_cp866_hex\":\""
-            << hex_m46(read_string_m46(process, block + 0x590, 12))
-            << "\",\"raw_separator\":" << static_cast<int>(read_value<unsigned char>(process, raw + i))
-            << ",\"code_hex\":\"" << hex_m46(read_string_m46(process, codes + i * 4, 4))
-            << "\",\"candidate_count\":" << static_cast<int>(candidates) << ",\"candidates_hex\":[";
+            << hex_m46(read_string_m46(process, word, 4096)) << '\"';
+        // Separators/codes are not initialized yet at the M51 analysis hooks.
+        if (!analyses_only)
+            out << ",\"punctuation_cp866_hex\":\"" << hex_m46(read_string_m46(process, block + 0x590, 12))
+                << "\",\"raw_separator\":" << static_cast<int>(read_value<unsigned char>(process, raw + i))
+                << ",\"code_hex\":\"" << hex_m46(read_string_m46(process, codes + i * 4, 4)) << '\"';
+        out << ",\"candidate_count\":" << static_cast<int>(candidates) << ",\"candidates_hex\":[";
         for (int c = 0; c < candidates; ++c) {
             if (c) out << ',';
             out << '\"' << hex_m46(read_vector<unsigned char>(process, block + (c + 1) * 20, 20)) << '\"';
+        }
+        // Preserve the historical M46 shifted window; never reinterpret old
+        // captures silently. Authors/scorers actually address stride*c + 4.
+        out << "],\"candidate_layout\":\"payload20-at-stride-plus4-v1\",\"candidate_payloads_hex\":[";
+        for (int c = 0; c < candidates; ++c) {
+            if (c) out << ',';
+            out << '\"' << hex_m46(read_vector<unsigned char>(process, block + (c + 1) * 20 + 4, 20)) << '\"';
         }
         out << ']';
         if (source_records) {

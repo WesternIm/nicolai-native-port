@@ -1,0 +1,35 @@
+{
+  "schema": "nicolai-m46b-original-corpus-v1",
+  "cases": 1,
+  "exe_sha256": "2b97d1296b49f8d14cca1f3d29bccf2e9e7fe53ca1574d92d9cabc56723c4ec2",
+  "baseline_exe_sha256": "d8c0453fd0df32e44d85b47a19ef5fdd4cbade84db4ade1002ccf23460fa04fa",
+  "corpus_sha256": "a4ba2dd4587be3f89c7786e57759cbfc3c48e93d19c58b036e063d4cdc2e550d",
+  "windows_managed_launch": true,
+  "pcm_equal_pairs": 1,
+  "complete_calls": 4,
+  "linguistic_calls": 1,
+  "zero_word_calls": 3,
+  "source_phone_records": 12,
+  "scan_model_matches": 1,
+  "scan_model_mismatches": 0,
+  "skipped": 0,
+  "rows": [
+    {
+      "schema": "nicolai-m46-linguistic-audit-v1",
+      "complete_calls": 4,
+      "scan_model_matches": 1,
+      "linguistic_calls": 1,
+      "zero_word_calls": 3,
+      "scan_model_mismatches": 0,
+      "source_phone_records": 12,
+      "limits": "Scan/split only; not complete morphology, raw-producer parity, acoustic units or audio parity.",
+      "case_id": "default-four-stage",
+      "records": 16,
+      "skipped": 0,
+      "normal_samples": 24485,
+      "traced_samples": 24485,
+      "pcm_equal": true
+    }
+  ],
+  "scope": "Real stage/scan capture and original PCM isolation, not complete morphology or port acoustic parity."
+}

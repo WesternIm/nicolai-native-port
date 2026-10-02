@@ -6,6 +6,11 @@ the standalone test UI without proprietary voice data. Stable is the default;
 experimental modes are clearly labeled, and original SAPI requires a working
 installed Nicolai voice.
 
+The [M51 analysis-selection checkpoint](docs/M51_ANALYSIS_SELECTION.md) corrects
+the candidate capture offset, adds opt-in before/after-context observations,
+and verifies isolated form-normalization/conflict primitives against the
+original. It does not add an audible profile or change M50 synthesis.
+
 The opt-in [M50 noun е/ё filters](docs/M50_NOUN_YO.md) extend M49 with recovered
 initialized noun-form membership, not per-word overrides. Six pronunciation
 fixes are confirmed against fresh original traces, with no observed regression

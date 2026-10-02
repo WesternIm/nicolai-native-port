@@ -4,11 +4,13 @@ param(
     [Parameter(Mandatory=$true)][string]$OutputDir,
     [string]$VoiceDir = '',
     [switch]$Trace,
+    [switch]$Analysis,
     [switch]$WindowsManagedLaunch,
     [switch]$Worker
 )
 # PRIVATE diagnostic artifacts only. This is not a SAPI installation repair.
 $ErrorActionPreference = 'Stop'
+if ($Analysis -and -not $Trace) { throw '-Analysis requires -Trace.' }
 function Quote-Argument([string]$Value) {
     # CRT quoting also preserves backslashes immediately before a quote/end.
     '"' + [regex]::Replace([regex]::Replace($Value, '(\\*)"', '$1$1\"'), '(\\+)$', '$1$1') + '"'
@@ -23,7 +25,7 @@ function Invoke-OwnedRender {
     $exitCode = $null
     $failure = $null
     try {
-        $mode = if ($Trace) { '--render-trace' } else { '--render' }
+        $mode = if ($Analysis) { '--render-analysis-trace' } elseif ($Trace) { '--render-trace' } else { '--render' }
         $arguments = @($mode, (Quote-Argument $VoiceDir), (Quote-Argument $TextFile),
             'original-sapi', (Quote-Argument (Join-Path $OutputDir 'result.wav')))
         $render = Start-Process -FilePath $Exe -ArgumentList $arguments -WorkingDirectory (Split-Path $Exe) `
@@ -65,6 +67,7 @@ function Invoke-OwnedRender {
         }
         $wav = Join-Path $OutputDir 'result.wav'
         $report = [ordered]@{schema='nicolai-original-owned-probe-v1'; trace=[bool]$Trace;
+            analysis=[bool]$Analysis;
             exit_code=$exitCode; success=($null -eq $failure); error=$failure;
             wav_bytes=0; wav_sha256=$null; proprietary_artifacts_private=$true}
         if (Test-Path -LiteralPath $wav) {
@@ -108,6 +111,7 @@ if (-not $WindowsManagedLaunch) {
         ' -TextFile ' + (Quote-Argument $TextFile) + ' -OutputDir ' + (Quote-Argument $OutputDir) +
         ' -VoiceDir ' + (Quote-Argument $VoiceDir)
     if ($Trace) { $command += ' -Trace' }
+    if ($Analysis) { $command += ' -Analysis' }
     $startup = New-CimInstance -ClassName Win32_ProcessStartup -ClientOnly -Property @{ShowWindow=[uint16]0}
     $launchBirth = [datetime]::Now
     $launch = Invoke-CimMethod -ClassName Win32_Process -MethodName Create -OperationTimeoutSec 5 -Arguments @{
